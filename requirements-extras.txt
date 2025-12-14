@@ -20,7 +20,30 @@ seaborn
 # xgboost
 
 ########################
+# Deep learning / Torch (examples)
+########################
+# torch
+
+########################
+# Web APIs / apps (examples)
+########################
+# fastapi
+# uvicorn
+# streamlit
+
+##############
+# Imaging (examples)
+##############
+# pillow
+
+########################
 # Cloud / docs (examples)
 ########################
 Sphinx
 awscli
+
+########################
+# Google Cloud BigQuery (examples)
+########################
+# google-cloud-bigquery
+# google-cloud-bigquery-storage
