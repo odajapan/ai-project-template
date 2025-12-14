@@ -1,0 +1,11 @@
+name: your_project_name
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.12
+  - pip
+  - pre-commit
+  - pip:
+	  - -r requirements-dev.txt
+

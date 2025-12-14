@@ -1,0 +1,9 @@
+# local package
+-e .
+
+# external requirements (runtime)
+click
+python-dotenv>=0.5.1
+numpy
+pandas
+tqdm

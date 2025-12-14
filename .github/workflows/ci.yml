@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Miniconda (conda environment from environment.yaml)
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          auto-update-conda: true
+          activate-environment: your_project_name
+          environment-file: environment.yaml
+          use-mamba: true
+
+      - name: Show conda info
+        shell: bash -l {0}
+        run: conda info
+
+      - name: Run lint and tests (make check)
+        shell: bash -l {0}
+        run: |
+          make check

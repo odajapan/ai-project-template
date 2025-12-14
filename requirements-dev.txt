@@ -1,0 +1,14 @@
+# Development dependencies
+# This file is intended for tools used only during development.
+# It includes the base requirements plus additional dev-only tools.
+
+-r requirements.txt
+
+pytest
+flake8
+coverage
+black
+isort
+mypy
+pre-commit
+

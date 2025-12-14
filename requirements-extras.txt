@@ -1,0 +1,26 @@
+# Optional / extra dependencies
+# Add optional packages here (e.g., notebooks, visualization, ML libs).
+
+##############################
+# Notebooks / interactive use
+##############################
+jupyterlab
+ipykernel
+
+################
+# Visualization
+################
+matplotlib
+seaborn
+
+########################
+# Machine learning (examples)
+########################
+# scikit-learn
+# xgboost
+
+########################
+# Cloud / docs (examples)
+########################
+Sphinx
+awscli
