@@ -20,11 +20,11 @@ fi
 
 # Replace in text files
 # You can extend the find path/patterns as needed.
-find . -type f \
-  \( -name "*.py" -o -name "*.rst" -o -name "*.md" -o -name "*.yml" -o -name "*.yaml" -o -name "*.txt" -o -name "Makefile" -o -name "*.cfg" -o -name "*.ini" \) \
-  ! -path "*/.git/*" \
-	  ! -path "*/*.egg-info/*" \
-  -print0 | xargs -0 sed "${SED_INPLACE[@]}" "s/${OLD_NAME}/${NEW_NAME}/g"
+	find . -type f \
+	  \( -name "*.py" -o -name "*.rst" -o -name "*.md" -o -name "*.yml" -o -name "*.yaml" -o -name "*.txt" -o -name "Makefile" -o -name "*.cfg" -o -name "*.ini" -o -name "*.toml" \) \
+	  ! -path "*/.git/*" \
+		  ! -path "*/*.egg-info/*" \
+	  -print0 | xargs -0 sed "${SED_INPLACE[@]}" "s/${OLD_NAME}/${NEW_NAME}/g"
 
 # Rename package directory under src/
 if [ -d "src/${OLD_NAME}" ] && [ ! -d "src/${NEW_NAME}" ]; then
