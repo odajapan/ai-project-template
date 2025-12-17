@@ -1,6 +1,64 @@
 [build-system]
-requires = ["setuptools>=61"]
+requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "your_project_name"
+version = "0.1.0"
+description = "Python data science project template."
+authors = [
+  { name = "Hideto Oda" },
+]
+license = { text = "MIT" }
+readme = "README.md"
+requires-python = ">=3.12"
+
+# Runtime dependencies (mirrors requirements.txt, excluding "-e .")
+dependencies = [
+  "click",
+  "python-dotenv>=0.5.1",
+  "numpy",
+  "pandas",
+  "tqdm",
+]
+
+[project.optional-dependencies]
+# Core development tools (lint/test/format/type-check/pre-commit)
+dev = [
+  "pytest",
+  "flake8",
+  "coverage",
+  "black",
+  "isort",
+  "mypy",
+  "pre-commit",
+]
+
+# Extras that are commonly used in data-science projects. These are kept
+# separate so projects can opt in to only what they need.
+notebook = [
+  "jupyterlab",
+  "ipykernel",
+]
+
+viz = [
+  "matplotlib",
+  "seaborn",
+]
+
+docs = [
+  "Sphinx",
+]
+
+cloud = [
+  "awscli",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.black]
 line-length = 88
@@ -10,6 +68,12 @@ target-version = ["py312"]
 profile = "black"
 line_length = 88
 multi_line_output = 3
+
+[tool.flake8]
+max-line-length = 88
+max-complexity = 10
+extend-ignore = ["E203", "W503"]
+
 [tool.coverage.run]
 relative_files = true
 branch = false
@@ -17,3 +81,15 @@ branch = false
 [tool.coverage.report]
 show_missing = false
 skip_covered = false
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+warn_return_any = true
+warn_unused_ignores = true
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["tests"]
+python_files = ["test_*.py"]

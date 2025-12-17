@@ -24,8 +24,8 @@ endif
 
 ## Install Python Dependencies (development environment)
 requirements: test_environment
-	$(PYTHON_INTERPRETER) -m pip install -U pip setuptools wheel
-	$(PYTHON_INTERPRETER) -m pip install -r requirements-dev.txt
+	$(PYTHON_INTERPRETER) -m pip install -U pip
+	$(PYTHON_INTERPRETER) -m pip install -e .[dev,notebook,viz,docs,cloud]
 
 ## Make Dataset
 data: requirements
@@ -65,11 +65,11 @@ else
 	aws s3 sync s3://$(BUCKET)/data/ data/ --profile $(PROFILE)
 endif
 
-## Set up python interpreter environment (prefer conda + environment.yaml)
+	## Set up python interpreter environment (prefer conda + environment.yml)
 create_environment:
 ifeq (True,$(HAS_CONDA))
-	@echo ">>> Detected conda, creating/updating environment from environment.yaml."
-	conda env create -f environment.yaml || conda env update -f environment.yaml
+		@echo ">>> Detected conda, creating/updating environment from environment.yml."
+		conda env create -f environment.yml || conda env update -f environment.yml
 	@echo ">>> Activate with:\nconda activate $(PROJECT_NAME)"
 else
 	$(PYTHON_INTERPRETER) -m venv .venv
