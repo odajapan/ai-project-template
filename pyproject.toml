@@ -54,6 +54,9 @@ cloud = [
   "awscli",
 ]
 
+[project.scripts]
+your_project_name = "your_project_name.cli:main"
+
 [tool.setuptools]
 package-dir = {"" = "src"}
 

@@ -95,6 +95,14 @@ The template provides a few standard Make targets to simplify common workflows:
     make precommit      # Run pre-commit hooks against all files
     ```
 
+After installing the package in editable mode, a small example CLI is also
+available:
+
+```bash
+your_project_name hello
+your_project_name hello Alice
+```
+
 ## Project Organization
 
     ├── LICENSE
