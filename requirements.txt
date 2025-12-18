@@ -1,9 +1,14 @@
-# local package
--e .
+#! /usr/bin/env pip
 
-# external requirements (runtime)
-click
-python-dotenv>=0.5.1
-numpy
-pandas
-tqdm
+# Convenience installer for this project.
+#
+# All dependency definitions live in pyproject.toml (single source of truth).
+#
+# Default: install the project in editable mode with development tools only
+# (lightweight; notebooks/viz/docs/cloud/dashboard are not installed by default).
+
+-e .[dev]
+
+# Example for projects that use notebooks, visualization, docs, cloud tools,
+# and dashboards:
+# -e .[dev,notebook,viz,docs,cloud,dashboard]

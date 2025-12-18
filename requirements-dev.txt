@@ -1,14 +1,5 @@
 # Development dependencies
-# This file is intended for tools used only during development.
-# It includes the base requirements plus additional dev-only tools.
+# Kept as a thin wrapper around requirements.txt for backward compatibility.
+# All actual dependency definitions live in pyproject.toml.
 
 -r requirements.txt
-
-pytest
-flake8
-coverage
-black
-isort
-mypy
-pre-commit
-

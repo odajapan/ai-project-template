@@ -9,9 +9,11 @@ for starting new data science projects. After creating your own project from thi
 template, you can:
 
     -   Rename the project (replace `your_project_name` with your project name in
-        files such as `README.md`, `Makefile`, and `environment.yml`).
+            files such as `README.md`, `Makefile`, and `environment.yml`).
 
--   Customize Python dependencies in `requirements.txt`.
+-   Customize Python dependencies in `pyproject.toml` (under `dependencies` and
+    `optional-dependencies`). `requirements*.txt` are thin wrappers for
+    convenient installation and normally do not need to be edited.
 -   Add your own data pipelines, models, and notebooks under `src/` and
     `notebooks/`.
 
@@ -35,28 +37,36 @@ Use a virtual environment and install the project plus development extras via
     python3 -m venv .venv
     source .venv/bin/activate  # On Windows: .venv\Scripts\activate
         pip install --upgrade pip
-        pip install -e .[dev,notebook,viz,docs,cloud]
+            pip install -e .[dev,notebook,viz,docs,cloud]
+            # Optionally add feature-specific extras such as vision, bigquery,
+            # or dashboard:
+            # pip install -e .[dev,vision]
+            # pip install -e .[dev,bigquery]
+            # pip install -e .[dev,dashboard]
     ```
 
 This installs:
 
 -   the package itself (`your_project_name` under `src/`)
 -   runtime dependencies (from `pyproject.toml`)
--   development tools and commonly used extras (`dev`, `notebook`, `viz`,
-    `docs`, `cloud` extras from `pyproject.toml`)
+    -   development tools and commonly used extras (`dev`, `notebook`, `viz`,
+        `docs`, `cloud` extras from `pyproject.toml`)
+    -   (optionally) feature-specific extras such as `vision`, `bigquery`, or
+        `dashboard`
 
 ### 2. Conda
 
-If you prefer conda, an example environment file is provided (development
-environment with tests and tooling):
+If you prefer conda, an example environment file is provided for creating a
+minimal environment:
 
     ```bash
     conda env create -f environment.yml
     conda activate your_project_name
+    # Install the project with development tools (lightweight default)
+    pip install -r requirements.txt
+    # Example: install full dev + notebook + viz + docs + cloud extras
+    # pip install -e .[dev,notebook,viz,docs,cloud]
     ```
-
-Internally this environment file runs `pip install -e .[dev,notebook,viz,docs,cloud]`
-inside the conda environment, so it matches the pip/venv setup.
 
 ### 3. Docker (optional)
 
@@ -109,10 +119,10 @@ your_project_name hello Alice
     ├── Makefile           <- Makefile with commands like `make data` or `make train`
     ├── README.md          <- The top-level README for developers using this project.
     ├── data
-    │   ├── external       <- Data from third party sources.
-    │   ├── interim        <- Intermediate data that has been transformed.
-    │   ├── processed      <- The final, canonical data sets for modeling.
-    │   └── raw            <- The original, immutable data dump.
+    │   ├── external       <- Data from third party sources.
+    │   ├── interim        <- Intermediate data that has been transformed.
+    │   ├── processed      <- The final, canonical data sets for modeling.
+    │   └── raw            <- The original, immutable data dump.
     │
     ├── docs               <- A default Sphinx project; see sphinx-doc.org for details
     │
@@ -125,27 +135,27 @@ your_project_name hello Alice
     ├── references         <- Data dictionaries, manuals, and all other explanatory materials.
     │
     ├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc.
-    │   └── figures        <- Generated graphics and figures to be used in reporting
+    │   └── figures        <- Generated graphics and figures to be used in reporting
     │
-        ├── pyproject.toml     <- Project metadata, dependencies, and tool configuration
-    ├── requirements.txt   <- Runtime dependencies for the project (also listed in pyproject.toml)
+    ├── pyproject.toml     <- Project metadata, dependencies, and tool configuration
+    ├── requirements.txt   <- Convenience installer selecting which extras to install (default: dev only)
     │
     ├── src                <- Source code for use in this project.
-    │   ├── __init__.py    <- Makes src a Python module
+    │   ├── __init__.py    <- Makes src a Python module
     │   │
-    │   ├── data           <- Scripts to download or generate data
-    │   │   └── make_dataset.py
+    │   ├── data           <- Scripts to download or generate data
+    │   │   └── make_dataset.py
     │   │
-    │   ├── features       <- Scripts to turn raw data into features for modeling
-    │   │   └── build_features.py
+    │   ├── features       <- Scripts to turn raw data into features for modeling
+    │   │   └── build_features.py
     │   │
-    │   ├── models         <- Scripts to train models and then use trained models to make
+    │   ├── models         <- Scripts to train models and then use trained models to make
     │   │   │                 predictions
-    │   │   ├── predict_model.py
-    │   │   └── train_model.py
+    │   │   ├── predict_model.py
+    │   │   └── train_model.py
     │   │
-    │   └── visualization  <- Scripts to create exploratory and results oriented visualizations
-    │       └── visualize.py
+    │   └── visualization  <- Scripts to create exploratory and results oriented visualizations
+    │       └── visualize.py
     │
     └── tox.ini            <- tox file with settings for running tox; see tox.readthedocs.io
 
@@ -165,7 +175,10 @@ lockfiles from `pyproject.toml`, for example using `pip-tools`:
       --extra notebook \
       --extra viz \
       --extra docs \
-      --extra cloud \
+          --extra cloud \
+          --extra dashboard \
+          --extra vision \
+          --extra bigquery \
       -o requirements.lock \
       pyproject.toml
     ```
@@ -178,13 +191,39 @@ or using `uv`:
       --extra notebook \
       --extra viz \
       --extra docs \
-      --extra cloud \
+          --extra cloud \
+          --extra dashboard \
+          --extra vision \
+          --extra bigquery \
       pyproject.toml \
       -o requirements.lock
     ```
 
 You can then commit the generated `requirements.lock` file to projects created
 from this template if a lockfile-based workflow fits your organization.
+
+## Dependency management workflow
+
+When working on projects created from this template:
+
+1. **Adding new dependencies**
+
+    - Add them to `pyproject.toml` under `[project].dependencies` or
+      `[project.optional-dependencies]`.
+    - Then reinstall them into your environment, for example:
+        - `pip install -r requirements.txt`, or
+        - `pip install -e .[dev,notebook,viz,docs,cloud]`.
+
+2. **Removing dependencies**
+
+    - Remove the package from `pyproject.toml`.
+    - Optionally run `pip uninstall <package>` in your environment if you want
+      to clean it up (pip does not automatically uninstall packages).
+
+3. **Do not edit `requirements*.txt` directly**
+    - The canonical source of dependency information is `pyproject.toml`.
+    - `requirements*.txt` are thin wrappers for convenient installation and
+      normally do not need to be changed.
 
 ---
 
