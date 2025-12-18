@@ -1,8 +1,9 @@
 # Optional / extra dependencies
 #
 # NOTE:
-# Optional dependencies for notebooks, visualization, docs, cloud, etc.
-# are defined in pyproject.toml under [project.optional-dependencies].
+# Optional dependencies for notebooks, visualization, docs, cloud, dashboard,
+# vision, bigquery, etc. are defined in pyproject.toml under
+# [project.optional-dependencies].
 #
 # This file is kept only as a placeholder / for backward compatibility and
 # intentionally does not list any packages.

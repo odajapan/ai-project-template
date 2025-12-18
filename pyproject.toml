@@ -35,24 +35,51 @@ dev = [
   "pre-commit",
 ]
 
-# Extras that are commonly used in data-science projects. These are kept
-# separate so projects can opt in to only what they need.
+# Jupyter / notebook tools
 notebook = [
   "jupyterlab",
   "ipykernel",
 ]
 
+# Visualization tools
 viz = [
   "matplotlib",
   "seaborn",
 ]
 
+# Documentation tools
 docs = [
   "Sphinx",
 ]
 
+# AWS / cloud-related tools
 cloud = [
+  "boto3",
+  "s3fs",
   "awscli",
+  "aioboto3",
+]
+
+# Dashboard / web UI and API tools
+dashboard = [
+  "streamlit",
+  "fastapi",
+  "uvicorn[standard]",
+]
+
+# Vision / CV related extras
+vision = [
+  "torch>=2.0.0",
+  "torchvision>=0.15.0",
+  "opencv-python>=4.8.0",
+  "pillow>=10.0.0",
+]
+
+# BigQuery related extras
+bigquery = [
+  "google-cloud-bigquery",
+  "google-cloud-bigquery-storage",
+  "db-dtypes",
 ]
 
 [project.scripts]

@@ -37,15 +37,22 @@ Use a virtual environment and install the project plus development extras via
     python3 -m venv .venv
     source .venv/bin/activate  # On Windows: .venv\Scripts\activate
         pip install --upgrade pip
-        pip install -e .[dev,notebook,viz,docs,cloud]
+            pip install -e .[dev,notebook,viz,docs,cloud]
+            # Optionally add feature-specific extras such as vision, bigquery,
+            # or dashboard:
+            # pip install -e .[dev,vision]
+            # pip install -e .[dev,bigquery]
+            # pip install -e .[dev,dashboard]
     ```
 
 This installs:
 
 -   the package itself (`your_project_name` under `src/`)
 -   runtime dependencies (from `pyproject.toml`)
--   development tools and commonly used extras (`dev`, `notebook`, `viz`,
-    `docs`, `cloud` extras from `pyproject.toml`)
+    -   development tools and commonly used extras (`dev`, `notebook`, `viz`,
+        `docs`, `cloud` extras from `pyproject.toml`)
+    -   (optionally) feature-specific extras such as `vision`, `bigquery`, or
+        `dashboard`
 
 ### 2. Conda
 
@@ -55,9 +62,9 @@ minimal environment:
     ```bash
     conda env create -f environment.yml
     conda activate your_project_name
-    # Optional: install full dev + notebook + viz + docs + cloud extras
+    # Install the project with development tools (lightweight default)
     pip install -r requirements.txt
-    # or
+    # Example: install full dev + notebook + viz + docs + cloud extras
     # pip install -e .[dev,notebook,viz,docs,cloud]
     ```
 
@@ -112,10 +119,10 @@ your_project_name hello Alice
     ├── Makefile           <- Makefile with commands like `make data` or `make train`
     ├── README.md          <- The top-level README for developers using this project.
     ├── data
-    │   ├── external       <- Data from third party sources.
-    │   ├── interim        <- Intermediate data that has been transformed.
-    │   ├── processed      <- The final, canonical data sets for modeling.
-    │   └── raw            <- The original, immutable data dump.
+    │   ├── external       <- Data from third party sources.
+    │   ├── interim        <- Intermediate data that has been transformed.
+    │   ├── processed      <- The final, canonical data sets for modeling.
+    │   └── raw            <- The original, immutable data dump.
     │
     ├── docs               <- A default Sphinx project; see sphinx-doc.org for details
     │
@@ -127,28 +134,28 @@ your_project_name hello Alice
     │
     ├── references         <- Data dictionaries, manuals, and all other explanatory materials.
     │
-        ├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc.
-        │   └── figures        <- Generated graphics and figures to be used in reporting
-        │
-            ├── pyproject.toml     <- Project metadata, dependencies, and tool configuration
-        ├── requirements.txt   <- Convenience installer wrapping pyproject extras (dev, notebook, viz, docs, cloud)
-        │
+    ├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc.
+    │   └── figures        <- Generated graphics and figures to be used in reporting
+    │
+    ├── pyproject.toml     <- Project metadata, dependencies, and tool configuration
+    ├── requirements.txt   <- Convenience installer selecting which extras to install (default: dev only)
+    │
     ├── src                <- Source code for use in this project.
-    │   ├── __init__.py    <- Makes src a Python module
+    │   ├── __init__.py    <- Makes src a Python module
     │   │
-    │   ├── data           <- Scripts to download or generate data
-    │   │   └── make_dataset.py
+    │   ├── data           <- Scripts to download or generate data
+    │   │   └── make_dataset.py
     │   │
-    │   ├── features       <- Scripts to turn raw data into features for modeling
-    │   │   └── build_features.py
+    │   ├── features       <- Scripts to turn raw data into features for modeling
+    │   │   └── build_features.py
     │   │
-    │   ├── models         <- Scripts to train models and then use trained models to make
+    │   ├── models         <- Scripts to train models and then use trained models to make
     │   │   │                 predictions
-    │   │   ├── predict_model.py
-    │   │   └── train_model.py
+    │   │   ├── predict_model.py
+    │   │   └── train_model.py
     │   │
-    │   └── visualization  <- Scripts to create exploratory and results oriented visualizations
-    │       └── visualize.py
+    │   └── visualization  <- Scripts to create exploratory and results oriented visualizations
+    │       └── visualize.py
     │
     └── tox.ini            <- tox file with settings for running tox; see tox.readthedocs.io
 
@@ -168,7 +175,10 @@ lockfiles from `pyproject.toml`, for example using `pip-tools`:
       --extra notebook \
       --extra viz \
       --extra docs \
-      --extra cloud \
+          --extra cloud \
+          --extra dashboard \
+          --extra vision \
+          --extra bigquery \
       -o requirements.lock \
       pyproject.toml
     ```
@@ -181,7 +191,10 @@ or using `uv`:
       --extra notebook \
       --extra viz \
       --extra docs \
-      --extra cloud \
+          --extra cloud \
+          --extra dashboard \
+          --extra vision \
+          --extra bigquery \
       pyproject.toml \
       -o requirements.lock
     ```

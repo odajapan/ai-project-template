@@ -2,8 +2,13 @@
 
 # Convenience installer for this project.
 #
-# Dependencies are defined in pyproject.toml (single source of truth).
-# This file simply installs the project in editable mode with common extras
-# for development, notebooks, visualization, docs, and cloud tools.
+# All dependency definitions live in pyproject.toml (single source of truth).
+#
+# Default: install the project in editable mode with development tools only
+# (lightweight; notebooks/viz/docs/cloud/dashboard are not installed by default).
 
--e .[dev,notebook,viz,docs,cloud]
+-e .[dev]
+
+# Example for projects that use notebooks, visualization, docs, cloud tools,
+# and dashboards:
+# -e .[dev,notebook,viz,docs,cloud,dashboard]
