@@ -1,49 +1,8 @@
 # Optional / extra dependencies
-# Add optional packages here (e.g., notebooks, visualization, ML libs).
-
-##############################
-# Notebooks / interactive use
-##############################
-jupyterlab
-ipykernel
-
-################
-# Visualization
-################
-matplotlib
-seaborn
-
-########################
-# Machine learning (examples)
-########################
-# scikit-learn
-# xgboost
-
-########################
-# Deep learning / Torch (examples)
-########################
-# torch
-
-########################
-# Web APIs / apps (examples)
-########################
-# fastapi
-# uvicorn
-# streamlit
-
-##############
-# Imaging (examples)
-##############
-# pillow
-
-########################
-# Cloud / docs (examples)
-########################
-Sphinx
-awscli
-
-########################
-# Google Cloud BigQuery (examples)
-########################
-# google-cloud-bigquery
-# google-cloud-bigquery-storage
+#
+# NOTE:
+# Optional dependencies for notebooks, visualization, docs, cloud, etc.
+# are defined in pyproject.toml under [project.optional-dependencies].
+#
+# This file is kept only as a placeholder / for backward compatibility and
+# intentionally does not list any packages.

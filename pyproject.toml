@@ -13,7 +13,8 @@ license = { text = "MIT" }
 readme = "README.md"
 requires-python = ">=3.12"
 
-# Runtime dependencies (mirrors requirements.txt, excluding "-e .")
+# Runtime dependencies (canonical source of truth; requirements*.txt are thin
+# wrappers around these definitions for convenient installation).
 dependencies = [
   "click",
   "python-dotenv>=0.5.1",

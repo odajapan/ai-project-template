@@ -1,9 +1,9 @@
-# local package
--e .
+#! /usr/bin/env pip
 
-# external requirements (runtime)
-click
-python-dotenv>=0.5.1
-numpy
-pandas
-tqdm
+# Convenience installer for this project.
+#
+# Dependencies are defined in pyproject.toml (single source of truth).
+# This file simply installs the project in editable mode with common extras
+# for development, notebooks, visualization, docs, and cloud tools.
+
+-e .[dev,notebook,viz,docs,cloud]

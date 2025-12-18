@@ -9,9 +9,11 @@ for starting new data science projects. After creating your own project from thi
 template, you can:
 
     -   Rename the project (replace `your_project_name` with your project name in
-        files such as `README.md`, `Makefile`, and `environment.yml`).
+            files such as `README.md`, `Makefile`, and `environment.yml`).
 
--   Customize Python dependencies in `requirements.txt`.
+-   Customize Python dependencies in `pyproject.toml` (under `dependencies` and
+    `optional-dependencies`). `requirements*.txt` are thin wrappers for
+    convenient installation and normally do not need to be edited.
 -   Add your own data pipelines, models, and notebooks under `src/` and
     `notebooks/`.
 
@@ -47,16 +49,17 @@ This installs:
 
 ### 2. Conda
 
-If you prefer conda, an example environment file is provided (development
-environment with tests and tooling):
+If you prefer conda, an example environment file is provided for creating a
+minimal environment:
 
     ```bash
     conda env create -f environment.yml
     conda activate your_project_name
+    # Optional: install full dev + notebook + viz + docs + cloud extras
+    pip install -r requirements.txt
+    # or
+    # pip install -e .[dev,notebook,viz,docs,cloud]
     ```
-
-Internally this environment file runs `pip install -e .[dev,notebook,viz,docs,cloud]`
-inside the conda environment, so it matches the pip/venv setup.
 
 ### 3. Docker (optional)
 
@@ -124,12 +127,12 @@ your_project_name hello Alice
     │
     ├── references         <- Data dictionaries, manuals, and all other explanatory materials.
     │
-    ├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc.
-    │   └── figures        <- Generated graphics and figures to be used in reporting
-    │
-        ├── pyproject.toml     <- Project metadata, dependencies, and tool configuration
-    ├── requirements.txt   <- Runtime dependencies for the project (also listed in pyproject.toml)
-    │
+        ├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc.
+        │   └── figures        <- Generated graphics and figures to be used in reporting
+        │
+            ├── pyproject.toml     <- Project metadata, dependencies, and tool configuration
+        ├── requirements.txt   <- Convenience installer wrapping pyproject extras (dev, notebook, viz, docs, cloud)
+        │
     ├── src                <- Source code for use in this project.
     │   ├── __init__.py    <- Makes src a Python module
     │   │
@@ -185,6 +188,29 @@ or using `uv`:
 
 You can then commit the generated `requirements.lock` file to projects created
 from this template if a lockfile-based workflow fits your organization.
+
+## Dependency management workflow
+
+When working on projects created from this template:
+
+1. **Adding new dependencies**
+
+    - Add them to `pyproject.toml` under `[project].dependencies` or
+      `[project.optional-dependencies]`.
+    - Then reinstall them into your environment, for example:
+        - `pip install -r requirements.txt`, or
+        - `pip install -e .[dev,notebook,viz,docs,cloud]`.
+
+2. **Removing dependencies**
+
+    - Remove the package from `pyproject.toml`.
+    - Optionally run `pip uninstall <package>` in your environment if you want
+      to clean it up (pip does not automatically uninstall packages).
+
+3. **Do not edit `requirements*.txt` directly**
+    - The canonical source of dependency information is `pyproject.toml`.
+    - `requirements*.txt` are thin wrappers for convenient installation and
+      normally do not need to be changed.
 
 ---
 
