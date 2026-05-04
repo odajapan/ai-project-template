@@ -1,4 +1,4 @@
-.PHONY: clean data lint requirements sync_data_to_s3 sync_data_from_s3 test format check typecheck precommit
+.PHONY: clean data lint requirements sync_data_to_s3 sync_data_from_s3 test format check typecheck precommit activate
 
 #################################################################################
 # GLOBALS                                                                       #
@@ -65,16 +65,20 @@ else
 	aws s3 sync s3://$(BUCKET)/data/ data/ --profile $(PROFILE)
 endif
 
-	## Set up python interpreter environment (prefer conda + environment.yml)
+## Set up python interpreter environment (prefer conda + environment.yml)
 create_environment:
 ifeq (True,$(HAS_CONDA))
 		@echo ">>> Detected conda, creating/updating environment from environment.yml."
 		conda env create -f environment.yml || conda env update -f environment.yml
-	@echo ">>> Activate with:\nconda activate $(PROJECT_NAME)"
+		@echo ">>> Activate with:\nconda activate $(PROJECT_NAME)"
 else
 	$(PYTHON_INTERPRETER) -m venv .venv
 	@echo ">>> New virtual environment created in .venv. Activate with:\nsource .venv/bin/activate"
 endif
+
+## Show the command to activate the conda environment for this project
+activate:
+	@echo "conda activate $(PROJECT_NAME)"
 
 ## Test python environment is setup correctly
 test_environment:
