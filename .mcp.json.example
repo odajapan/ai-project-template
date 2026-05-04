@@ -1,0 +1,27 @@
+{
+  "$comment": "Project-scoped MCP servers. Copy to .mcp.json to enable (gitignored).",
+  "mcpServers": {
+    "filesystem": {
+      "$comment": "Read/write access to data and reports directories",
+      "command": "npx",
+      "args": [
+        "@modelcontextprotocol/server-filesystem",
+        "data/",
+        "reports/"
+      ]
+    },
+    "sqlite": {
+      "$comment": "Query local SQLite databases",
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-sqlite", "data.db"]
+    },
+    "postgres": {
+      "$comment": "Connect to a PostgreSQL database",
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-postgres"],
+      "env": {
+        "POSTGRES_CONNECTION_STRING": "postgresql://user:pass@localhost:5432/dbname"
+      }
+    }
+  }
+}

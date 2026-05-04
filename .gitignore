@@ -92,3 +92,6 @@ target/
 # Claude Code: ignore personal overrides and auto-generated state
 .claude/settings.local.json
 .claude/worktrees/
+
+# MCP server config (may contain credentials)
+.mcp.json
