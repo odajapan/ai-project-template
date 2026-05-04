@@ -6,9 +6,8 @@ dependencies:
   - python=3.12
   - pip
   - pip:
-      # Core dependencies only for CI / minimal runtime
-      # For development, install extras after activating the environment, e.g.:
-      #   pip install -r requirements.txt        # dev-only (lightweight default)
-      #   # or: pip install -e .[dev,notebook,viz,docs,cloud]
+      # Minimal install: project only.
+      # After activating, add dev tools and extras with:
+      #   pip install -e .[dev]
+      #   # or: pip install -e .[dev,claude,notebook,viz,docs,cloud]
       - "-e ."
-

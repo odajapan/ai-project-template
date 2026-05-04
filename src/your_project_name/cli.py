@@ -10,6 +10,9 @@ import os
 import sys
 
 import click
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 @click.group()
