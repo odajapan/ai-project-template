@@ -22,29 +22,49 @@ Project-specific instructions go in `./CLAUDE.md` at the repo root.
 ## Project Structure
 
 ```
-src/your_project_name/   # Main package
-  cli.py                 # Click CLI entry point
-  utils.py               # Shared utility helpers
-  llm.py                 # Claude API wrapper (with prompt caching)
+src/your_project_name/
+  cli.py           # Click CLI entry point
+  utils.py         # Shared utility helpers
+  llm.py           # Claude API wrapper (caching, streaming, tool use, multi-turn)
+  schemas.py       # Pydantic models for tool definitions and structured output
   data/
-    make_dataset.py      # Data pipeline entry point
-tests/                   # pytest tests (mirror src/ structure)
-data/
-  raw/                   # Original immutable data
-  interim/               # Intermediate transformed data
-  processed/             # Final canonical datasets
-  external/              # Third-party data
-notebooks/               # Jupyter notebooks
-models/                  # Serialized models
-reports/figures/         # Generated figures
+    make_dataset.py  # Data pipeline entry point
+tests/             # pytest tests (mirror src/ structure)
+.claude/
+  CLAUDE.md        # This file — template baseline
+  rules/           # Path-scoped rules loaded per file context
+    llm-development.md
+    testing.md
+    data-pipeline.md
+  settings.json    # Shared permissions and hooks
 ```
 
 ## Code Conventions
 
-- Python 3.12+, type annotations on all public functions (`disallow_untyped_defs = true`)
-- Line length: 88 (ruff default)
+- Python 3.12+; type annotations required on all public functions
+- Line length: 88 (ruff)
 - No comments unless the WHY is non-obvious
-- Tests use pytest; no mocking of internal logic unless testing I/O boundaries
+- Tests in `tests/`; mock only at system boundaries (external APIs, file I/O)
+
+## Security
+
+- Never commit `.env` — use `.env.example` as the template
+- `.env` and secrets stay in environment variables only
+- `settings.json` deny rules block Claude from reading `.env` directly
+- Sanitize any third-party data before storing results in `references/`
+
+## Testing Standards
+
+- All public functions require at least one test
+- Mock `anthropic.Anthropic` for LLM unit tests — no real API calls in CI
+- Integration tests (real API) go in `tests/integration/` and are skipped by `make test`
+- Run `pytest tests/ --cov=src --cov-report=term-missing` to check coverage
+
+## Git Workflow
+
+- Branch naming: `feat/`, `fix/`, `docs/`, `chore/`
+- Run `make check` before pushing
+- PR titles follow Conventional Commits: `feat(module): description`
 
 ## Environment Variables
 
@@ -52,7 +72,7 @@ Copy `.env.example` to `.env` before running code that calls the Claude API:
 
 ```bash
 cp .env.example .env
-# then fill in ANTHROPIC_API_KEY
+# fill in ANTHROPIC_API_KEY
 ```
 
 ## Dependencies

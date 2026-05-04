@@ -9,6 +9,13 @@
       "Bash(git status:*)",
       "Bash(find:*)",
       "Bash(grep:*)"
+    ],
+    "deny": [
+      "Read(.env)",
+      "Read(.env.*)",
+      "Bash(rm -rf *)",
+      "Bash(curl *)",
+      "Bash(wget *)"
     ]
   },
   "hooks": {
