@@ -15,15 +15,14 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Upgrade pip inside the image
-RUN pip install --upgrade pip
+# Install uv for fast dependency installation
+RUN pip install uv
 
 # Copy project files into the image
 COPY . .
 
 # Install the project plus development and common DS extras
-RUN pip install -e .[dev,notebook,viz,docs,cloud]
+RUN uv pip install --system -e .[dev,notebook,viz,docs,cloud]
 
 # Default to an interactive shell; override CMD/ENTRYPOINT as needed in projects
 CMD ["bash"]
-
