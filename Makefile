@@ -28,7 +28,7 @@ requirements: test_environment
 	$(PYTHON_INTERPRETER) -m pip install -e .[dev,notebook,viz,docs,cloud]
 
 ## Make Dataset
-data: requirements
+data:
 	$(PYTHON_INTERPRETER) src/your_project_name/data/make_dataset.py data/raw data/processed
 
 ## Delete all compiled Python files
@@ -36,14 +36,14 @@ clean:
 	find . -type f -name "*.py[co]" -delete
 	find . -type d -name "__pycache__" -delete
 
-## Lint using flake8
+## Lint using ruff
 lint:
-	flake8 src
+	ruff check src tests
 
-## Format code with black and isort
+## Format code with ruff
 format:
-	black src tests
-	isort src tests
+	ruff format src tests
+	ruff check --fix src tests
 
 ## Run static type checks with mypy
 typecheck:
@@ -92,8 +92,8 @@ test_environment:
 test:
 	pytest
 
-## Run linting and tests
-check: lint test
+## Run linting, type checks, and tests
+check: lint typecheck test
 
 ## Run pre-commit on all files
 precommit:

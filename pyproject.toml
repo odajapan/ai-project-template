@@ -25,13 +25,16 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# Claude / Anthropic SDK
+claude = [
+  "anthropic>=0.40",
+]
+
 # Core development tools (lint/test/format/type-check/pre-commit)
 dev = [
   "pytest",
-  "flake8",
+  "ruff",
   "coverage",
-  "black",
-  "isort",
   "mypy",
   "pre-commit",
 ]
@@ -92,19 +95,14 @@ package-dir = {"" = "src"}
 [tool.setuptools.packages.find]
 where = ["src"]
 
-[tool.black]
+[tool.ruff]
 line-length = 88
-target-version = ["py312"]
+target-version = "py312"
 
-[tool.isort]
-profile = "black"
-line_length = 88
-multi_line_output = 3
-
-[tool.flake8]
-max-line-length = 88
-max-complexity = 10
-extend-ignore = ["E203", "W503"]
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP"]
+ignore = ["E203"]
+mccabe.max-complexity = 10
 
 [tool.coverage.run]
 relative_files = true
