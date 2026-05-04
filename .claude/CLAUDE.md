@@ -23,21 +23,39 @@ Project-specific instructions go in `./CLAUDE.md` at the repo root.
 
 ```
 src/your_project_name/
-  cli.py           # Click CLI entry point
+  cli.py           # Click CLI: hello / ask / chat (last two call Claude)
   utils.py         # Shared utility helpers
   llm.py           # Claude API wrapper (caching, streaming, tool use, multi-turn)
   schemas.py       # Pydantic models for tool definitions and structured output
   data/
     make_dataset.py  # Data pipeline entry point
 tests/             # pytest tests (mirror src/ structure)
+examples/          # Runnable scripts: simple_chat / agent_loop / structured_extraction
 .claude/
   CLAUDE.md        # This file — template baseline
+  commands/        # Project-specific slash commands (/llm-test, /add-tool, /new-rule)
   rules/           # Path-scoped rules loaded per file context
     llm-development.md
     testing.md
     data-pipeline.md
   settings.json    # Shared permissions and hooks
 ```
+
+## Quick Start with Claude
+
+After `pip install -e .[claude]` and setting `ANTHROPIC_API_KEY`:
+
+```bash
+your_project_name ask "summarise prompt caching in one sentence"
+your_project_name chat                 # interactive REPL
+python examples/simple_chat.py         # runnable example
+```
+
+Slash commands (run inside Claude Code):
+
+- `/llm-test` — verify Claude API connectivity
+- `/add-tool <name>` — scaffold a new ToolDefinition + handler + test
+- `/new-rule <name>` — create a path-scoped rule under `.claude/rules/`
 
 ## Code Conventions
 
