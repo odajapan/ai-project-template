@@ -1,0 +1,67 @@
+"""Minimal tool-use loop.
+
+Claude decides whether to call ``get_current_weather``; the script executes
+the tool locally and returns the result back to Claude for the final answer.
+
+Run::
+
+    python examples/agent_loop.py
+"""
+
+from __future__ import annotations
+
+from typing import Any
+
+from your_project_name.llm import ClaudeClient
+from your_project_name.schemas import ToolDefinition
+
+WEATHER_TOOL = ToolDefinition(
+    name="get_current_weather",
+    description="Return current weather for a city as a short string.",
+    input_schema={
+        "type": "object",
+        "properties": {
+            "city": {"type": "string", "description": "City name"},
+        },
+        "required": ["city"],
+    },
+)
+
+
+def get_current_weather(city: str) -> str:
+    """Stub implementation — replace with a real API call."""
+    fake = {"Tokyo": "sunny, 22°C", "Reykjavik": "snow, -3°C"}
+    return fake.get(city, f"unknown weather for {city}")
+
+
+def run_tool(name: str, args: dict[str, Any]) -> str:
+    if name == "get_current_weather":
+        return get_current_weather(**args)
+    raise ValueError(f"Unknown tool: {name}")
+
+
+def main() -> None:
+    client = ClaudeClient(
+        system="You answer weather questions by calling tools when needed.",
+    )
+
+    user_message = "What's the weather in Tokyo right now?"
+    text, tool_calls = client.chat_with_tools(user_message, tools=[WEATHER_TOOL])
+
+    if not tool_calls:
+        print(text)
+        return
+
+    for call in tool_calls:
+        result = run_tool(call["name"], call["input"])
+        print(f"[tool {call['name']}({call['input']}) -> {result}]")
+        follow_up = client.chat(
+            f"You asked: {user_message}\n"
+            f"Tool {call['name']} returned: {result}\n"
+            "Now answer the user in one sentence."
+        )
+        print(f"Final answer: {follow_up}")
+
+
+if __name__ == "__main__":
+    main()

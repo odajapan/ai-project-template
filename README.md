@@ -89,7 +89,25 @@ After installing the package, the CLI is available:
 ```bash
 your_project_name hello
 your_project_name hello Alice
+
+# Talk to Claude (requires ANTHROPIC_API_KEY)
+your_project_name ask "what is prompt caching?"
+your_project_name chat        # interactive REPL
 ```
+
+Runnable examples live in [`examples/`](examples/README.md):
+
+```bash
+python examples/simple_chat.py            # cached system prompt + token usage
+python examples/agent_loop.py             # tool use loop
+python examples/structured_extraction.py  # JSON → Pydantic
+```
+
+Slash commands available inside Claude Code:
+
+- `/llm-test` — verify the Claude API works end-to-end
+- `/add-tool <name>` — scaffold a new `ToolDefinition`
+- `/new-rule <name>` — add a new path-scoped rule
 
 ---
 
@@ -106,15 +124,23 @@ your_project_name hello Alice
 ├── .env.example           ← Environment variable template
 ├── .claude/
 │   ├── CLAUDE.md          ← Template baseline instructions for Claude Code
-│   └── settings.json      ← Claude Code permissions and hooks
+│   ├── settings.json      ← Claude Code permissions and hooks
+│   ├── commands/          ← Project-specific slash commands
+│   └── rules/             ← Path-scoped rules loaded per file context
 │
 ├── src/
 │   └── your_project_name/
-│       ├── cli.py         ← Click CLI entry point
+│       ├── cli.py         ← Click CLI: hello / ask / chat
 │       ├── utils.py       ← Shared utility helpers
-│       ├── llm.py         ← Claude API wrapper (prompt caching)
+│       ├── llm.py         ← Claude API wrapper (caching, streaming, tools, multi-turn)
+│       ├── schemas.py     ← Pydantic models for tool defs and structured output
 │       └── data/
 │           └── make_dataset.py  ← Data pipeline entry point
+│
+├── examples/              ← Runnable Claude API examples
+│   ├── simple_chat.py
+│   ├── agent_loop.py
+│   └── structured_extraction.py
 │
 ├── tests/
 │   ├── test_cli.py
