@@ -73,4 +73,4 @@ class ClaudeClient:
         block = message.content[0]
         if block.type != "text":
             raise ValueError(f"Unexpected content block type: {block.type}")
-        return block.text
+        return str(block.text)
