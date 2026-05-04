@@ -105,6 +105,7 @@ your_project_name hello Alice
 ├── Dockerfile
 ├── .env.example           ← Environment variable template
 ├── .claude/
+│   ├── CLAUDE.md          ← Template baseline instructions for Claude Code
 │   └── settings.json      ← Claude Code permissions and hooks
 │
 ├── src/
