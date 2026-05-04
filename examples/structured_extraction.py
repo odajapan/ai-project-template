@@ -9,8 +9,12 @@ from __future__ import annotations
 
 import json
 
+from dotenv import load_dotenv
+
 from your_project_name.llm import ClaudeClient
 from your_project_name.schemas import StructuredResponse
+
+load_dotenv()
 
 
 class IssueSummary(StructuredResponse):

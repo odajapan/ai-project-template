@@ -12,8 +12,12 @@ from __future__ import annotations
 
 from typing import Any
 
+from dotenv import load_dotenv
+
 from your_project_name.llm import ClaudeClient
 from your_project_name.schemas import ToolDefinition
+
+load_dotenv()
 
 WEATHER_TOOL = ToolDefinition(
     name="get_current_weather",

@@ -7,7 +7,11 @@ Run::
 
 from __future__ import annotations
 
+from dotenv import load_dotenv
+
 from your_project_name.llm import ClaudeClient
+
+load_dotenv()
 
 
 def main() -> None:
