@@ -89,5 +89,6 @@ target/
 # Mypy cache
 .mypy_cache/
 
-# Claude Code: ignore personal overrides, track shared settings
+# Claude Code: ignore personal overrides and auto-generated state
 .claude/settings.local.json
+.claude/worktrees/
