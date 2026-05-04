@@ -8,7 +8,7 @@ derived from this template.
 from __future__ import annotations
 
 import re
-from typing import Sequence
+from collections.abc import Sequence
 
 
 def normalize_scores(scores: Sequence[float]) -> list[float]:

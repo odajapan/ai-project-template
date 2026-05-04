@@ -1,25 +1,20 @@
 import sys
 
-REQUIRED_PYTHON = "python3"
+REQUIRED_MAJOR = 3
+REQUIRED_MINOR = 12
 
 
-def main():
-    system_major = sys.version_info.major
-    if REQUIRED_PYTHON == "python":
-        required_major = 2
-    elif REQUIRED_PYTHON == "python3":
-        required_major = 3
-    else:
-        raise ValueError("Unrecognized python interpreter: {}".format(
-            REQUIRED_PYTHON))
+def main() -> None:
+    major = sys.version_info.major
+    minor = sys.version_info.minor
 
-    if system_major != required_major:
+    if major != REQUIRED_MAJOR or minor < REQUIRED_MINOR:
         raise TypeError(
-            "This project requires Python {}. Found: Python {}".format(
-                required_major, sys.version))
-    else:
-        print(">>> Development environment passes all tests!")
+            f"This project requires Python {REQUIRED_MAJOR}.{REQUIRED_MINOR}+. "
+            f"Found: Python {sys.version}"
+        )
+    print(">>> Development environment passes all tests!")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

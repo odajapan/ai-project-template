@@ -1,5 +1,0 @@
-# Development dependencies
-# Kept as a thin wrapper around requirements.txt for backward compatibility.
-# All actual dependency definitions live in pyproject.toml.
-
--r requirements.txt
