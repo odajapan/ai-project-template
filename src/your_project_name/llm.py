@@ -142,8 +142,9 @@ class ClaudeClient:
         """Send a message with optional tool definitions.
 
         Returns ``(response_text, tool_calls)`` where *tool_calls* is a list
-        of ``{"name": ..., "input": ...}`` dicts for every tool the model
-        invoked.
+        of ``{"id": ..., "name": ..., "input": ...}`` dicts for every tool
+        the model invoked. The ``id`` is the ``tool_use_id`` that must be
+        referenced when returning the tool result in a follow-up message.
         """
         kwargs = self._base_kwargs([{"role": "user", "content": user_message}])
         if tools:
@@ -152,11 +153,47 @@ class ClaudeClient:
             ]
         message = self._client.messages.create(**kwargs)
         tool_calls = [
-            {"name": block.name, "input": block.input}
+            {"id": block.id, "name": block.name, "input": block.input}
             for block in message.content
             if block.type == "tool_use"
         ]
         return self._extract_text(message), tool_calls
+
+    def continue_with_tool_results(
+        self,
+        user_message: str,
+        assistant_content: list[Any],
+        tool_results: list[dict[str, Any]],
+        tools: list[Any] | None = None,
+    ) -> str:
+        """Send a follow-up turn with tool_result blocks.
+
+        *assistant_content* is the raw ``message.content`` returned from the
+        previous turn (containing ``tool_use`` blocks). *tool_results* is a
+        list of ``{"tool_use_id": ..., "content": ...}`` mappings.
+        """
+        kwargs = self._base_kwargs(
+            [
+                {"role": "user", "content": user_message},
+                {"role": "assistant", "content": assistant_content},
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "tool_result",
+                            "tool_use_id": r["tool_use_id"],
+                            "content": r["content"],
+                        }
+                        for r in tool_results
+                    ],
+                },
+            ]
+        )
+        if tools:
+            kwargs["tools"] = [
+                t.to_tool() if hasattr(t, "to_tool") else t for t in tools
+            ]
+        return self._extract_text(self._client.messages.create(**kwargs))
 
     # ------------------------------------------------------------------
     # Streaming

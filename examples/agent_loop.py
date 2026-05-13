@@ -1,7 +1,8 @@
-"""Minimal tool-use loop.
+"""Minimal tool-use loop using Anthropic's canonical tool_result flow.
 
 Claude decides whether to call ``get_current_weather``; the script executes
-the tool locally and returns the result back to Claude for the final answer.
+the tool locally and returns the result as a ``tool_result`` block in a
+follow-up message, preserving the ``tool_use_id`` linkage.
 
 Run::
 
@@ -50,21 +51,29 @@ def main() -> None:
     )
 
     user_message = "What's the weather in Tokyo right now?"
-    text, tool_calls = client.chat_with_tools(user_message, tools=[WEATHER_TOOL])
 
-    if not tool_calls:
-        print(text)
+    kwargs = client._base_kwargs([{"role": "user", "content": user_message}])
+    kwargs["tools"] = [WEATHER_TOOL.to_tool()]
+    first = client._client.messages.create(**kwargs)
+
+    tool_uses = [b for b in first.content if b.type == "tool_use"]
+    if not tool_uses:
+        print(client._extract_text(first))
         return
 
-    for call in tool_calls:
-        result = run_tool(call["name"], call["input"])
-        print(f"[tool {call['name']}({call['input']}) -> {result}]")
-        follow_up = client.chat(
-            f"You asked: {user_message}\n"
-            f"Tool {call['name']} returned: {result}\n"
-            "Now answer the user in one sentence."
-        )
-        print(f"Final answer: {follow_up}")
+    tool_results = []
+    for block in tool_uses:
+        result = run_tool(block.name, block.input)
+        print(f"[tool {block.name}({block.input}) -> {result}]")
+        tool_results.append({"tool_use_id": block.id, "content": result})
+
+    final = client.continue_with_tool_results(
+        user_message=user_message,
+        assistant_content=list(first.content),
+        tool_results=tool_results,
+        tools=[WEATHER_TOOL],
+    )
+    print(f"Final answer: {final}")
 
 
 if __name__ == "__main__":
