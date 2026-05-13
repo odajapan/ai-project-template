@@ -1,4 +1,4 @@
-.PHONY: clean data lint requirements sync_data_to_s3 sync_data_from_s3 test format check typecheck precommit activate
+.PHONY: clean data lint requirements sync_data_to_s3 sync_data_from_s3 test format check typecheck precommit activate hooks
 
 #################################################################################
 # GLOBALS                                                                       #
@@ -98,6 +98,12 @@ check: lint typecheck test
 ## Run pre-commit on all files
 precommit:
 	pre-commit run --all-files
+
+## Install repo-local Git hooks (branch guards in .githooks/)
+hooks:
+	git config core.hooksPath .githooks
+	chmod +x .githooks/*
+	@echo ">>> Git hooks installed (.githooks/ via core.hooksPath)."
 #################################################################################
 # Self Documenting Commands                                                     #
 #################################################################################

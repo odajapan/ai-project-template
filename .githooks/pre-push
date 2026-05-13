@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# Template-provided guard hook: refuse pushes that would land on main/master
+# directly, or any --force / --force-with-lease push.
+
+set -euo pipefail
+
+protected_pattern='^refs/heads/(main|master)$'
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  if [[ "$remote_ref" =~ $protected_pattern ]]; then
+    echo "✖ Direct push to '${remote_ref}' is blocked by .githooks/pre-push." >&2
+    echo "  Open a pull request from a feature branch instead." >&2
+    exit 1
+  fi
+done
+
+for arg in "$@"; do
+  case "$arg" in
+    --force|-f|--force-with-lease|--force-with-lease=*)
+      echo "✖ Force push is blocked by .githooks/pre-push." >&2
+      echo "  Remove the force flag, or push to a fresh branch." >&2
+      exit 1
+      ;;
+  esac
+done
+
+# GIT_PUSH_OPTION_* env vars are set when force is requested via config too.
+if [[ -n "${GIT_PUSH_FORCE:-}" ]]; then
+  echo "✖ Force push (via env) is blocked by .githooks/pre-push." >&2
+  exit 1
+fi
+
+exit 0

@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Template-provided guard hook: refuse direct commits to main/master.
+#
+# Lint / format / type checks are handled by .pre-commit-config.yaml via the
+# pre-commit framework. This hook intentionally stays focused on branch
+# protection so the two systems do not duplicate work.
+
+set -euo pipefail
+
+current_ref=$(git symbolic-ref --short HEAD 2>/dev/null || echo "")
+
+case "$current_ref" in
+  main|master)
+    echo "✖ Direct commits to '${current_ref}' are not allowed." >&2
+    echo "  Create a feature branch instead, e.g.:" >&2
+    echo "    git switch -c claude/<task-name>" >&2
+    exit 1
+    ;;
+esac
+
+exit 0
