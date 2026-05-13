@@ -194,6 +194,35 @@ def test_chat_with_thinking_sets_thinking_param(mock_anthropic: MagicMock) -> No
     assert kwargs["thinking"] == {"type": "enabled", "budget_tokens": 3000}
 
 
+def test_chat_concatenates_multiple_text_blocks(mock_anthropic: MagicMock) -> None:
+    mock_anthropic.messages.create.return_value = _message(
+        _text_block("Hello, "),
+        _tool_block("noop", {}),
+        _text_block("world!"),
+    )
+
+    from your_project_name.llm import ClaudeClient  # noqa: PLC0415
+
+    assert ClaudeClient().chat("Hi") == "Hello, world!"
+
+
+def test_chat_with_thinking_concatenates_multiple_blocks(
+    mock_anthropic: MagicMock,
+) -> None:
+    mock_anthropic.messages.create.return_value = _message(
+        _thinking_block("first thought; "),
+        _thinking_block("second thought"),
+        _text_block("answer A "),
+        _text_block("answer B"),
+    )
+
+    from your_project_name.llm import ClaudeClient  # noqa: PLC0415
+
+    thinking, response = ClaudeClient().chat_with_thinking("Hi")
+    assert thinking == "first thought; second thought"
+    assert response == "answer A answer B"
+
+
 # ---------------------------------------------------------------------------
 # ConversationClient
 # ---------------------------------------------------------------------------

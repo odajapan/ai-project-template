@@ -115,10 +115,9 @@ class ClaudeClient:
 
     @staticmethod
     def _extract_text(message: Any) -> str:
-        for block in message.content:
-            if block.type == "text":
-                return str(block.text)
-        return ""
+        return "".join(
+            str(block.text) for block in message.content if block.type == "text"
+        )
 
     # ------------------------------------------------------------------
     # Single-turn helpers
@@ -189,14 +188,14 @@ class ClaudeClient:
 
         message = self._client.messages.create(**kwargs)
 
-        thinking_text = ""
-        response_text = ""
+        thinking_parts: list[str] = []
+        response_parts: list[str] = []
         for block in message.content:
             if block.type == "thinking":
-                thinking_text = str(block.thinking)
+                thinking_parts.append(str(block.thinking))
             elif block.type == "text":
-                response_text = str(block.text)
-        return thinking_text, response_text
+                response_parts.append(str(block.text))
+        return "".join(thinking_parts), "".join(response_parts)
 
 
 class ConversationClient(ClaudeClient):
