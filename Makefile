@@ -25,7 +25,7 @@ endif
 ## Install Python Dependencies (development environment)
 requirements: test_environment
 	$(PYTHON_INTERPRETER) -m pip install -U pip
-	$(PYTHON_INTERPRETER) -m pip install -e .[dev,notebook,viz,docs,cloud]
+	$(PYTHON_INTERPRETER) -m pip install -e .[dev,claude,notebook,viz,docs,cloud]
 
 ## Make Dataset
 data:
