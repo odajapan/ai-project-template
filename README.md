@@ -68,6 +68,15 @@ cp .env.example .env
 pre-commit install
 ```
 
+### 7. Git branch guard hooks (recommended)
+
+Wire the repo-local hooks in `.githooks/` so direct commits and pushes
+to `main`/`master` are blocked locally:
+
+```bash
+make hooks
+```
+
 ---
 
 ## Common commands
@@ -200,6 +209,58 @@ uv pip install -e .[dev,claude,notebook,viz]
 
 3. **Do not edit `requirements.txt` directly** — it is a thin wrapper around
    `pyproject.toml`.
+
+---
+
+## Autonomous Claude Code runs
+
+This template is set up so Claude Code can be invoked with
+`--dangerously-skip-permissions` for long, hands-off tasks without the
+session being able to do anything genuinely dangerous. The guardrails:
+
+- `CLAUDE.md` "Autonomous run rules" — branching, commit, PR, and stop
+  conditions.
+- `.claude/settings.json` — `allow`/`deny` lists for the everyday
+  autonomous-run commands; explicit denies for force push, push to
+  `main`, `gh pr merge`, and reads of `.env`.
+- `.claude/rules/data-raw-immutable.md`, `secrets.md`, `notebooks.md` —
+  path-scoped guards that activate when matching files are in scope.
+- `.githooks/pre-commit` and `.githooks/pre-push` — refuse direct
+  commits and pushes to `main`/`master` and any `--force` push. Install
+  with `make hooks`.
+- `docs/branch-protection.md` — the GitHub-side server protections
+  that make the above failsafe.
+
+### Recommended flow
+
+1. **Pre-flight**: scope declared, working tree clean, `make hooks`
+   installed, no unstaged changes, `gh auth status` OK.
+2. **Isolate** (optional but recommended) — run in a separate worktree:
+   ```bash
+   git worktree add ../$(basename "$PWD")-<task> -b claude/<task> origin/main
+   cd ../$(basename "$PWD")-<task>
+   ```
+3. **Launch**:
+   ```bash
+   claude --dangerously-skip-permissions
+   ```
+4. **Inside the session**:
+   - `/start-task <task-name>` — sync `main`, cut `claude/<task>`,
+     re-read autonomous rules, declare scope, **stop**.
+   - Confirm the scope with the human, then do the work.
+   - `/finish-task` — run `make check`, commit in logical units, push
+     `claude/<task>`, open the PR, report URL, **stop**.
+5. **Human merges.** Claude never runs `gh pr merge`.
+
+### Checklist before launching
+
+- [ ] Scope declared with the human
+- [ ] Isolated worktree or fresh `claude/*` branch
+- [ ] Working tree clean (`git status`)
+- [ ] `gh auth status` is green
+- [ ] `make hooks` installed in the worktree
+- [ ] GitHub branch protection on `main` is set
+      (`docs/branch-protection.md`)
 
 ---
 

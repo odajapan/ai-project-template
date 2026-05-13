@@ -19,8 +19,8 @@ def _text_block(text: str) -> SimpleNamespace:
     return SimpleNamespace(type="text", text=text)
 
 
-def _tool_block(name: str, inp: dict) -> SimpleNamespace:
-    return SimpleNamespace(type="tool_use", name=name, input=inp)
+def _tool_block(name: str, inp: dict, tool_id: str = "tool_abc") -> SimpleNamespace:
+    return SimpleNamespace(type="tool_use", id=tool_id, name=name, input=inp)
 
 
 def _thinking_block(thinking: str) -> SimpleNamespace:
@@ -112,13 +112,35 @@ def test_chat_with_tracking_returns_usage(mock_anthropic: MagicMock) -> None:
 def test_chat_with_tools_returns_tool_calls(mock_anthropic: MagicMock) -> None:
     mock_anthropic.messages.create.return_value = _message(
         _text_block("Checking weather..."),
-        _tool_block("get_weather", {"city": "Tokyo"}),
+        _tool_block("get_weather", {"city": "Tokyo"}, tool_id="tool_001"),
     )
 
     from your_project_name.llm import ClaudeClient  # noqa: PLC0415
 
     _, calls = ClaudeClient().chat_with_tools("Weather in Tokyo?")
-    assert calls == [{"name": "get_weather", "input": {"city": "Tokyo"}}]
+    assert calls == [
+        {"id": "tool_001", "name": "get_weather", "input": {"city": "Tokyo"}}
+    ]
+
+
+def test_continue_with_tool_results_sends_tool_result_block(
+    mock_anthropic: MagicMock,
+) -> None:
+    mock_anthropic.messages.create.return_value = _message(_text_block("Sunny, 22C."))
+
+    from your_project_name.llm import ClaudeClient  # noqa: PLC0415
+
+    assistant_content = [_tool_block("get_weather", {"city": "Tokyo"}, "tool_42")]
+    reply = ClaudeClient().continue_with_tool_results(
+        user_message="Weather in Tokyo?",
+        assistant_content=assistant_content,
+        tool_results=[{"tool_use_id": "tool_42", "content": "Sunny, 22C"}],
+    )
+    assert reply == "Sunny, 22C."
+    messages = mock_anthropic.messages.create.call_args.kwargs["messages"]
+    assert messages[-1]["role"] == "user"
+    assert messages[-1]["content"][0]["type"] == "tool_result"
+    assert messages[-1]["content"][0]["tool_use_id"] == "tool_42"
 
 
 def test_chat_with_tools_passes_tool_definitions(mock_anthropic: MagicMock) -> None:
@@ -192,6 +214,35 @@ def test_chat_with_thinking_sets_thinking_param(mock_anthropic: MagicMock) -> No
     ClaudeClient().chat_with_thinking("Hi", budget_tokens=3000)
     kwargs = mock_anthropic.messages.create.call_args.kwargs
     assert kwargs["thinking"] == {"type": "enabled", "budget_tokens": 3000}
+
+
+def test_chat_concatenates_multiple_text_blocks(mock_anthropic: MagicMock) -> None:
+    mock_anthropic.messages.create.return_value = _message(
+        _text_block("Hello, "),
+        _tool_block("noop", {}),
+        _text_block("world!"),
+    )
+
+    from your_project_name.llm import ClaudeClient  # noqa: PLC0415
+
+    assert ClaudeClient().chat("Hi") == "Hello, world!"
+
+
+def test_chat_with_thinking_concatenates_multiple_blocks(
+    mock_anthropic: MagicMock,
+) -> None:
+    mock_anthropic.messages.create.return_value = _message(
+        _thinking_block("first thought; "),
+        _thinking_block("second thought"),
+        _text_block("answer A "),
+        _text_block("answer B"),
+    )
+
+    from your_project_name.llm import ClaudeClient  # noqa: PLC0415
+
+    thinking, response = ClaudeClient().chat_with_thinking("Hi")
+    assert thinking == "first thought; second thought"
+    assert response == "answer A answer B"
 
 
 # ---------------------------------------------------------------------------

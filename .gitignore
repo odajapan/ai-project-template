@@ -68,7 +68,11 @@ target/
 .idea
 
 # VS Code
-.vscode/
+# (We do commit .vscode/settings.json so the project's env-manager defaults
+# are shared. Personal overrides should go to .vscode/settings.local.json.)
+.vscode/*
+!.vscode/settings.json
+.vscode/settings.local.json
 
 # Spyder
 .spyproject/
