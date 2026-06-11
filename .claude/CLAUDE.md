@@ -33,12 +33,23 @@ tests/             # pytest tests (mirror src/ structure)
 examples/          # Runnable scripts: simple_chat / agent_loop / structured_extraction
 .claude/
   CLAUDE.md        # This file — template baseline
-  commands/        # Project-specific slash commands (/llm-test, /add-tool, /new-rule)
-  rules/           # Path-scoped rules loaded per file context
+  agents/          # Role-based subagents (code-reviewer/implementer/explorer)
+  commands/        # Slash commands
+    llm-test.md    # /llm-test  — verify Claude API connectivity
+    add-tool.md    # /add-tool  — scaffold ToolDefinition + handler + test
+    new-rule.md    # /new-rule  — create a path-scoped rule
+    start-task.md  # /start-task — cut branch + declare scope
+    finish-task.md # /finish-task — checks + push + PR
+    debug.md       # /debug     — diagnose and fix a Python error
+    add-example.md # /add-example — scaffold a runnable example script
+  rules/           # Path-scoped rules (auto-loaded by file context)
     llm-development.md
     testing.md
     data-pipeline.md
-  settings.json    # Shared permissions and hooks
+  skills/          # Reference docs Claude reads on demand
+    claude-sdk.md       # ClaudeClient patterns: caching, streaming, tools
+    python-testing.md   # pytest conventions and mock patterns
+  settings.json    # Shared permissions, hooks, and model config
 ```
 
 ## Quick Start with Claude
@@ -56,6 +67,15 @@ Slash commands (run inside Claude Code):
 - `/llm-test` — verify Claude API connectivity
 - `/add-tool <name>` — scaffold a new ToolDefinition + handler + test
 - `/new-rule <name>` — create a path-scoped rule under `.claude/rules/`
+- `/start-task <name>` — cut a `claude/<name>` branch and declare scope
+- `/finish-task` — run checks, push, and open a PR
+- `/debug <traceback>` — diagnose and fix a Python error systematically
+- `/add-example <name>` — scaffold a runnable script under `examples/`
+
+Skills (reference docs — mention by name to load):
+
+- `claude-sdk` — ClaudeClient patterns: caching, streaming, tool use
+- `python-testing` — pytest conventions and mock patterns
 
 ## Code Conventions
 

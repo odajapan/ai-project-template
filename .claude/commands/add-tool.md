@@ -5,6 +5,16 @@ allowed-tools:
   - Read
   - Edit
   - Write
+  - Bash
+common_files:
+  - src/your_project_name/schemas.py
+  - src/your_project_name/llm.py
+  - tests/test_llm.py
+suggested_sequence:
+  - read schemas.py and llm.py for conventions
+  - write ToolDefinition + handler in tools.py
+  - write unit tests in tests/test_tools.py
+  - run make check
 ---
 
 # /add-tool — scaffold a new Claude tool

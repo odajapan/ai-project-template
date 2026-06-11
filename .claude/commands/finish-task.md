@@ -3,6 +3,17 @@ description: Verify checks, push the claude/* branch, and open a PR.
 allowed-tools:
   - Bash
   - Read
+common_files:
+  - .github/pull_request_template.md
+  - CLAUDE.md
+suggested_sequence:
+  - verify no forbidden files in git status
+  - confirm on claude/* branch
+  - run make check
+  - commit uncommitted changes with conventional commits
+  - git push origin <branch>
+  - gh pr create with PR template
+  - report PR URL and stop
 ---
 
 # /finish-task — wrap up an autonomous task
