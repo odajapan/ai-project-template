@@ -5,6 +5,7 @@ allowed-tools:
   - Read
   - Edit
   - Write
+  - Bash
 common_files:
   - src/your_project_name/schemas.py
   - src/your_project_name/llm.py

@@ -82,19 +82,27 @@ def test_golden(case, real_client):
 
 ## pytest marks setup (`pyproject.toml`)
 
+**This config must be added to `pyproject.toml` before using the marks.**
+Without it pytest warns "Unknown mark" and `make test` will still collect
+and run any marked tests that live under `tests/`.
+
 ```toml
 [tool.pytest.ini_options]
+# merge with the existing [tool.pytest.ini_options] block — do not duplicate
 markers = [
     "llm_judge: requires real API, grades with a second LLM call",
     "golden: golden set regression, run before model upgrades",
     "integration: real API call, skipped in CI",
 ]
+addopts = "-m 'not llm_judge and not golden and not integration'"
 ```
 
-`make test` runs none of the marked tests. Run them manually:
+With `addopts` set, `make test` excludes all three mark families.
+Run them explicitly when needed:
 ```bash
 pytest -m llm_judge
 pytest -m golden
+pytest tests/integration/
 ```
 
 ## What belongs in unit tests (mocked)

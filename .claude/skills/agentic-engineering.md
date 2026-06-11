@@ -22,14 +22,19 @@ description: Patterns for building reliable Claude-based agents — tool use, ag
 tool = ToolDefinition(
     name="search_docs",
     description="Search the project docs for a keyword.",  # be specific
-    parameters={"query": {"type": "string", "description": "search term"}},
+    input_schema={
+        "type": "object",
+        "properties": {"query": {"type": "string", "description": "search term"}},
+        "required": ["query"],
+    },
 )
 
-# 2. Always process tool_use before text in the response
-for block in response.content:
-    if block.type == "tool_use":
-        result = dispatch(block.name, block.input)
-        # Return result in follow-up user message, not system message
+# 2. chat_with_tools returns (text, tool_calls) — a tuple, not a message object
+text, tool_calls = client.chat_with_tools(prompt, tools=[tool])
+
+for call in tool_calls:
+    result = dispatch(call["name"], call["input"])
+    # Feed results back via continue_with_tool_results
 ```
 
 **Description quality is the #1 lever.** A vague description → the model
@@ -38,19 +43,38 @@ use it, what it returns.
 
 ## Agent loop skeleton
 
+`chat_with_tools` is single-turn. For multi-step tool use, call
+`continue_with_tool_results` to feed results back, then repeat.
+
 ```python
-history = []
+MAX_TURNS = 10
+user_message = prompt
+
 for _ in range(MAX_TURNS):
-    response = client.chat_with_tools(prompt, tools=tools, history=history)
-    history.append({"role": "assistant", "content": response.content})
+    text, tool_calls = client.chat_with_tools(user_message, tools=tools)
 
-    tool_calls = [b for b in response.content if b.type == "tool_use"]
     if not tool_calls:
-        break  # model is done
+        break  # model finished without requesting more tools
 
-    results = [{"type": "tool_result", "tool_use_id": b.id,
-                "content": dispatch(b.name, b.input)} for b in tool_calls]
-    history.append({"role": "user", "content": results})
+    # Reconstruct assistant_content shape expected by the Anthropic API
+    assistant_content = [
+        {"type": "tool_use", "id": c["id"], "name": c["name"], "input": c["input"]}
+        for c in tool_calls
+    ]
+    tool_results = [
+        {"tool_use_id": c["id"], "content": dispatch(c["name"], c["input"])}
+        for c in tool_calls
+    ]
+    # continue_with_tool_results sends a fresh three-turn context each call.
+    # For true history accumulation across many turns use ConversationClient
+    # and manage tool_use / tool_result blocks manually.
+    text = client.continue_with_tool_results(
+        user_message=user_message,
+        assistant_content=assistant_content,
+        tool_results=tool_results,
+        tools=tools,
+    )
+    user_message = text  # carry forward for next turn
 ```
 
 Cap `MAX_TURNS` (10–20). An unbounded loop is a runaway cost risk.
@@ -58,16 +82,20 @@ Cap `MAX_TURNS` (10–20). An unbounded loop is a runaway cost risk.
 ## Structured output without tool use
 
 ```python
-from your_project_name.schemas import StructuredOutputModel
+from your_project_name.schemas import StructuredResponse
+
+class MySummary(StructuredResponse):
+    title: str
+    key_points: list[str]
 
 prompt = f"""
 Respond ONLY with valid JSON matching this schema:
-{StructuredOutputModel.model_json_schema()}
+{MySummary.model_json_schema()}
 
 Input: {user_input}
 """
 raw = client.chat(prompt)
-result = StructuredOutputModel.model_validate_json(raw)
+result = MySummary.from_text(raw)   # StructuredResponse.from_text parses JSON
 ```
 
 Prefer tool use over JSON-in-prompt for complex schemas — the model is

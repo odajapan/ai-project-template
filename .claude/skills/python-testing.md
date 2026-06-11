@@ -33,27 +33,32 @@ pytest --cov=src --cov-report=term-missing  # coverage report
 
 ## Mock pattern for ClaudeClient
 
-Always patch at the `anthropic.Anthropic` import inside `llm.py`:
+`llm.py` imports `anthropic` **lazily** inside `_make_client()`, so
+`@patch("your_project_name.llm.anthropic.Anthropic")` raises `AttributeError`.
+Use `monkeypatch.setitem(sys.modules, ...)` instead — exactly as
+`tests/test_llm.py` does:
 
 ```python
-from unittest.mock import MagicMock, patch
+from types import SimpleNamespace
+from unittest.mock import MagicMock
+import pytest
 
-@patch("your_project_name.llm.anthropic.Anthropic")
-def test_something(mock_anthropic):
+@pytest.fixture()
+def mock_anthropic(monkeypatch: pytest.MonkeyPatch) -> MagicMock:
+    mock_module = MagicMock()
     mock_client = MagicMock()
-    mock_anthropic.return_value = mock_client
+    mock_module.Anthropic.return_value = mock_client
+    monkeypatch.setitem(__import__("sys").modules, "anthropic", mock_module)
+    return mock_client
 
-    # Build a realistic response object
-    mock_msg = MagicMock()
-    mock_msg.content = [MagicMock(type="text", text="expected output")]
-    mock_msg.usage = MagicMock(
-        input_tokens=10,
-        output_tokens=5,
-        cache_read_input_tokens=0,
-        cache_creation_input_tokens=0,
+def test_something(mock_anthropic: MagicMock) -> None:
+    mock_anthropic.messages.create.return_value = SimpleNamespace(
+        content=[SimpleNamespace(type="text", text="expected output")],
+        usage=SimpleNamespace(
+            input_tokens=10, output_tokens=5,
+            cache_read_input_tokens=0, cache_creation_input_tokens=0,
+        ),
     )
-    mock_client.messages.create.return_value = mock_msg
-
     from your_project_name.llm import ClaudeClient
     result = ClaudeClient().chat("prompt")
     assert "expected output" in result

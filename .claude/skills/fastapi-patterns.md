@@ -43,10 +43,8 @@ Run with: `uvicorn your_project_name.api.app:app --reload`
 
 ```python
 # api/dependencies.py
-from functools import lru_cache
 from your_project_name.llm import ClaudeClient
 
-@lru_cache
 def get_client() -> ClaudeClient:
     return ClaudeClient()
 
@@ -55,20 +53,27 @@ from fastapi import Depends
 from ..dependencies import get_client
 
 @router.post("/")
-async def chat(req: ChatRequest,
-               client: ClaudeClient = Depends(get_client)) -> ChatResponse:
+def chat(req: ChatRequest,                          # sync — ClaudeClient is sync
+         client: ClaudeClient = Depends(get_client)) -> ChatResponse:
     text = client.chat(req.message)
     return ChatResponse(reply=text)
 ```
 
+Note: `@lru_cache` on `get_client()` caches a real instance at import time,
+making test isolation via `patch()` unreliable. Always override with
+`app.dependency_overrides` in tests (see Testing section below).
+
 ## Streaming LLM responses (SSE)
+
+`ClaudeClient.stream_chat()` is a sync generator. Use a **sync** handler
+so FastAPI runs it in a thread pool instead of blocking the event loop:
 
 ```python
 from fastapi.responses import StreamingResponse
 
 @router.post("/stream")
-async def stream_chat(req: ChatRequest,
-                      client: ClaudeClient = Depends(get_client)):
+def stream_chat(req: ChatRequest,              # sync — NOT async def
+                client: ClaudeClient = Depends(get_client)):
     def generate():
         for chunk in client.stream_chat(req.message):
             yield f"data: {chunk}\n\n"
@@ -76,6 +81,9 @@ async def stream_chat(req: ChatRequest,
 
     return StreamingResponse(generate(), media_type="text/event-stream")
 ```
+
+Using `async def` with a sync blocking generator stalls the event loop
+for the full stream duration, serializing all concurrent SSE clients.
 
 ## Request / response schemas
 
@@ -113,22 +121,26 @@ Return 502 for upstream LLM failures, 422 (auto) for validation errors,
 
 ## Testing FastAPI endpoints
 
+Always use `dependency_overrides` — do not `patch()` ClaudeClient directly,
+since the override is the FastAPI-idiomatic approach and avoids import-time
+caching issues:
+
 ```python
 from fastapi.testclient import TestClient
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from your_project_name.api.app import create_app
+from your_project_name.api.dependencies import get_client
 
 def test_chat_endpoint():
     app = create_app()
-    with patch("your_project_name.api.dependencies.ClaudeClient") as mock:
-        mock.return_value.chat.return_value = "hello"
-        client = TestClient(app)
-        resp = client.post("/chat/", json={"message": "hi"})
+    mock_client = MagicMock()
+    mock_client.chat.return_value = "hello"
+    app.dependency_overrides[get_client] = lambda: mock_client
+
+    client = TestClient(app)
+    resp = client.post("/chat/", json={"message": "hi"})
     assert resp.status_code == 200
     assert resp.json()["reply"] == "hello"
-```
 
-Override dependencies in tests with `app.dependency_overrides`:
-```python
-app.dependency_overrides[get_client] = lambda: mock_client
+    app.dependency_overrides.clear()  # restore after test
 ```
