@@ -42,6 +42,8 @@ import os
 from collections.abc import Iterator
 from typing import Any
 
+from your_project_name.exceptions import LLMError
+
 DEFAULT_MODEL = os.getenv("CLAUDE_MODEL", "claude-sonnet-4-6")
 DEFAULT_MAX_TOKENS = 1024
 
@@ -119,6 +121,15 @@ class ClaudeClient:
             str(block.text) for block in message.content if block.type == "text"
         )
 
+    def _call_api(self, fn: Any, **kwargs: Any) -> Any:
+        """Call an anthropic messages function, re-raising SDK errors as LLMError."""
+        import anthropic  # noqa: PLC0415
+
+        try:
+            return fn(**kwargs)
+        except anthropic.APIError as e:
+            raise LLMError(str(e)) from e
+
     # ------------------------------------------------------------------
     # Single-turn helpers
     # ------------------------------------------------------------------
@@ -126,12 +137,14 @@ class ClaudeClient:
     def chat(self, user_message: str) -> str:
         """Send a single message and return the text response."""
         kwargs = self._base_kwargs([{"role": "user", "content": user_message}])
-        return self._extract_text(self._client.messages.create(**kwargs))
+        return self._extract_text(
+            self._call_api(self._client.messages.create, **kwargs)
+        )
 
     def chat_with_tracking(self, user_message: str) -> tuple[str, dict[str, int]]:
         """Like ``chat`` but also returns token usage statistics."""
         kwargs = self._base_kwargs([{"role": "user", "content": user_message}])
-        message = self._client.messages.create(**kwargs)
+        message = self._call_api(self._client.messages.create, **kwargs)
         return self._extract_text(message), UsageStats(message.usage).as_dict()
 
     def chat_with_tools(
@@ -151,7 +164,7 @@ class ClaudeClient:
             kwargs["tools"] = [
                 t.to_tool() if hasattr(t, "to_tool") else t for t in tools
             ]
-        message = self._client.messages.create(**kwargs)
+        message = self._call_api(self._client.messages.create, **kwargs)
         tool_calls = [
             {"id": block.id, "name": block.name, "input": block.input}
             for block in message.content
@@ -193,7 +206,9 @@ class ClaudeClient:
             kwargs["tools"] = [
                 t.to_tool() if hasattr(t, "to_tool") else t for t in tools
             ]
-        return self._extract_text(self._client.messages.create(**kwargs))
+        return self._extract_text(
+            self._call_api(self._client.messages.create, **kwargs)
+        )
 
     # ------------------------------------------------------------------
     # Streaming
@@ -201,9 +216,14 @@ class ClaudeClient:
 
     def stream_chat(self, user_message: str) -> Iterator[str]:
         """Yield response text in chunks as they arrive."""
+        import anthropic  # noqa: PLC0415
+
         kwargs = self._base_kwargs([{"role": "user", "content": user_message}])
-        with self._client.messages.stream(**kwargs) as stream:
-            yield from stream.text_stream
+        try:
+            with self._client.messages.stream(**kwargs) as stream:
+                yield from stream.text_stream
+        except anthropic.APIError as e:
+            raise LLMError(str(e)) from e
 
     # ------------------------------------------------------------------
     # Extended thinking  (requires a thinking-capable model)
@@ -223,7 +243,7 @@ class ClaudeClient:
         kwargs["thinking"] = {"type": "enabled", "budget_tokens": budget_tokens}
         kwargs["max_tokens"] = max(self.max_tokens, budget_tokens + 512)
 
-        message = self._client.messages.create(**kwargs)
+        message = self._call_api(self._client.messages.create, **kwargs)
 
         thinking_parts: list[str] = []
         response_parts: list[str] = []
@@ -246,7 +266,7 @@ class ConversationClient(ClaudeClient):
         """Append *user_message* to history, call the API, store the reply."""
         self._history.append({"role": "user", "content": user_message})
         kwargs = self._base_kwargs(self._history)
-        message = self._client.messages.create(**kwargs)
+        message = self._call_api(self._client.messages.create, **kwargs)
         reply = self._extract_text(message)
         self._history.append({"role": "assistant", "content": reply})
         return reply

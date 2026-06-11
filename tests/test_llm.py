@@ -44,6 +44,8 @@ def mock_anthropic(monkeypatch: pytest.MonkeyPatch) -> MagicMock:
     mock_module = MagicMock()
     mock_client = MagicMock()
     mock_module.Anthropic.return_value = mock_client
+    mock_module.APIError = type("APIError", (Exception,), {})
+    mock_module.RateLimitError = type("RateLimitError", (Exception,), {})
     monkeypatch.setitem(__import__("sys").modules, "anthropic", mock_module)
     return mock_client
 
@@ -51,6 +53,19 @@ def mock_anthropic(monkeypatch: pytest.MonkeyPatch) -> MagicMock:
 # ---------------------------------------------------------------------------
 # ClaudeClient.chat
 # ---------------------------------------------------------------------------
+
+
+def test_chat_raises_llm_error_on_api_error(mock_anthropic: MagicMock) -> None:
+    import sys
+
+    APIError = sys.modules["anthropic"].APIError
+    mock_anthropic.messages.create.side_effect = APIError("upstream failed")
+
+    from your_project_name.exceptions import LLMError  # noqa: PLC0415
+    from your_project_name.llm import ClaudeClient  # noqa: PLC0415
+
+    with pytest.raises(LLMError, match="upstream failed"):
+        ClaudeClient().chat("prompt")
 
 
 def test_chat_returns_text(mock_anthropic: MagicMock) -> None:

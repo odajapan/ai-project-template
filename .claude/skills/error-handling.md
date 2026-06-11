@@ -47,6 +47,7 @@ Catch broad `anthropic` exceptions and re-raise as `LLMError` at the
 ```python
 import time
 import anthropic
+from your_project_name.exceptions import LLMError
 
 def call_with_retry(fn, max_attempts: int = 3) -> str:
     for attempt in range(max_attempts):
