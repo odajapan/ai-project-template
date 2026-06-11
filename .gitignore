@@ -59,6 +59,7 @@ target/
 
 # DotEnv configuration
 .env
+.envrc
 
 # Database
 *.db

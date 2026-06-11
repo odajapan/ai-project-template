@@ -123,3 +123,9 @@ disallow_untyped_defs = true
 minversion = "7.0"
 testpaths = ["tests"]
 python_files = ["test_*.py"]
+markers = [
+    "integration: real API call, skipped in CI",
+    "llm_judge: requires real API, grades with a second LLM call",
+    "golden: golden set regression, run before model upgrades",
+]
+addopts = "-m 'not llm_judge and not golden and not integration'"
