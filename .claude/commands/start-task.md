@@ -4,6 +4,17 @@ argument-hint: <task-name-kebab-case>
 allowed-tools:
   - Bash
   - Read
+common_files:
+  - CLAUDE.md
+  - .claude/CLAUDE.md
+  - Makefile
+  - pyproject.toml
+suggested_sequence:
+  - check git status
+  - sync main
+  - cut claude/<task> branch
+  - re-read CLAUDE.md autonomous rules
+  - emit scope declaration and wait for confirmation
 ---
 
 # /start-task — begin an autonomous task
