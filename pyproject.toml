@@ -129,3 +129,4 @@ markers = [
     "golden: golden set regression, run before model upgrades",
 ]
 addopts = "-m 'not llm_judge and not golden and not integration'"
+norecursedirs = ["tests/integration"]
