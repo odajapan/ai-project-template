@@ -3,21 +3,12 @@
 This file is the template-provided baseline for Claude Code.
 Project-specific instructions go in `./CLAUDE.md` at the repo root.
 
+Portable baseline (commands, code conventions, testing, security, git workflow)
+lives in `../AGENTS.md` — read that first.
+
 @README.md
 
-## Key Commands
-
-| Command | Description |
-|---------|-------------|
-| `make requirements` | Install project in editable mode with dev + common extras |
-| `make check` | Lint (ruff) + type check (mypy) + tests (pytest) |
-| `make lint` | Run ruff over `src/` and `tests/` |
-| `make typecheck` | Run mypy over `src/` |
-| `make test` | Run pytest |
-| `make format` | Format with ruff |
-| `make data` | Run the data pipeline |
-| `make precommit` | Run pre-commit hooks against all files |
-| `make activate` | Print the conda activate command for this project |
+---
 
 ## Project Structure
 
@@ -27,30 +18,46 @@ src/your_project_name/
   utils.py         # Shared utility helpers
   llm.py           # Claude API wrapper (caching, streaming, tool use, multi-turn)
   schemas.py       # Pydantic models for tool definitions and structured output
+  exceptions.py    # Project-level exception hierarchy
   data/
     make_dataset.py  # Data pipeline entry point
 tests/             # pytest tests (mirror src/ structure)
 examples/          # Runnable scripts: simple_chat / agent_loop / structured_extraction
 .claude/
-  CLAUDE.md        # This file — template baseline
-  agents/          # Role-based subagents (code-reviewer/implementer/explorer)
+  CLAUDE.md        # This file — Claude Code baseline (harness-specific)
+  agents/          # Role-based subagents
+    code-reviewer.md   # Read-only PR/diff review (opus)
+    explorer.md        # Cheap read-only lookup (haiku)
+    implementer.md     # Edit-capable feature/refactor/test work (sonnet)
   commands/        # Slash commands
-    llm-test.md    # /llm-test  — verify Claude API connectivity
-    add-tool.md    # /add-tool  — scaffold ToolDefinition + handler + test
-    new-rule.md    # /new-rule  — create a path-scoped rule
+    llm-test.md    # /llm-test   — verify Claude API connectivity
+    add-tool.md    # /add-tool   — scaffold ToolDefinition + handler + test
+    new-rule.md    # /new-rule   — create a path-scoped rule
     start-task.md  # /start-task — cut branch + declare scope
     finish-task.md # /finish-task — checks + push + PR
-    debug.md       # /debug     — diagnose and fix a Python error
+    debug.md       # /debug      — diagnose and fix a Python error
     add-example.md # /add-example — scaffold a runnable example script
+    worktree.md    # /worktree   — show commands to spin up an isolated worktree
   rules/           # Path-scoped rules (auto-loaded by file context)
-    llm-development.md
-    testing.md
-    data-pipeline.md
-  skills/          # Reference docs Claude reads on demand
-    claude-sdk.md       # ClaudeClient patterns: caching, streaming, tools
-    python-testing.md   # pytest conventions and mock patterns
+    data-pipeline.md      # src/**/data/**, notebooks/**
+    data-raw-immutable.md # data/raw/** immutability guard
+    llm-development.md    # src/**/llm.py, *client*.py, llm tests
+    notebooks.md          # notebooks/**/*.ipynb conventions
+    secrets.md            # .env, **/secrets/** guards
+    testing.md            # tests/**, src/**
+  skills/          # Reference docs — mention by name to load
+    agentic-engineering.md  # Claude agent patterns: tool use, loops, subagents
+    api-design.md           # REST API design (tool-agnostic)
+    claude-sdk.md           # ClaudeClient patterns: caching, streaming, tool use
+    codebase-onboarding.md  # Map of this template, which files to read first
+    error-handling.md       # Python error-handling conventions
+    eval-harness.md         # Testing LLM outputs: deterministic, LLM-as-judge, golden set
+    fastapi-patterns.md     # FastAPI router/Pydantic/ClaudeClient injection patterns
+    python-testing.md       # pytest conventions, mocks, coverage
   settings.json    # Shared permissions, hooks, and model config
 ```
+
+---
 
 ## Quick Start with Claude
 
@@ -71,59 +78,15 @@ Slash commands (run inside Claude Code):
 - `/finish-task` — run checks, push, and open a PR
 - `/debug <traceback>` — diagnose and fix a Python error systematically
 - `/add-example <name>` — scaffold a runnable script under `examples/`
+- `/worktree` — show commands to spin up an isolated git worktree
 
 Skills (reference docs — mention by name to load):
 
-- `claude-sdk` — ClaudeClient patterns: caching, streaming, tool use
+- `claude-sdk` — ClaudeClient patterns: caching, streaming, tool use, multi-turn
 - `python-testing` — pytest conventions and mock patterns
-
-## Code Conventions
-
-- Python 3.12+; type annotations required on all public functions
-- Line length: 88 (ruff)
-- No comments unless the WHY is non-obvious
-- Tests in `tests/`; mock only at system boundaries (external APIs, file I/O)
-
-## Security
-
-- Never commit `.env` — use `.env.example` as the template
-- `.env` and secrets stay in environment variables only
-- `settings.json` deny rules block Claude from reading `.env` directly
-- Sanitize any third-party data before storing results in `references/`
-
-## Testing Standards
-
-- All public functions require at least one test
-- Mock `anthropic.Anthropic` for LLM unit tests — no real API calls in CI
-- Integration tests (real API) go in `tests/integration/` and are skipped by `make test`
-- Run `pytest tests/ --cov=src --cov-report=term-missing` to check coverage
-
-## Git Workflow
-
-- Branch naming: `feat/`, `fix/`, `docs/`, `chore/`
-- Run `make check` before pushing
-- PR titles follow Conventional Commits: `feat(module): description`
-
-## Environment Variables
-
-Copy `.env.example` to `.env` before running code that calls the Claude API:
-
-```bash
-cp .env.example .env
-# fill in ANTHROPIC_API_KEY
-```
-
-## Dependencies
-
-All dependency definitions live in `pyproject.toml`. Do not edit `requirements*.txt` directly.
-
-| Extra | Contents |
-|-------|----------|
-| `dev` | pytest, ruff, mypy, pre-commit |
-| `claude` | anthropic SDK |
-| `notebook` | jupyterlab, ipykernel |
-| `viz` | matplotlib, seaborn |
-| `cloud` | boto3, s3fs, aioboto3 |
-| `dashboard` | streamlit, fastapi, uvicorn |
-| `vision` | torch, torchvision, opencv-python, pillow |
-| `bigquery` | google-cloud-bigquery, db-dtypes |
+- `agentic-engineering` — agent loops, tool use, subagents, structured output
+- `eval-harness` — testing LLM outputs: deterministic checks, LLM-as-judge, golden set
+- `codebase-onboarding` — map of this template, which files to read first
+- `error-handling` — Python error-handling conventions
+- `api-design` — REST API design
+- `fastapi-patterns` — FastAPI + Pydantic + ClaudeClient patterns
