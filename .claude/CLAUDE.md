@@ -27,8 +27,11 @@ examples/          # Runnable scripts: simple_chat / agent_loop / structured_ext
   CLAUDE.md        # This file — Claude Code baseline (harness-specific)
   agents/          # Role-based subagents
     code-reviewer.md   # Read-only PR/diff review (opus)
+    data-analyst.md    # Read-only data/ diagnostics with pandas/DuckDB (sonnet)
     explorer.md        # Cheap read-only lookup (haiku)
     implementer.md     # Edit-capable feature/refactor/test work (sonnet)
+    test-runner.md     # Run pytest/ruff and summarize pass/fail (haiku)
+    verifier.md        # Adversarial check of a single claim/finding (opus)
   commands/        # Slash commands
     llm-test.md    # /llm-test   — verify Claude API connectivity
     add-tool.md    # /add-tool   — scaffold ToolDefinition + handler + test
@@ -56,6 +59,30 @@ examples/          # Runnable scripts: simple_chat / agent_loop / structured_ext
     python-testing.md       # pytest conventions, mocks, coverage
   settings.json    # Shared permissions, hooks, and model config
 ```
+
+---
+
+## Subagent delegation policy (token economy)
+
+The main loop keeps design decisions and delegates mechanical work. Each
+agent pins the cheapest model that does its job well:
+
+| Task | Agent | Model |
+|------|-------|-------|
+| "Where is X" lookups, read-only search | `explorer` | haiku |
+| Run tests/lint, summarize pass/fail | `test-runner` | haiku |
+| Implement an agreed spec + tests | `implementer` | sonnet |
+| Data diagnostics under `data/` | `data-analyst` | sonnet |
+| Pre-PR review, design second opinion | `code-reviewer` | opus |
+| Verify one claim/finding adversarially | `verifier` | opus |
+
+Notes:
+
+- The built-in `Explore` / `Plan` agents inherit the session model — for
+  cheap lookups prefer the custom `explorer` (pinned to haiku).
+- `code-reviewer` reviews a whole diff broadly; `verifier` judges a single
+  claim (CONFIRMED / PLAUSIBLE / REFUTED). Feed verifier one finding at a
+  time, ideally in parallel across findings.
 
 ---
 
