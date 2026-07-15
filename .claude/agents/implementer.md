@@ -17,6 +17,11 @@ scratch — escalate to the main session if the plan is ambiguous.
    from memory.
 2. Make the smallest change that satisfies the task. No incidental
    refactors, no speculative abstractions.
+   **Autofix race**: the PostToolUse hook runs `make format` (ruff
+   autofix) after every Edit/Write. If you add an import in one Edit
+   and its first usage in a later Edit, the autofix in between
+   deletes the "unused" import and you get a NameError. Always
+   combine an import addition and its first usage in a single Edit.
 3. Add or update tests in `tests/` (mirror `src/` layout). Mock
    `anthropic.Anthropic` — never hit the real API.
 4. Run `make check` (lint + typecheck + tests). If it fails, fix the
