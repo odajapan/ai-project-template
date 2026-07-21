@@ -21,7 +21,7 @@ Tool use::
     from your_project_name.schemas import ToolDefinition
 
     tools = [ToolDefinition(name="get_weather", description="...", input_schema={...})]
-    text, tool_calls = client.chat_with_tools("What's the weather?", tools=tools)
+    text, tool_calls, content = client.chat_with_tools("Weather?", tools=tools)
 
 Multi-turn conversation::
 
@@ -44,7 +44,7 @@ from typing import Any
 
 from your_project_name.exceptions import LLMError
 
-DEFAULT_MODEL = os.getenv("CLAUDE_MODEL", "claude-sonnet-4-6")
+DEFAULT_MODEL = os.getenv("CLAUDE_MODEL", "claude-sonnet-5")
 DEFAULT_MAX_TOKENS = 1024
 
 
@@ -151,13 +151,15 @@ class ClaudeClient:
         self,
         user_message: str,
         tools: list[Any] | None = None,
-    ) -> tuple[str, list[dict[str, Any]]]:
+    ) -> tuple[str, list[dict[str, Any]], list[Any]]:
         """Send a message with optional tool definitions.
 
-        Returns ``(response_text, tool_calls)`` where *tool_calls* is a list
-        of ``{"id": ..., "name": ..., "input": ...}`` dicts for every tool
-        the model invoked. The ``id`` is the ``tool_use_id`` that must be
-        referenced when returning the tool result in a follow-up message.
+        Returns ``(response_text, tool_calls, assistant_content)``.
+        *tool_calls* is a list of ``{"id": ..., "name": ..., "input": ...}``
+        dicts for every tool the model invoked; the ``id`` is the
+        ``tool_use_id`` that must be referenced when returning the tool
+        result. *assistant_content* is the raw ``message.content`` — pass it
+        unchanged to ``continue_with_tool_results`` for the follow-up turn.
         """
         kwargs = self._base_kwargs([{"role": "user", "content": user_message}])
         if tools:
@@ -170,7 +172,7 @@ class ClaudeClient:
             for block in message.content
             if block.type == "tool_use"
         ]
-        return self._extract_text(message), tool_calls
+        return self._extract_text(message), tool_calls, list(message.content)
 
     def continue_with_tool_results(
         self,
@@ -226,22 +228,29 @@ class ClaudeClient:
             raise LLMError(str(e)) from e
 
     # ------------------------------------------------------------------
-    # Extended thinking  (requires a thinking-capable model)
+    # Adaptive thinking  (requires an adaptive-thinking model)
     # ------------------------------------------------------------------
 
     def chat_with_thinking(
         self,
         user_message: str,
-        budget_tokens: int = 5000,
+        effort: str | None = None,
     ) -> tuple[str, str]:
-        """Return ``(thinking, response)`` using extended thinking.
+        """Return ``(thinking, response)`` using adaptive thinking.
 
-        Pass a model that supports extended thinking, e.g.
-        ``ClaudeClient(model="claude-opus-4-7")``.
+        Requires an adaptive-thinking model — the default
+        ``claude-sonnet-5`` qualifies, as do ``claude-opus-4-8`` and later.
+        ``display: "summarized"`` is set explicitly because those models
+        default to ``"omitted"``, which returns thinking blocks with empty
+        text. *effort* optionally sets ``output_config.effort``
+        ("low" | "medium" | "high" | "xhigh" | "max").
         """
         kwargs = self._base_kwargs([{"role": "user", "content": user_message}])
-        kwargs["thinking"] = {"type": "enabled", "budget_tokens": budget_tokens}
-        kwargs["max_tokens"] = max(self.max_tokens, budget_tokens + 512)
+        kwargs["thinking"] = {"type": "adaptive", "display": "summarized"}
+        if effort:
+            kwargs["output_config"] = {"effort": effort}
+        # Thinking spends from max_tokens; the 1024 default is too tight.
+        kwargs["max_tokens"] = max(self.max_tokens, 8192)
 
         message = self._call_api(self._client.messages.create, **kwargs)
 

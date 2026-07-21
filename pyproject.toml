@@ -25,9 +25,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# Claude / Anthropic SDK
+# Claude / Anthropic SDK (floor covers adaptive thinking + output_config)
 claude = [
-  "anthropic>=0.40",
+  "anthropic>=0.92",
 ]
 
 # Core development tools (lint/test/format/type-check/pre-commit)

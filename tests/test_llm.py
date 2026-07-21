@@ -93,10 +93,11 @@ def test_chat_with_tools_returns_tool_calls(mock_anthropic: MagicMock) -> None:
 
     from your_project_name.llm import ClaudeClient
 
-    _, calls = ClaudeClient().chat_with_tools("Weather in Tokyo?")
+    _, calls, content = ClaudeClient().chat_with_tools("Weather in Tokyo?")
     assert calls == [
         {"id": "tool_001", "name": "get_weather", "input": {"city": "Tokyo"}}
     ]
+    assert [b.type for b in content] == ["text", "tool_use"]
 
 
 def test_continue_with_tool_results_sends_tool_result_block(
@@ -144,6 +145,31 @@ def test_chat_with_no_tools_omits_tools_key(mock_anthropic: MagicMock) -> None:
     assert "tools" not in mock_anthropic.messages.create.call_args.kwargs
 
 
+def test_agent_loop_round_trip(mock_anthropic: MagicMock) -> None:
+    """Full public-API tool loop: chat_with_tools -> continue_with_tool_results."""
+    first = _message(
+        _tool_block("get_weather", {"city": "Tokyo"}, tool_id="tool_7"),
+    )
+    second = _message(_text_block("Sunny, 22C."))
+    mock_anthropic.messages.create.side_effect = [first, second]
+
+    from your_project_name.llm import ClaudeClient
+
+    client = ClaudeClient()
+    text, calls, assistant_content = client.chat_with_tools("Weather in Tokyo?")
+    assert text == ""
+    assert calls[0]["id"] == "tool_7"
+
+    final = client.continue_with_tool_results(
+        user_message="Weather in Tokyo?",
+        assistant_content=assistant_content,
+        tool_results=[{"tool_use_id": "tool_7", "content": "Sunny, 22C"}],
+    )
+    assert final == "Sunny, 22C."
+    messages = mock_anthropic.messages.create.call_args.kwargs["messages"]
+    assert messages[1] == {"role": "assistant", "content": assistant_content}
+
+
 # ---------------------------------------------------------------------------
 # ClaudeClient.stream_chat
 # ---------------------------------------------------------------------------
@@ -182,14 +208,26 @@ def test_chat_with_thinking_returns_thinking_and_text(
     assert response == "Hello!"
 
 
-def test_chat_with_thinking_sets_thinking_param(mock_anthropic: MagicMock) -> None:
+def test_chat_with_thinking_sets_adaptive_thinking(mock_anthropic: MagicMock) -> None:
     mock_anthropic.messages.create.return_value = _message(_text_block("ok"))
 
     from your_project_name.llm import ClaudeClient
 
-    ClaudeClient().chat_with_thinking("Hi", budget_tokens=3000)
+    ClaudeClient().chat_with_thinking("Hi")
     kwargs = mock_anthropic.messages.create.call_args.kwargs
-    assert kwargs["thinking"] == {"type": "enabled", "budget_tokens": 3000}
+    assert kwargs["thinking"] == {"type": "adaptive", "display": "summarized"}
+    assert "output_config" not in kwargs
+    assert kwargs["max_tokens"] >= 8192
+
+
+def test_chat_with_thinking_passes_effort(mock_anthropic: MagicMock) -> None:
+    mock_anthropic.messages.create.return_value = _message(_text_block("ok"))
+
+    from your_project_name.llm import ClaudeClient
+
+    ClaudeClient().chat_with_thinking("Hi", effort="low")
+    kwargs = mock_anthropic.messages.create.call_args.kwargs
+    assert kwargs["output_config"] == {"effort": "low"}
 
 
 def test_chat_concatenates_multiple_text_blocks(mock_anthropic: MagicMock) -> None:
