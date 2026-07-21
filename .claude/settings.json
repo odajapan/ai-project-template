@@ -41,7 +41,12 @@
       "Bash(git branch -d:*)",
       "Bash(pnpm:*)",
       "Bash(find:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(python scripts/jira_task.py:*)",
+      "Bash(scripts/jira_task.py:*)",
+      "Bash(python scripts/daily_report.py:*)",
+      "Bash(scripts/daily_report.sh:*)",
+      "Bash(source ~/.config/jira/env)"
     ],
     "deny": [
       "Read(.env)",

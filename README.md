@@ -156,6 +156,11 @@ Slash commands available inside Claude Code:
 │   ├── test_utils.py
 │   └── test_llm.py
 │
+├── scripts/               ← Standalone CLI scripts (not part of the installable package)
+│   ├── jira_task.py       ← Optional Jira <-> GitHub workflow: issue = branch = PR
+│   ├── daily_report.py    ← Lists Jira tickets resolved on a given day
+│   └── rename_project.sh
+│
 ├── data/
 │   ├── raw/               ← Original immutable data
 │   ├── interim/           ← Intermediate transformed data
@@ -186,6 +191,7 @@ All dependency definitions live in `pyproject.toml`.
 | `dashboard` | streamlit, fastapi, uvicorn |
 | `vision` | torch, torchvision, opencv-python, pillow |
 | `bigquery` | google-cloud-bigquery, db-dtypes |
+| `jira` | requests, pyyaml — optional Jira ↔ GitHub workflow (`scripts/jira_task.py`, see [docs/JIRA_GITHUB_WORKFLOW.md](docs/JIRA_GITHUB_WORKFLOW.md)) |
 
 Install any combination:
 

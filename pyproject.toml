@@ -30,6 +30,12 @@ claude = [
   "anthropic>=0.92",
 ]
 
+# Optional Jira <-> GitHub workflow tooling (scripts/jira_task.py, daily_report.py)
+jira = [
+  "requests",
+  "pyyaml",
+]
+
 # Core development tools (lint/test/format/type-check/pre-commit)
 dev = [
   "pytest",

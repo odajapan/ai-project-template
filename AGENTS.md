@@ -150,6 +150,16 @@ These apply to every agent, unconditionally:
   branch — when that base branch is deleted on merge, GitHub auto-closes
   the child PR instead of retargeting it.
 
+### Optional: Jira ↔ GitHub workflow
+
+Projects that track work in Jira can use `scripts/jira_task.py` instead of
+hand-rolling branches: **one Jira issue = one branch = one PR**. It creates
+the issue, branches, transitions status (by name — no hard-coded workflow
+IDs, so it works against any Jira project's own status names), and links
+the PR back to the issue. Setup and full command reference:
+[docs/JIRA_GITHUB_WORKFLOW.md](docs/JIRA_GITHUB_WORKFLOW.md). This is
+purely additive — skip it entirely if the project doesn't use Jira.
+
 ---
 
 ## Scope & stop conditions
