@@ -33,6 +33,7 @@
       "Bash(gh pr diff:*)",
       "Bash(gh issue view:*)",
       "Bash(gh issue list:*)",
+      "Bash(pnpm:*)",
       "Bash(find:*)",
       "Bash(grep:*)"
     ],

@@ -80,6 +80,30 @@ Key locations:
 
 ---
 
+## web/ (optional TypeScript workspace)
+
+Some downstream projects add a TypeScript workspace under `web/`
+(dashboards, UIs). It may not exist in every project.
+
+| Command (run from `web/`) | Description |
+|---------------------------|-------------|
+| `pnpm install` | Install dependencies |
+| `pnpm lint` | ESLint |
+| `pnpm typecheck` | `tsc --noEmit` |
+| `pnpm test` | Unit tests |
+| `pnpm build` | Production build |
+
+- TypeScript `strict: true`; pnpm is the package-manager convention
+  (follow the existing lockfile if the project uses npm/yarn)
+- Unit tests are colocated with sources and make no real network calls
+- **`make check` does not cover `web/`** — run the pnpm commands above
+  before every commit that touches `web/`
+- CI runs the `web` job only when `web/package.json` exists
+- Never commit `node_modules/`, build output, or `.env.local`; never
+  embed API keys in client-side code
+
+---
+
 ## Security & forbidden actions
 
 These apply to every agent, unconditionally:
