@@ -47,7 +47,7 @@ jobs:
 
       - name: Set up pnpm
         if: steps.detect.outputs.exists == 'true'
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
 
       - name: Set up Node.js
         if: steps.detect.outputs.exists == 'true'
