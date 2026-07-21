@@ -17,7 +17,7 @@ requires-python = ">=3.12"
 # wrappers around these definitions for convenient installation).
 dependencies = [
   "click",
-  "python-dotenv>=0.5.1",
+  "python-dotenv>=1.2.2",
   "numpy",
   "pandas",
   "tqdm",
