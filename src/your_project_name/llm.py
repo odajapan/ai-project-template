@@ -85,7 +85,7 @@ class ClaudeClient:
     @staticmethod
     def _make_client() -> Any:
         try:
-            import anthropic  # noqa: PLC0415
+            import anthropic
         except ImportError as exc:
             raise ImportError(
                 "The 'anthropic' package is required. "
@@ -123,7 +123,7 @@ class ClaudeClient:
 
     def _call_api(self, fn: Any, **kwargs: Any) -> Any:
         """Call an anthropic messages function, re-raising SDK errors as LLMError."""
-        import anthropic  # noqa: PLC0415
+        import anthropic
 
         try:
             return fn(**kwargs)
@@ -216,7 +216,7 @@ class ClaudeClient:
 
     def stream_chat(self, user_message: str) -> Iterator[str]:
         """Yield response text in chunks as they arrive."""
-        import anthropic  # noqa: PLC0415
+        import anthropic
 
         kwargs = self._base_kwargs([{"role": "user", "content": user_message}])
         try:

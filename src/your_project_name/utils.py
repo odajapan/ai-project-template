@@ -12,7 +12,7 @@ from collections.abc import Sequence
 
 
 def normalize_scores(scores: Sequence[float]) -> list[float]:
-    """Normalize numeric scores to the 0–1 range.
+    """Normalize numeric scores to the 0-1 range.
 
     * An empty input sequence results in an empty list.
     * A constant input sequence results in a list of zeros.

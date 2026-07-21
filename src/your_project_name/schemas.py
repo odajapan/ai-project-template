@@ -64,7 +64,7 @@ class StructuredResponse(BaseModel):
     @classmethod
     def from_text(cls, text: str) -> StructuredResponse:
         """Parse *text* (a JSON string from Claude) into this model."""
-        import json  # noqa: PLC0415
+        import json
 
         raw = json.loads(text)
         return cls.model_validate(raw)
