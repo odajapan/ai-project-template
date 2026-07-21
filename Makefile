@@ -39,16 +39,16 @@ clean:
 
 ## Lint using ruff
 lint:
-	ruff check src tests
+	ruff check src tests scripts
 
 ## Format code with ruff
 format:
-	ruff format src tests
-	ruff check --fix src tests
+	ruff format src tests scripts
+	ruff check --fix src tests scripts
 
 ## Run static type checks with mypy
 typecheck:
-	mypy src
+	mypy src scripts
 
 ## Upload Data to S3
 sync_data_to_s3:

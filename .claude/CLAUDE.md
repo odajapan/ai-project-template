@@ -22,7 +22,14 @@ src/your_project_name/
   data/
     make_dataset.py  # Data pipeline entry point
 tests/             # pytest tests (mirror src/ structure)
+  scripts/         # tests for scripts/ (jira_task.py helpers)
 examples/          # Runnable scripts: simple_chat / agent_loop / structured_extraction
+scripts/           # Standalone CLI scripts (not part of the installable package)
+  jira_task.py     # Optional Jira <-> GitHub workflow: issue = branch = PR (see docs/JIRA_GITHUB_WORKFLOW.md)
+  daily_report.py  # Lists Jira tickets resolved on a given day
+  daily_report.sh  # Shell entry point for daily_report.py (sources ~/.config/jira/env)
+docs/
+  JIRA_GITHUB_WORKFLOW.md  # Setup + command reference for scripts/jira_task.py
 .claude/
   CLAUDE.md        # This file — Claude Code baseline (harness-specific)
   agents/          # Role-based subagents
@@ -42,6 +49,8 @@ examples/          # Runnable scripts: simple_chat / agent_loop / structured_ext
     debug.md       # /debug      — diagnose and fix a Python error
     add-example.md # /add-example — scaffold a runnable example script
     worktree.md    # /worktree   — show commands to spin up an isolated worktree
+    jira.md        # /jira       — reference for the optional Jira <-> GitHub workflow
+    daily-report.md # /daily-report — list Jira tickets completed today
   rules/           # Path-scoped rules (auto-loaded by file context)
     data-pipeline.md      # src/**/data/**, notebooks/**
     data-raw-immutable.md # data/raw/** immutability guard
@@ -109,6 +118,9 @@ Slash commands (run inside Claude Code):
 - `/debug <traceback>` — diagnose and fix a Python error systematically
 - `/add-example <name>` — scaffold a runnable script under `examples/`
 - `/worktree` — show commands to spin up an isolated git worktree
+- `/jira <subcommand>` — optional Jira ↔ GitHub workflow (issue = branch = PR);
+  see `docs/JIRA_GITHUB_WORKFLOW.md`
+- `/daily-report [--date YYYY-MM-DD]` — list Jira tickets completed on a day
 
 ySkills (reference docs — mention by name to load):
 
