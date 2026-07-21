@@ -51,7 +51,7 @@ def _require_api_key() -> None:
 def ask(prompt: tuple[str, ...], system: str, stream: bool) -> None:
     """Send a single prompt to Claude and print the response."""
     _require_api_key()
-    from your_project_name.llm import ClaudeClient  # noqa: PLC0415
+    from your_project_name.llm import ClaudeClient
 
     client = ClaudeClient(system=system)
     user_message = " ".join(prompt)
@@ -73,7 +73,7 @@ def ask(prompt: tuple[str, ...], system: str, stream: bool) -> None:
 def chat(system: str) -> None:
     """Start an interactive multi-turn conversation. Type 'exit' to quit."""
     _require_api_key()
-    from your_project_name.llm import ConversationClient  # noqa: PLC0415
+    from your_project_name.llm import ConversationClient
 
     conv = ConversationClient(system=system)
     click.echo("Chat started. Type 'exit' or Ctrl-D to quit.\n")
