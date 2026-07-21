@@ -38,6 +38,7 @@ examples/          # Runnable scripts: simple_chat / agent_loop / structured_ext
     new-rule.md    # /new-rule   — create a path-scoped rule
     start-task.md  # /start-task — cut branch + declare scope
     finish-task.md # /finish-task — checks + push + PR
+    land.md        # /land       — merge PR(s), retarget children, sync main, clean up
     debug.md       # /debug      — diagnose and fix a Python error
     add-example.md # /add-example — scaffold a runnable example script
     worktree.md    # /worktree   — show commands to spin up an isolated worktree
@@ -68,14 +69,14 @@ examples/          # Runnable scripts: simple_chat / agent_loop / structured_ext
 The main loop keeps design decisions and delegates mechanical work. Each
 agent pins the cheapest model that does its job well:
 
-| Task | Agent | Model |
-|------|-------|-------|
-| "Where is X" lookups, read-only search | `explorer` | haiku |
-| Run tests/lint, summarize pass/fail | `test-runner` | haiku |
-| Implement an agreed spec + tests | `implementer` | sonnet |
-| Data diagnostics under `data/` | `data-analyst` | sonnet |
-| Pre-PR review, design second opinion | `code-reviewer` | opus |
-| Verify one claim/finding adversarially | `verifier` | opus |
+| Task                                   | Agent           | Model  |
+| -------------------------------------- | --------------- | ------ |
+| "Where is X" lookups, read-only search | `explorer`      | haiku  |
+| Run tests/lint, summarize pass/fail    | `test-runner`   | haiku  |
+| Implement an agreed spec + tests       | `implementer`   | sonnet |
+| Data diagnostics under `data/`         | `data-analyst`  | sonnet |
+| Pre-PR review, design second opinion   | `code-reviewer` | opus   |
+| Verify one claim/finding adversarially | `verifier`      | opus   |
 
 Notes:
 
@@ -104,11 +105,12 @@ Slash commands (run inside Claude Code):
 - `/new-rule <name>` — create a path-scoped rule under `.claude/rules/`
 - `/start-task <name>` — cut a `claude/<name>` branch and declare scope
 - `/finish-task` — run checks, push, and open a PR
+- `/land [<pr>...]` — merge PR(s), retarget stacked children, sync main, and clean up
 - `/debug <traceback>` — diagnose and fix a Python error systematically
 - `/add-example <name>` — scaffold a runnable script under `examples/`
 - `/worktree` — show commands to spin up an isolated git worktree
 
-Skills (reference docs — mention by name to load):
+ySkills (reference docs — mention by name to load):
 
 - `claude-sdk` — ClaudeClient patterns: caching, streaming, tool use, multi-turn
 - `python-testing` — pytest conventions and mock patterns

@@ -31,8 +31,14 @@
       "Bash(gh pr view:*)",
       "Bash(gh pr list:*)",
       "Bash(gh pr diff:*)",
+      "Bash(gh pr checks:*)",
+      "Bash(gh pr edit:*)",
       "Bash(gh issue view:*)",
       "Bash(gh issue list:*)",
+      "Bash(git worktree list)",
+      "Bash(git worktree prune)",
+      "Bash(git worktree remove:*)",
+      "Bash(git branch -d:*)",
       "Bash(pnpm:*)",
       "Bash(find:*)",
       "Bash(grep:*)"
@@ -53,8 +59,7 @@
       "Bash(git push origin main:*)",
       "Bash(git push origin master:*)",
       "Bash(git reset --hard:*)",
-      "Bash(git rebase -i:*)",
-      "Bash(gh pr merge:*)"
+      "Bash(git rebase -i:*)"
     ]
   },
   "hooks": {
