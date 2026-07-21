@@ -81,7 +81,7 @@ dashboard = [
 # Vision / CV related extras
 vision = [
   "torch>=2.13.0",
-  "torchvision>=0.15.0",
+  "torchvision>=0.28.0",
   "opencv-python>=5.0.0.93",
   "pillow>=12.3.0",
 ]
