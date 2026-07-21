@@ -1,0 +1,19 @@
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: "/"
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+
+  # Uncomment in downstream projects that have a web/ workspace.
+  # Dependabot errors on a configured directory that does not exist,
+  # so the entry cannot be enabled in the template itself.
+  # - package-ecosystem: npm
+  #   directory: "/web"
+  #   schedule:
+  #     interval: weekly
