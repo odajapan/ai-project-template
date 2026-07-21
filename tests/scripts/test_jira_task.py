@@ -11,6 +11,11 @@ default. Insert it directly here (rather than via a second
 under ``tests/scripts/`` would shadow ``tests/conftest.py`` in
 ``sys.modules`` and break the ``from conftest import ...`` used by other
 test modules.
+
+``jira_task`` needs the optional ``jira`` extra (``requests``, ``pyyaml``).
+Skip this whole module gracefully when it isn't installed, rather than
+failing collection -- the default ``pip install -e ".[dev]"`` setup does
+not include it.
 """
 
 from __future__ import annotations
@@ -21,7 +26,9 @@ from typing import Any
 from unittest import mock
 
 import pytest
-import yaml
+
+yaml = pytest.importorskip("yaml")
+pytest.importorskip("requests")
 
 _SCRIPTS_DIR = Path(__file__).resolve().parents[2] / "scripts"
 if str(_SCRIPTS_DIR) not in sys.path:
