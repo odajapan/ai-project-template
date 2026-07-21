@@ -93,7 +93,7 @@ from pydantic import BaseModel, Field
 
 class ChatRequest(BaseModel):
     message: str = Field(..., min_length=1, max_length=4096)
-    model: str = Field(default="claude-sonnet-4-6")
+    model: str = Field(default="claude-sonnet-5")
 
 class ChatResponse(BaseModel):
     reply: str

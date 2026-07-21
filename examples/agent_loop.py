@@ -52,24 +52,22 @@ def main() -> None:
 
     user_message = "What's the weather in Tokyo right now?"
 
-    kwargs = client._base_kwargs([{"role": "user", "content": user_message}])
-    kwargs["tools"] = [WEATHER_TOOL.to_tool()]
-    first = client._client.messages.create(**kwargs)
-
-    tool_uses = [b for b in first.content if b.type == "tool_use"]
-    if not tool_uses:
-        print(client._extract_text(first))
+    text, tool_calls, assistant_content = client.chat_with_tools(
+        user_message, tools=[WEATHER_TOOL]
+    )
+    if not tool_calls:
+        print(text)
         return
 
     tool_results = []
-    for block in tool_uses:
-        result = run_tool(block.name, block.input)
-        print(f"[tool {block.name}({block.input}) -> {result}]")
-        tool_results.append({"tool_use_id": block.id, "content": result})
+    for call in tool_calls:
+        result = run_tool(call["name"], call["input"])
+        print(f"[tool {call['name']}({call['input']}) -> {result}]")
+        tool_results.append({"tool_use_id": call["id"], "content": result})
 
     final = client.continue_with_tool_results(
         user_message=user_message,
-        assistant_content=list(first.content),
+        assistant_content=assistant_content,
         tool_results=tool_results,
         tools=[WEATHER_TOOL],
     )

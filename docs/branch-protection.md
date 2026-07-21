@@ -34,6 +34,12 @@ local guards (Git hooks, `.claude/settings.json` denies) prevent
 mistakes during the session. Branch protection on GitHub is what stops
 mistakes from landing even if a local guard is bypassed.
 
+> **Branch protection is now the only enforced merge control.** The
+> `.claude/settings.json` deny on `gh pr merge` has been removed so that
+> Claude can land PRs interactively when the human asks (via `/land`).
+> Nothing in the repo mechanically prevents a merge anymore — enabling
+> the protection below on `main` is **required**, not optional.
+
 A safe autonomous configuration looks like:
 
 1. Repo has the protection above on `main`.

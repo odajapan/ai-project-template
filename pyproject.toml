@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=68", "wheel"]
+requires = ["setuptools>=83.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -21,13 +21,13 @@ dependencies = [
   "numpy",
   "pandas",
   "tqdm",
-  "pydantic>=2,<3",
+  "pydantic>=2.13.4,<3",
 ]
 
 [project.optional-dependencies]
-# Claude / Anthropic SDK
+# Claude / Anthropic SDK (floor covers adaptive thinking + output_config)
 claude = [
-  "anthropic>=0.40",
+  "anthropic>=0.92",
 ]
 
 # Core development tools (lint/test/format/type-check/pre-commit)
@@ -74,10 +74,10 @@ dashboard = [
 
 # Vision / CV related extras
 vision = [
-  "torch>=2.0.0",
+  "torch>=2.13.0",
   "torchvision>=0.15.0",
   "opencv-python>=5.0.0.93",
-  "pillow>=10.0.0",
+  "pillow>=12.3.0",
 ]
 
 # BigQuery related extras
