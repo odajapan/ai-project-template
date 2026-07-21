@@ -9,46 +9,7 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-
-def _text_block(text: str) -> SimpleNamespace:
-    return SimpleNamespace(type="text", text=text)
-
-
-def _tool_block(name: str, inp: dict, tool_id: str = "tool_abc") -> SimpleNamespace:
-    return SimpleNamespace(type="tool_use", id=tool_id, name=name, input=inp)
-
-
-def _thinking_block(thinking: str) -> SimpleNamespace:
-    return SimpleNamespace(type="thinking", thinking=thinking)
-
-
-def _message(*blocks: SimpleNamespace, usage: object | None = None) -> SimpleNamespace:
-    if usage is None:
-        usage = SimpleNamespace(
-            input_tokens=10,
-            output_tokens=5,
-            cache_creation_input_tokens=0,
-            cache_read_input_tokens=0,
-        )
-    return SimpleNamespace(content=list(blocks), usage=usage)
-
-
-@pytest.fixture()
-def mock_anthropic(monkeypatch: pytest.MonkeyPatch) -> MagicMock:
-    """Patch ``anthropic.Anthropic`` before any ClaudeClient is instantiated."""
-    mock_module = MagicMock()
-    mock_client = MagicMock()
-    mock_module.Anthropic.return_value = mock_client
-    mock_module.APIError = type("APIError", (Exception,), {})
-    mock_module.RateLimitError = type("RateLimitError", (Exception,), {})
-    monkeypatch.setitem(__import__("sys").modules, "anthropic", mock_module)
-    return mock_client
-
+from conftest import _message, _text_block, _thinking_block, _tool_block
 
 # ---------------------------------------------------------------------------
 # ClaudeClient.chat
@@ -61,8 +22,8 @@ def test_chat_raises_llm_error_on_api_error(mock_anthropic: MagicMock) -> None:
     APIError = sys.modules["anthropic"].APIError
     mock_anthropic.messages.create.side_effect = APIError("upstream failed")
 
-    from your_project_name.exceptions import LLMError  # noqa: PLC0415
-    from your_project_name.llm import ClaudeClient  # noqa: PLC0415
+    from your_project_name.exceptions import LLMError
+    from your_project_name.llm import ClaudeClient
 
     with pytest.raises(LLMError, match="upstream failed"):
         ClaudeClient().chat("prompt")
@@ -71,7 +32,7 @@ def test_chat_raises_llm_error_on_api_error(mock_anthropic: MagicMock) -> None:
 def test_chat_returns_text(mock_anthropic: MagicMock) -> None:
     mock_anthropic.messages.create.return_value = _message(_text_block("Hello!"))
 
-    from your_project_name.llm import ClaudeClient  # noqa: PLC0415
+    from your_project_name.llm import ClaudeClient
 
     assert ClaudeClient().chat("Hi") == "Hello!"
 
@@ -79,7 +40,7 @@ def test_chat_returns_text(mock_anthropic: MagicMock) -> None:
 def test_chat_with_system_adds_cache_control(mock_anthropic: MagicMock) -> None:
     mock_anthropic.messages.create.return_value = _message(_text_block("ok"))
 
-    from your_project_name.llm import ClaudeClient  # noqa: PLC0415
+    from your_project_name.llm import ClaudeClient
 
     ClaudeClient(system="You are helpful.").chat("Hi")
     kwargs = mock_anthropic.messages.create.call_args.kwargs
@@ -89,7 +50,7 @@ def test_chat_with_system_adds_cache_control(mock_anthropic: MagicMock) -> None:
 def test_chat_no_system_omits_system_key(mock_anthropic: MagicMock) -> None:
     mock_anthropic.messages.create.return_value = _message(_text_block("ok"))
 
-    from your_project_name.llm import ClaudeClient  # noqa: PLC0415
+    from your_project_name.llm import ClaudeClient
 
     ClaudeClient().chat("Hi")
     assert "system" not in mock_anthropic.messages.create.call_args.kwargs
@@ -111,7 +72,7 @@ def test_chat_with_tracking_returns_usage(mock_anthropic: MagicMock) -> None:
         _text_block("ok"), usage=usage
     )
 
-    from your_project_name.llm import ClaudeClient  # noqa: PLC0415
+    from your_project_name.llm import ClaudeClient
 
     text, stats = ClaudeClient().chat_with_tracking("Hi")
     assert text == "ok"
@@ -130,7 +91,7 @@ def test_chat_with_tools_returns_tool_calls(mock_anthropic: MagicMock) -> None:
         _tool_block("get_weather", {"city": "Tokyo"}, tool_id="tool_001"),
     )
 
-    from your_project_name.llm import ClaudeClient  # noqa: PLC0415
+    from your_project_name.llm import ClaudeClient
 
     _, calls = ClaudeClient().chat_with_tools("Weather in Tokyo?")
     assert calls == [
@@ -143,7 +104,7 @@ def test_continue_with_tool_results_sends_tool_result_block(
 ) -> None:
     mock_anthropic.messages.create.return_value = _message(_text_block("Sunny, 22C."))
 
-    from your_project_name.llm import ClaudeClient  # noqa: PLC0415
+    from your_project_name.llm import ClaudeClient
 
     assistant_content = [_tool_block("get_weather", {"city": "Tokyo"}, "tool_42")]
     reply = ClaudeClient().continue_with_tool_results(
@@ -161,8 +122,8 @@ def test_continue_with_tool_results_sends_tool_result_block(
 def test_chat_with_tools_passes_tool_definitions(mock_anthropic: MagicMock) -> None:
     mock_anthropic.messages.create.return_value = _message(_text_block("ok"))
 
-    from your_project_name.llm import ClaudeClient  # noqa: PLC0415
-    from your_project_name.schemas import ToolDefinition  # noqa: PLC0415
+    from your_project_name.llm import ClaudeClient
+    from your_project_name.schemas import ToolDefinition
 
     tool = ToolDefinition(
         name="ping",
@@ -177,7 +138,7 @@ def test_chat_with_tools_passes_tool_definitions(mock_anthropic: MagicMock) -> N
 def test_chat_with_no_tools_omits_tools_key(mock_anthropic: MagicMock) -> None:
     mock_anthropic.messages.create.return_value = _message(_text_block("ok"))
 
-    from your_project_name.llm import ClaudeClient  # noqa: PLC0415
+    from your_project_name.llm import ClaudeClient
 
     ClaudeClient().chat_with_tools("Hi")
     assert "tools" not in mock_anthropic.messages.create.call_args.kwargs
@@ -195,7 +156,7 @@ def test_stream_chat_yields_chunks(mock_anthropic: MagicMock) -> None:
     mock_stream.text_stream = iter(["Hello", ", ", "world!"])
     mock_anthropic.messages.stream.return_value = mock_stream
 
-    from your_project_name.llm import ClaudeClient  # noqa: PLC0415
+    from your_project_name.llm import ClaudeClient
 
     chunks = list(ClaudeClient().stream_chat("Hi"))
     assert "".join(chunks) == "Hello, world!"
@@ -214,7 +175,7 @@ def test_chat_with_thinking_returns_thinking_and_text(
         _text_block("Hello!"),
     )
 
-    from your_project_name.llm import ClaudeClient  # noqa: PLC0415
+    from your_project_name.llm import ClaudeClient
 
     thinking, response = ClaudeClient().chat_with_thinking("Hi")
     assert thinking == "I should say hello."
@@ -224,7 +185,7 @@ def test_chat_with_thinking_returns_thinking_and_text(
 def test_chat_with_thinking_sets_thinking_param(mock_anthropic: MagicMock) -> None:
     mock_anthropic.messages.create.return_value = _message(_text_block("ok"))
 
-    from your_project_name.llm import ClaudeClient  # noqa: PLC0415
+    from your_project_name.llm import ClaudeClient
 
     ClaudeClient().chat_with_thinking("Hi", budget_tokens=3000)
     kwargs = mock_anthropic.messages.create.call_args.kwargs
@@ -238,7 +199,7 @@ def test_chat_concatenates_multiple_text_blocks(mock_anthropic: MagicMock) -> No
         _text_block("world!"),
     )
 
-    from your_project_name.llm import ClaudeClient  # noqa: PLC0415
+    from your_project_name.llm import ClaudeClient
 
     assert ClaudeClient().chat("Hi") == "Hello, world!"
 
@@ -253,7 +214,7 @@ def test_chat_with_thinking_concatenates_multiple_blocks(
         _text_block("answer B"),
     )
 
-    from your_project_name.llm import ClaudeClient  # noqa: PLC0415
+    from your_project_name.llm import ClaudeClient
 
     thinking, response = ClaudeClient().chat_with_thinking("Hi")
     assert thinking == "first thought; second thought"
@@ -268,7 +229,7 @@ def test_chat_with_thinking_concatenates_multiple_blocks(
 def test_conversation_accumulates_history(mock_anthropic: MagicMock) -> None:
     mock_anthropic.messages.create.return_value = _message(_text_block("Hi there!"))
 
-    from your_project_name.llm import ConversationClient  # noqa: PLC0415
+    from your_project_name.llm import ConversationClient
 
     conv = ConversationClient()
     conv.send("Hello")
@@ -280,7 +241,7 @@ def test_conversation_accumulates_history(mock_anthropic: MagicMock) -> None:
 def test_conversation_reset_clears_history(mock_anthropic: MagicMock) -> None:
     mock_anthropic.messages.create.return_value = _message(_text_block("ok"))
 
-    from your_project_name.llm import ConversationClient  # noqa: PLC0415
+    from your_project_name.llm import ConversationClient
 
     conv = ConversationClient()
     conv.send("Hello")
@@ -291,7 +252,7 @@ def test_conversation_reset_clears_history(mock_anthropic: MagicMock) -> None:
 def test_conversation_sends_full_history(mock_anthropic: MagicMock) -> None:
     mock_anthropic.messages.create.return_value = _message(_text_block("ok"))
 
-    from your_project_name.llm import ConversationClient  # noqa: PLC0415
+    from your_project_name.llm import ConversationClient
 
     conv = ConversationClient()
     conv.send("First")
@@ -334,7 +295,7 @@ def test_missing_anthropic_raises_import_error(
 
 
 def test_tool_definition_to_tool() -> None:
-    from your_project_name.schemas import ToolDefinition  # noqa: PLC0415
+    from your_project_name.schemas import ToolDefinition
 
     tool = ToolDefinition(
         name="ping",
@@ -349,7 +310,7 @@ def test_tool_definition_to_tool() -> None:
 
 
 def test_structured_response_from_text() -> None:
-    from your_project_name.schemas import StructuredResponse  # noqa: PLC0415
+    from your_project_name.schemas import StructuredResponse
 
     class Summary(StructuredResponse):
         title: str
