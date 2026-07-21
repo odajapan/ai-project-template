@@ -139,7 +139,16 @@ These apply to every agent, unconditionally:
   commit a red tree
 - Open PR with `gh pr create`; body must follow `.github/pull_request_template.md`
   (summary, motivation, key changes, `make check` output, verification steps)
-- **Never merge** — humans run `gh pr merge`
+- **Merging is human-initiated, not autonomous.** In an interactive
+  session, when the human says a PR is ready (e.g. via `/land`), Claude
+  may run `gh pr merge`. The authoritative gate is **GitHub branch
+  protection** (required CI + review — see `docs/branch-protection.md`),
+  not the local permission rules. **Autonomous runs
+  (`--dangerously-skip-permissions`) must never merge** — open the PR and
+  stop.
+- **Base every PR on `main`.** Do not stack a PR on a sibling feature
+  branch — when that base branch is deleted on merge, GitHub auto-closes
+  the child PR instead of retargeting it.
 
 ---
 
