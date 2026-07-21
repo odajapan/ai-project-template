@@ -31,10 +31,11 @@ requirements: test_environment
 data:
 	$(PYTHON_INTERPRETER) src/your_project_name/data/make_dataset.py data/raw data/processed
 
-## Delete all compiled Python files
+## Delete all compiled Python files and build metadata
 clean:
 	find . -type f -name "*.py[co]" -delete
 	find . -type d -name "__pycache__" -delete
+	find . -type d -name "*.egg-info" -not -path "./.claude/*" -exec rm -r {} +
 
 ## Lint using ruff
 lint:
