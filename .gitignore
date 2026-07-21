@@ -100,3 +100,13 @@ target/
 
 # MCP server config (may contain credentials)
 .mcp.json
+
+# Node / web workspace
+node_modules/
+web/dist/
+web/build/
+web/.next/
+web/coverage/
+*.tsbuildinfo
+.env.local
+.env.*.local

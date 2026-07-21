@@ -48,6 +48,7 @@ examples/          # Runnable scripts: simple_chat / agent_loop / structured_ext
     notebooks.md          # notebooks/**/*.ipynb conventions
     secrets.md            # .env, **/secrets/** guards
     testing.md            # tests/**, src/**
+    web.md                # web/** TypeScript workspace conventions
   skills/          # Reference docs — mention by name to load
     agentic-engineering.md  # Claude agent patterns: tool use, loops, subagents
     api-design.md           # REST API design (tool-agnostic)

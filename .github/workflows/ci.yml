@@ -30,3 +30,43 @@ jobs:
 
       - name: Run lint, type checks, and tests
         run: make check
+
+  # Runs only when the repo has a web/ workspace; otherwise every step
+  # is skipped and the job still reports green, so it is safe to mark
+  # as a required check. Job-level `if: hashFiles(...)` cannot be used
+  # here — it evaluates before checkout and is always empty.
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Detect web workspace
+        id: detect
+        run: echo "exists=$([ -f web/package.json ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+      - name: Set up pnpm
+        if: steps.detect.outputs.exists == 'true'
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        if: steps.detect.outputs.exists == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+
+      - name: Install dependencies
+        if: steps.detect.outputs.exists == 'true'
+        working-directory: web
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint, typecheck, test, build
+        if: steps.detect.outputs.exists == 'true'
+        working-directory: web
+        run: |
+          pnpm lint
+          pnpm typecheck
+          pnpm test
+          pnpm build
