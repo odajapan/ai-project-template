@@ -1,4 +1,4 @@
-.PHONY: clean data lint requirements sync_data_to_s3 sync_data_from_s3 test format check typecheck precommit activate hooks
+.PHONY: clean data lint requirements sync_data_to_s3 sync_data_from_s3 test coverage format check typecheck precommit activate hooks
 
 #################################################################################
 # GLOBALS                                                                       #
@@ -91,6 +91,10 @@ test_environment:
 ## Run tests
 test:
 	pytest
+
+## Run tests with a coverage report
+coverage:
+	pytest --cov=src --cov-report=term-missing
 
 ## Run linting, type checks, and tests
 check: lint typecheck test

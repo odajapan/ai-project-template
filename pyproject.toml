@@ -33,6 +33,7 @@ claude = [
 # Core development tools (lint/test/format/type-check/pre-commit)
 dev = [
   "pytest",
+  "pytest-cov",
   "ruff",
   "coverage",
   "mypy",
@@ -95,12 +96,15 @@ package-dir = {"" = "src"}
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+your_project_name = ["py.typed"]
+
 [tool.ruff]
 line-length = 88
 target-version = "py312"
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I", "UP"]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "C4", "RUF"]
 ignore = ["E203"]
 mccabe.max-complexity = 10
 
