@@ -21,7 +21,7 @@ dependencies = [
   "numpy",
   "pandas",
   "tqdm",
-  "pydantic>=2,<3",
+  "pydantic>=2.13.4,<3",
 ]
 
 [project.optional-dependencies]
