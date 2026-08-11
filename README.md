@@ -12,6 +12,11 @@ the placeholder in one shot:
 ./scripts/rename_project.sh my_new_project
 ```
 
+Then, before starting your first feature, walk through
+[docs/TEMPLATE_INIT.md](docs/TEMPLATE_INIT.md) (or run `/init-from-template`
+in Claude Code) to prune the scaffolding this project doesn't need and
+re-anchor the docs.
+
 ---
 
 ## Getting started

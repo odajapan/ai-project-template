@@ -63,6 +63,9 @@ python examples/simple_chat.py         # runnable example
 
 Slash commands (run inside Claude Code):
 
+- `/init-from-template <name>` — first-run checklist: adapt the template
+  to this project before the first feature task (see
+  `docs/TEMPLATE_INIT.md`)
 - `/llm-test` — verify Claude API connectivity
 - `/add-tool <name>` — scaffold a new ToolDefinition + handler + test
 - `/new-rule <name>` — create a path-scoped rule under `.claude/rules/`
