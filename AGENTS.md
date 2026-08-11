@@ -25,7 +25,7 @@ providers are wired in. Adding another provider is a deliberate, scoped change.
 
 ```bash
 pip install -e ".[dev,claude]"   # or: make requirements
-cp .env.example .env             # then fill in ANTHROPIC_API_KEY
+cp env.example .env              # then fill in ANTHROPIC_API_KEY
 ```
 
 Python 3.12+ required. Never commit `.env`.
@@ -111,7 +111,9 @@ These apply to every agent, unconditionally:
 - Never write secrets (`ANTHROPIC_API_KEY`, cloud tokens, DB passwords) into source,
   commits, or logs — use placeholders in examples
 - `data/raw/` is **immutable** — no edits, moves, or deletions
-- Never overwrite `.env`; `.env.example` may be edited
+- Never read or write `.env` / `.env.*` / `secrets/**`. `env.example` is an
+  ordinary committed file — read it before editing and match its formatting
+  (`KEY=value`, no indentation)
 - Never delete existing files under `models/`
 - No `git push --force`, `git reset --hard origin/*`, or `git rebase -i` against
   published history

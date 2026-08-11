@@ -32,7 +32,7 @@ A Python 3.12+ project scaffold pre-wired for Claude AI development:
    find . -type f | xargs grep -l "your_project_name" | head -20
    ```
 2. Update `pyproject.toml`: `name`, `[project.scripts]` entry point.
-3. `cp .env.example .env` and fill in `ANTHROPIC_API_KEY`.
+3. `cp env.example .env` and fill in `ANTHROPIC_API_KEY`.
 4. `make requirements` to install in editable mode.
 5. `make check` — should be green before writing any code.
 6. `/llm-test` inside Claude Code to verify API connectivity.

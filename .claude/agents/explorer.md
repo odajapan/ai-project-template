@@ -27,8 +27,9 @@ git or `gh`.
 
 ## Safety summary (inherited)
 
-Never read `.env*`, anything under `data/raw/`, or anything under
-`secrets/`. Do not execute git, `gh`, or shell-mutating commands.
+Never read `.env` / `.env.*` (env.example is fine), anything under
+`data/raw/`, or anything under `secrets/`. Do not execute git, `gh`, or
+shell-mutating commands.
 
 ## How to report
 

@@ -31,7 +31,7 @@ def _require_api_key() -> None:
     if not os.getenv("ANTHROPIC_API_KEY"):
         raise click.UsageError(
             "ANTHROPIC_API_KEY is not set. "
-            "Copy .env.example to .env and fill it in, "
+            "Copy env.example to .env and fill it in, "
             "or export the variable in your shell."
         )
 

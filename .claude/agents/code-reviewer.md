@@ -21,15 +21,16 @@ modify files and never run shell-mutating, git, or `gh` commands.
   `anthropic.Anthropic`? Real-API tests should live in
   `tests/integration/`, not the default suite.
 - **Security.** No hard-coded secrets, no logging of API keys, no
-  writes under `data/raw/`, no reads of `.env*`.
+  writes under `data/raw/`, no reads of `.env` / `.env.*` (env.example is fine).
 - **Autonomous-run compliance.** Branch is `claude/*`, commits follow
   Conventional Commits, no edits to forbidden paths, scope stays
   within what was declared in `/start-task`.
 
 ## Safety summary (inherited)
 
-Never read `.env*` or anything under `data/raw/` or `secrets/`. Do
-not run git, `gh`, or any shell-mutating commands. Report findings
+Never read `.env` / `.env.*` (env.example is fine) or anything under
+`data/raw/` or `secrets/`. Do not run git, `gh`, or any shell-mutating
+commands. Report findings
 only — never apply fixes; defer all edits to the `implementer`
 subagent or the main session.
 

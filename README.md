@@ -58,7 +58,7 @@ docker run --rm -it -v "$(pwd):/app" your_project_name:dev bash
 ### 5. Environment variables
 
 ```bash
-cp .env.example .env
+cp env.example .env
 # Fill in ANTHROPIC_API_KEY and any other values
 ```
 
@@ -130,7 +130,7 @@ Slash commands available inside Claude Code:
 ├── requirements.txt       ← Convenience wrapper (installs dev extras via pyproject.toml)
 ├── environment.yml        ← Conda environment definition
 ├── Dockerfile
-├── .env.example           ← Environment variable template
+├── env.example            ← Environment variable template
 ├── .claude/
 │   ├── CLAUDE.md          ← Template baseline instructions for Claude Code
 │   ├── settings.json      ← Claude Code permissions and hooks

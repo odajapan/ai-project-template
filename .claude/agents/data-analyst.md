@@ -36,9 +36,9 @@ approximate sizes/row counts, key columns, and known pitfalls
 ## Safety summary (inherited)
 
 `data/raw/` is immutable — never write, move, or delete there, and
-never write anywhere under `data/`. Never read `.env*` or anything
-under `secrets/`. Do not execute git, `gh`, or shell-mutating
-commands.
+never write anywhere under `data/`. Never read `.env` / `.env.*`
+(env.example is fine) or anything under `secrets/`. Do not execute
+git, `gh`, or shell-mutating commands.
 
 ## How to report
 
