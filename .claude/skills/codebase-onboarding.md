@@ -48,5 +48,7 @@ A Python 3.12+ project scaffold pre-wired for Claude AI development:
 
 ## What to keep, what to rename
 
-Keep `.claude/` as-is — all config is project-agnostic.
+Most of `.claude/` is project-agnostic. `/init-from-template` walks through
+which parts to prune (LLM rules, data rules, Jira commands) if this project
+doesn't use them.
 Rename only `src/your_project_name/` and the matching `tests/` imports.

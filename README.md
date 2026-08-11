@@ -165,7 +165,8 @@ Slash commands available inside Claude Code:
 │   ├── daily_report.py    ← Lists Jira tickets resolved on a given day
 │   └── rename_project.sh
 │
-├── data/
+├── data/                  ← Shipped as an empty skeleton (.gitkeep only);
+│   │                        contents are gitignored except .gitkeep
 │   ├── raw/               ← Original immutable data
 │   ├── interim/           ← Intermediate transformed data
 │   ├── processed/         ← Final canonical datasets

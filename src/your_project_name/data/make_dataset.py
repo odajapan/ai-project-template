@@ -21,8 +21,9 @@ logger = logging.getLogger(__name__)
 
 def process(raw_dir: Path, processed_dir: Path) -> None:
     """Read files from *raw_dir* and write results to *processed_dir*."""
+    raw_dir.mkdir(parents=True, exist_ok=True)
     processed_dir.mkdir(parents=True, exist_ok=True)
-    raw_files = list(raw_dir.iterdir()) if raw_dir.exists() else []
+    raw_files = [p for p in raw_dir.iterdir() if p.name != ".gitkeep"]
 
     if not raw_files:
         logger.info("No raw files found in %s — nothing to process.", raw_dir)

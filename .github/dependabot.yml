@@ -4,6 +4,15 @@ updates:
     directory: "/"
     schedule:
       interval: weekly
+    # This is a template with no lockfile. Raising *version floors* in
+    # pyproject.toml over-constrains every downstream consumer, so ignore
+    # bumps for optional-extra packages that no template code imports.
+    ignore:
+      - dependency-name: "torch"
+      - dependency-name: "torchvision"
+      - dependency-name: "opencv-python"
+      - dependency-name: "pillow"
+      - dependency-name: "setuptools"
 
   - package-ecosystem: github-actions
     directory: "/"

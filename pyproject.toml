@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=83.0.0", "wheel"]
+requires = ["setuptools>=64", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -78,12 +78,13 @@ dashboard = [
   "uvicorn[standard]",
 ]
 
-# Vision / CV related extras
+# Vision / CV related extras. No version floors: nothing in src/ imports
+# these, so pinning a minimum here only over-constrains downstream projects.
 vision = [
-  "torch>=2.13.0",
-  "torchvision>=0.15.0",
-  "opencv-python>=5.0.0.93",
-  "pillow>=12.3.0",
+  "torch",
+  "torchvision",
+  "opencv-python",
+  "pillow",
 ]
 
 # BigQuery related extras
