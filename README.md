@@ -22,10 +22,11 @@ the placeholder in one shot:
 
 ```bash
 pip install uv          # or: brew install uv
-uv pip install -e .[dev]
+uv pip install -e ".[dev,claude,jira]"
 
-# Add optional extras as needed:
-# uv pip install -e .[dev,notebook,viz,cloud,claude]
+# Heavier data-science extras (notebook/viz/docs/cloud), if this project
+# needs them:
+# uv pip install -e ".[dev,claude,jira,notebook,viz,docs,cloud]"
 ```
 
 ### 2. pip / venv
@@ -34,10 +35,11 @@ uv pip install -e .[dev]
 python3 -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install --upgrade pip
-pip install -e .[dev]
+pip install -e ".[dev,claude,jira]"
 
-# Add optional extras as needed:
-# pip install -e .[dev,notebook,viz,cloud,claude]
+# Heavier data-science extras (notebook/viz/docs/cloud), if this project
+# needs them:
+# pip install -e ".[dev,claude,jira,notebook,viz,docs,cloud]"
 ```
 
 ### 3. Conda
@@ -45,7 +47,7 @@ pip install -e .[dev]
 ```bash
 conda env create -f environment.yml
 conda activate your_project_name
-pip install -e .[dev]
+pip install -e ".[dev,claude,jira]"
 ```
 
 ### 4. Docker
@@ -59,7 +61,8 @@ docker run --rm -it -v "$(pwd):/app" your_project_name:dev bash
 
 ```bash
 cp env.example .env
-# Fill in ANTHROPIC_API_KEY and any other values
+# ANTHROPIC_API_KEY is only needed for the LLM layer (llm.py, ask/chat,
+# examples/) — fill it in if this project uses it, otherwise leave it unset.
 ```
 
 ### 6. Pre-commit hooks (optional)
@@ -82,7 +85,8 @@ make hooks
 ## Common commands
 
 ```bash
-make requirements   # Install project in editable mode with dev + common extras
+make requirements   # Install project in editable mode with the canonical extras (dev,claude,jira)
+make requirements-all  # ...plus the heavier data-science extras (notebook,viz,docs,cloud)
 make check          # Lint (ruff) + type check (mypy) + tests (pytest)
 make lint           # Run ruff check over src/ and tests/
 make format         # Format with ruff
@@ -205,7 +209,7 @@ uv pip install -e .[dev,claude,notebook,viz]
 
 1. **Adding dependencies** — edit `pyproject.toml`, then reinstall:
    ```bash
-   uv pip install -e .[dev]
+   uv pip install -e ".[dev,claude,jira]"
    ```
 
 2. **Lockfiles** — generate with uv for fully reproducible environments:
@@ -228,7 +232,9 @@ session being able to do anything genuinely dangerous. The guardrails:
   conditions.
 - `.claude/settings.json` — `allow`/`deny` lists for the everyday
   autonomous-run commands; explicit denies for force push, push to
-  `main`, `gh pr merge`, and reads of `.env`.
+  `main`, `git reset --hard`, and reads *or writes* of `.env`. Merging
+  is not enforced by a deny rule — see "Human merges" below and
+  `docs/branch-protection.md` for the actual gate.
 - `.claude/rules/data-raw-immutable.md`, `secrets.md`, `notebooks.md` —
   path-scoped guards that activate when matching files are in scope.
 - `.githooks/pre-commit` and `.githooks/pre-push` — refuse direct

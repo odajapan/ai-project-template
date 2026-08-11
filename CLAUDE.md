@@ -11,11 +11,13 @@
 (e.g. `claude/harden-for-autonomous-runs`).
 
 **Autonomous runs** (`--dangerously-skip-permissions` or unattended sessions):
-the guardrails in `AGENTS.md` are enforced by `.claude/settings.json` deny rules —
-they block `gh pr merge`, force-push, push to `main`, direct `.env` reads, and
-destructive `rm -rf` of `data/raw/`, `models/`, `.git`. Use `/start-task` to cut
-the branch and declare scope; use `/finish-task` to run `make check`, push, and
-open the PR.
+the guardrails in `AGENTS.md` are backed by `.claude/settings.json` deny rules —
+force-push, push to `main`/`master`, `git reset --hard`, destructive `rm -rf`,
+and reads *or writes* of real `.env` files and `secrets/`. **Merging is not
+blocked by a deny rule** — the authoritative gate is GitHub branch protection
+(`docs/branch-protection.md`). Autonomous runs must open the PR and stop. Use
+`/start-task` to cut the branch and declare scope; use `/finish-task` to run
+`make check`, push, and open the PR.
 
 ## Session hygiene (/clear suggestions)
 

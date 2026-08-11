@@ -21,8 +21,8 @@ RUN pip install uv
 # Copy project files into the image
 COPY . .
 
-# Install the project plus development and common DS extras
-RUN uv pip install --system -e .[dev,notebook,viz,docs,cloud]
+# Install the project with the canonical extras (see AGENTS.md Setup)
+RUN uv pip install --system -e ".[dev,claude,jira]"
 
 # Default to an interactive shell; override CMD/ENTRYPOINT as needed in projects
 CMD ["bash"]

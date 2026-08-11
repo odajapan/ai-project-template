@@ -1,8 +1,5 @@
 {
-  "$comment": "Personal overrides for Claude Code. Copy to settings.local.json (gitignored).",
-  "env": {
-    "ANTHROPIC_API_KEY": "sk-ant-..."
-  },
+  "$comment": "Personal overrides for Claude Code. Copy to settings.local.json (gitignored). The Claude Code harness authenticates via `claude login` — do not put ANTHROPIC_API_KEY here, that silently switches the harness to API billing. The application reads ANTHROPIC_API_KEY from .env (see env.example). To re-enable curl locally, add \"Bash(curl:*)\" to permissions.allow below; for real egress control use sandbox.network.allowedDomains instead.",
   "permissions": {
     "allow": [
       "Bash(open:*)"

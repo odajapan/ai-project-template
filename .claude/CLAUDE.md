@@ -99,7 +99,8 @@ Notes:
 
 ## Quick Start with Claude
 
-After `pip install -e .[claude]` and setting `ANTHROPIC_API_KEY`:
+After `make requirements` (or `pip install -e ".[dev,claude,jira]"`) and
+setting `ANTHROPIC_API_KEY` in `.env`:
 
 ```bash
 your_project_name ask "summarise prompt caching in one sentence"

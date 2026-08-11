@@ -25,8 +25,8 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v7
 
-      - name: Install project with dev extras
-        run: uv pip install --system -e .[dev,jira]
+      - name: Install project with canonical extras
+        run: uv pip install --system -e ".[dev,claude,jira]"
 
       - name: Run lint, type checks, and tests
         run: make check
