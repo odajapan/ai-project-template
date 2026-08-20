@@ -46,7 +46,12 @@ them elsewhere (Makefile targets, `AGENTS.md` Commands table,
 
 1. Rewrite `env.example` for this project's real variables. **Read it
    first** — never append blind. Keep the format: `KEY=value` at column 0,
-   no indentation, `#` comments (see `.claude/rules/secrets.md`).
+   no indentation, `#` comments (see `.claude/rules/secrets.md`). Enforced:
+   `tests/test_repo_consistency.py::test_env_example_reviewed_after_template_rename`
+   fails `make check` once `pyproject.toml` is renamed if `env.example`
+   still matches the untouched template default byte-for-byte. If the
+   template defaults are genuinely correct as-is, add a comment
+   acknowledging the review instead of leaving the file untouched.
 2. Trim `AGENTS.md` §Commands to targets that actually exist after Phase 1.
 3. Refresh `.claude/CLAUDE.md` "Where things are" if entry points moved.
 4. Rewrite `README.md` for this project.
