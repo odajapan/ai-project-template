@@ -24,8 +24,24 @@ suggested_sequence:
 # /init-from-template — adapt the template to this project
 
 Read `docs/TEMPLATE_INIT.md` and execute its three phases in order. The
-argument `$ARGUMENTS` (if given) is the new project name for Phase 0;
-otherwise ask for it.
+argument `$ARGUMENTS` (if given) is the new project name for Phase 0.
+Otherwise, derive a default suggestion from the repository directory name
+and confirm it with the human rather than asking with no starting point:
+
+```bash
+name_guess=$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)" \
+  | tr '[:upper:]' '[:lower:]' \
+  | sed -E 's/[^a-z0-9]+/_/g; s/^[^a-z]+//; s/_+$//')
+```
+
+If `name_guess` is non-empty and matches `^[a-z][a-z0-9_]*$`, present it as
+the default and ask the human to confirm or override (e.g. via the question
+tool available in this session: "Use `<name_guess>` as the project name, or
+something else?"). If it's empty or invalid (directory name was all digits,
+symbols, etc.), fall back to asking outright with no suggestion. Either way,
+**never run the rename script on a guessed name without the human
+confirming it first** — a repo directory name is rarely an intentional
+package-name decision.
 
 This task cuts its own branch — it does not require `/start-task` first,
 and it is **exempt from `/start-task`'s ">3 files / >500 lines" stop
