@@ -51,7 +51,8 @@ Steps:
 
    Stop conditions:
      - >3 files or >500 lines added beyond the in-scope set
-     - any change to data/raw/, models/, or .env*
+     - any change to data/raw/, models/, or a real env file (.env, .env.local,
+       …). Editing env.example is in scope.
      - tests fail in a way I cannot diagnose in 2 attempts
    ```
 

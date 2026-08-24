@@ -111,7 +111,7 @@ Use the `Agent` tool to spin up a subagent for independent work:
 Stop conditions belong in the subagent prompt, not assumed:
 ```
 Stop and report if: the change exceeds 3 files, tests fail twice,
-or any write to data/raw/ or .env* would be required.
+or any write to data/raw/ or a real .env file would be required.
 ```
 
 ## Prompt engineering rules

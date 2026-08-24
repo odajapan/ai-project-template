@@ -6,6 +6,11 @@ paths:
 
 # Data Pipeline Rules
 
+Applies only to projects with a data pipeline. The template ships `data/`
+as an empty skeleton (`.gitkeep` only — see `.gitignore`); if this project
+has no pipeline, delete `data/`, `src/**/data/`, `notebooks/`, and this rule
+(see `docs/TEMPLATE_INIT.md` / `/init-from-template`).
+
 ## Directory Convention
 
 | Path | Purpose |

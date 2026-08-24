@@ -4,72 +4,25 @@ This file is the template-provided baseline for Claude Code.
 Project-specific instructions go in `./CLAUDE.md` at the repo root.
 
 Portable baseline (commands, code conventions, testing, security, git workflow)
-lives in `../AGENTS.md` — read that first.
-
-@README.md
+lives in `../AGENTS.md` — read that first. Project-specific overview lives in
+the repo root `README.md` — read it on demand, it is not auto-loaded.
 
 ---
 
-## Project Structure
+## Where things are
 
-```
-src/your_project_name/
-  cli.py           # Click CLI: hello / ask / chat (last two call Claude)
-  utils.py         # Shared utility helpers
-  llm.py           # Claude API wrapper (caching, streaming, tool use, multi-turn)
-  schemas.py       # Pydantic models for tool definitions and structured output
-  exceptions.py    # Project-level exception hierarchy
-  data/
-    make_dataset.py  # Data pipeline entry point
-tests/             # pytest tests (mirror src/ structure)
-  scripts/         # tests for scripts/ (jira_task.py helpers)
-examples/          # Runnable scripts: simple_chat / agent_loop / structured_extraction
-scripts/           # Standalone CLI scripts (not part of the installable package)
-  jira_task.py     # Optional Jira <-> GitHub workflow: issue = branch = PR (see docs/JIRA_GITHUB_WORKFLOW.md)
-  daily_report.py  # Lists Jira tickets resolved on a given day
-  daily_report.sh  # Shell entry point for daily_report.py (sources ~/.config/jira/env)
-docs/
-  JIRA_GITHUB_WORKFLOW.md  # Setup + command reference for scripts/jira_task.py
-.claude/
-  CLAUDE.md        # This file — Claude Code baseline (harness-specific)
-  agents/          # Role-based subagents
-    code-reviewer.md   # Read-only PR/diff review (opus)
-    data-analyst.md    # Read-only data/ diagnostics with pandas/DuckDB (sonnet)
-    explorer.md        # Cheap read-only lookup (haiku)
-    implementer.md     # Edit-capable feature/refactor/test work (sonnet)
-    test-runner.md     # Run pytest/ruff and summarize pass/fail (haiku)
-    verifier.md        # Adversarial check of a single claim/finding (opus)
-  commands/        # Slash commands
-    llm-test.md    # /llm-test   — verify Claude API connectivity
-    add-tool.md    # /add-tool   — scaffold ToolDefinition + handler + test
-    new-rule.md    # /new-rule   — create a path-scoped rule
-    start-task.md  # /start-task — cut branch + declare scope
-    finish-task.md # /finish-task — checks + push + PR
-    land.md        # /land       — merge PR(s), retarget children, sync main, clean up
-    debug.md       # /debug      — diagnose and fix a Python error
-    add-example.md # /add-example — scaffold a runnable example script
-    worktree.md    # /worktree   — show commands to spin up an isolated worktree
-    jira.md        # /jira       — reference for the optional Jira <-> GitHub workflow
-    daily-report.md # /daily-report — list Jira tickets completed today
-  rules/           # Path-scoped rules (auto-loaded by file context)
-    data-pipeline.md      # src/**/data/**, notebooks/**
-    data-raw-immutable.md # data/raw/** immutability guard
-    llm-development.md    # src/**/llm.py, *client*.py, llm tests
-    notebooks.md          # notebooks/**/*.ipynb conventions
-    secrets.md            # .env, **/secrets/** guards
-    testing.md            # tests/**, src/**
-    web.md                # web/** TypeScript workspace conventions
-  skills/          # Reference docs — mention by name to load
-    agentic-engineering.md  # Claude agent patterns: tool use, loops, subagents
-    api-design.md           # REST API design (tool-agnostic)
-    claude-sdk.md           # ClaudeClient patterns: caching, streaming, tool use
-    codebase-onboarding.md  # Map of this template, which files to read first
-    error-handling.md       # Python error-handling conventions
-    eval-harness.md         # Testing LLM outputs: deterministic, LLM-as-judge, golden set
-    fastapi-patterns.md     # FastAPI router/Pydantic/ClaudeClient injection patterns
-    python-testing.md       # pytest conventions, mocks, coverage
-  settings.json    # Shared permissions, hooks, and model config
-```
+| Concern | Entry point |
+|---|---|
+| Portable agent baseline | `../AGENTS.md` (read first) |
+| Package source | `src/your_project_name/` — `cli.py` is the entry point |
+| Tests | `tests/` (mirrors `src/`) |
+| Gate | `make check` (see `Makefile`) |
+| Standalone scripts | `scripts/` (not part of the installed package) |
+
+Claude Code config under `.claude/`: `agents/`, `commands/`, `rules/`,
+`skills/`, `settings.json`. **Do not maintain a file list here — it goes
+stale.** To discover what exists, read each file's frontmatter
+`description`: `head -5 .claude/{agents,commands,rules,skills}/*.md`.
 
 ---
 
@@ -99,7 +52,8 @@ Notes:
 
 ## Quick Start with Claude
 
-After `pip install -e .[claude]` and setting `ANTHROPIC_API_KEY`:
+After `make requirements` (or `pip install -e ".[dev,claude,jira]"`) and
+setting `ANTHROPIC_API_KEY` in `.env`:
 
 ```bash
 your_project_name ask "summarise prompt caching in one sentence"
@@ -109,6 +63,9 @@ python examples/simple_chat.py         # runnable example
 
 Slash commands (run inside Claude Code):
 
+- `/init-from-template <name>` — first-run checklist: adapt the template
+  to this project before the first feature task (see
+  `docs/TEMPLATE_INIT.md`)
 - `/llm-test` — verify Claude API connectivity
 - `/add-tool <name>` — scaffold a new ToolDefinition + handler + test
 - `/new-rule <name>` — create a path-scoped rule under `.claude/rules/`
@@ -122,7 +79,7 @@ Slash commands (run inside Claude Code):
   see `docs/JIRA_GITHUB_WORKFLOW.md`
 - `/daily-report [--date YYYY-MM-DD]` — list Jira tickets completed on a day
 
-ySkills (reference docs — mention by name to load):
+Skills (reference docs — mention by name to load):
 
 - `claude-sdk` — ClaudeClient patterns: caching, streaming, tool use, multi-turn
 - `python-testing` — pytest conventions and mock patterns

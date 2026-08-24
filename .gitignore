@@ -57,8 +57,9 @@ docs/_build/
 # PyBuilder
 target/
 
-# DotEnv configuration
+# DotEnv configuration (env.example is the committed template)
 .env
+.env.*
 .envrc
 
 # Database
@@ -81,8 +82,16 @@ target/
 # Jupyter NB Checkpoints
 .ipynb_checkpoints/
 
-# exclude data from source control by default
-/data/
+# Exclude data from source control by default, but keep the directory
+# skeleton so `make data` works from a clean clone. These 4 lines interact —
+# do not reorder them, or datasets will start getting committed.
+/data/*
+!/data/raw/
+!/data/interim/
+!/data/processed/
+!/data/external/
+/data/*/*
+!/data/*/.gitkeep
 
 # Mac OS-specific storage files
 .DS_Store
@@ -108,5 +117,3 @@ web/build/
 web/.next/
 web/coverage/
 *.tsbuildinfo
-.env.local
-.env.*.local

@@ -1,4 +1,4 @@
-.PHONY: clean data lint requirements sync_data_to_s3 sync_data_from_s3 test coverage format check typecheck precommit activate hooks
+.PHONY: clean data lint requirements requirements-all sync_data_to_s3 sync_data_from_s3 test coverage format check typecheck precommit activate hooks
 
 #################################################################################
 # GLOBALS                                                                       #
@@ -11,6 +11,9 @@ PROJECT_NAME = your_project_name
 # Use the current environment's "python" by default (conda/venv friendly).
 # You can override this at invocation time, e.g. `make PYTHON_INTERPRETER=python3.11 requirements`.
 PYTHON_INTERPRETER = python
+# Canonical extras for this project. Every doc and CI job installs exactly
+# this set; override at invocation time, e.g. `make EXTRAS=dev requirements`.
+EXTRAS ?= dev,claude,jira
 
 ifeq (,$(shell which conda))
 HAS_CONDA=False
@@ -25,7 +28,11 @@ endif
 ## Install Python Dependencies (development environment)
 requirements: test_environment
 	$(PYTHON_INTERPRETER) -m pip install -U pip
-	$(PYTHON_INTERPRETER) -m pip install -e .[dev,claude,notebook,viz,docs,cloud]
+	$(PYTHON_INTERPRETER) -m pip install -e ".[$(EXTRAS)]"
+
+## Install with the heavier data-science extras as well
+requirements-all:
+	$(MAKE) EXTRAS=dev,claude,jira,notebook,viz,docs,cloud requirements
 
 ## Make Dataset
 data:

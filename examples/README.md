@@ -9,7 +9,7 @@ python examples/agent_loop.py
 python examples/structured_extraction.py
 ```
 
-All examples expect `ANTHROPIC_API_KEY` to be set (see `.env.example`).
+All examples expect `ANTHROPIC_API_KEY` to be set (see `env.example`).
 
 | Script | Demonstrates |
 |--------|--------------|

@@ -24,11 +24,16 @@ providers are wired in. Adding another provider is a deliberate, scoped change.
 ## Setup
 
 ```bash
-pip install -e ".[dev,claude]"   # or: make requirements
-cp .env.example .env             # then fill in ANTHROPIC_API_KEY
+pip install -e ".[dev,claude,jira]"   # or: make requirements
+cp env.example .env                   # only if this project uses the LLM layer
 ```
 
 Python 3.12+ required. Never commit `.env`.
+
+`ANTHROPIC_API_KEY` is required only for `src/your_project_name/llm.py`, the
+`ask`/`chat` CLI commands, and `examples/`. `make check` passes without it —
+unit tests mock `anthropic.Anthropic`. Projects with no LLM layer can delete
+the key and the LLM scaffolding entirely.
 
 ---
 
@@ -111,7 +116,9 @@ These apply to every agent, unconditionally:
 - Never write secrets (`ANTHROPIC_API_KEY`, cloud tokens, DB passwords) into source,
   commits, or logs — use placeholders in examples
 - `data/raw/` is **immutable** — no edits, moves, or deletions
-- Never overwrite `.env`; `.env.example` may be edited
+- Never read or write `.env` / `.env.*` / `secrets/**`. `env.example` is an
+  ordinary committed file — read it before editing and match its formatting
+  (`KEY=value`, no indentation)
 - Never delete existing files under `models/`
 - No `git push --force`, `git reset --hard origin/*`, or `git rebase -i` against
   published history

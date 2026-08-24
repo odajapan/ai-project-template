@@ -4,11 +4,11 @@
 #
 # All dependency definitions live in pyproject.toml (single source of truth).
 #
-# Default: install the project in editable mode with development tools only
-# (lightweight; notebooks/viz/docs/cloud/dashboard are not installed by default).
+# Default: install the project in editable mode with the canonical extras
+# (dev + claude + jira — same set as make requirements and CI; see AGENTS.md).
 
--e .[dev]
+-e .[dev,claude,jira]
 
-# Example for projects that use notebooks, visualization, docs, cloud tools,
-# and dashboards:
-# -e .[dev,notebook,viz,docs,cloud,dashboard]
+# Example for projects that also use notebooks, visualization, docs, cloud
+# tools, and dashboards:
+# -e .[dev,claude,jira,notebook,viz,docs,cloud,dashboard]

@@ -10,18 +10,6 @@
         "reports/"
       ]
     },
-    "sqlite": {
-      "$comment": "Query local SQLite databases",
-      "command": "npx",
-      "args": ["@modelcontextprotocol/server-sqlite", "data.db"]
-    },
-    "postgres": {
-      "$comment": "Connect to a PostgreSQL database",
-      "command": "npx",
-      "args": ["@modelcontextprotocol/server-postgres"],
-      "env": {
-        "POSTGRES_CONNECTION_STRING": "postgresql://user:pass@localhost:5432/dbname"
-      }
-    }
+    "$comment_db": "A SQL database server (sqlite/postgres/etc.) is a common addition here. The community-maintained servers change over time — check https://github.com/modelcontextprotocol/servers for the current recommended package before adding one; server-sqlite and server-postgres from the original reference set are archived."
   }
 }

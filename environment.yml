@@ -7,7 +7,7 @@ dependencies:
   - pip
   - pip:
       # Minimal install: project only.
-      # After activating, add dev tools and extras with:
-      #   pip install -e .[dev]
-      #   # or: pip install -e .[dev,claude,notebook,viz,docs,cloud]
+      # After activating, add dev tools and extras with the canonical set:
+      #   pip install -e ".[dev,claude,jira]"
+      #   # or: make requirements
       - "-e ."
