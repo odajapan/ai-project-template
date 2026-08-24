@@ -33,7 +33,12 @@ fi
 
 # Files to rewrite in place. Excludes this script itself (so OLD_NAME below
 # stays literal across repeated runs — see the idempotence check at the
-# bottom) and common lockfiles/build artifacts that should never be touched.
+# bottom), common lockfiles/build artifacts that should never be touched,
+# and tests/test_repo_consistency.py: its
+# test_env_example_reviewed_after_template_rename sentinel must stay
+# "your_project_name" regardless of the new project name, or the blind sed
+# below would rewrite the sentinel and the pyproject.toml name to the same
+# string, making the check's skip guard trivially true forever.
 FIND_FILES=(find . -type f
   \( -name "*.py" -o -name "*.rst" -o -name "*.md"
      -o -name "*.yml" -o -name "*.yaml" -o -name "*.txt"
@@ -52,6 +57,7 @@ FIND_FILES=(find . -type f
   ! -path "*/build/*"
   ! -path "*/htmlcov/*"
   ! -name "rename_project.sh"
+  ! -path "*/tests/test_repo_consistency.py"
   ! -name "package-lock.json"
   ! -name "pnpm-lock.yaml"
   ! -name "uv.lock"

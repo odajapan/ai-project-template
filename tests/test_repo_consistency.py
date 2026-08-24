@@ -72,6 +72,11 @@ def test_requirements_txt_default_extras_match_canonical() -> None:
 
 
 def test_env_example_reviewed_after_template_rename() -> None:
+    # This file is excluded from rename_project.sh's blind sed sweep
+    # (scripts/rename_project.sh FIND_FILES) specifically so this literal
+    # stays "your_project_name" after a rename — otherwise the sed would
+    # rewrite it to the same new name as pyproject.toml's, and the skip
+    # guard below would become trivially true forever.
     pyproject = (REPO_ROOT / "pyproject.toml").read_text()
     name_match = re.search(r'(?m)^name = "([^"]+)"', pyproject)
     assert name_match, "pyproject.toml has no [project] name field"
