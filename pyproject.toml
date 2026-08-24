@@ -27,7 +27,7 @@ dependencies = [
 [project.optional-dependencies]
 # Claude / Anthropic SDK (floor covers adaptive thinking + output_config)
 claude = [
-  "anthropic>=0.92",
+  "anthropic>=1.0.0",
 ]
 
 # Optional Jira <-> GitHub workflow tooling (scripts/jira_task.py, daily_report.py)
