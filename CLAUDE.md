@@ -19,6 +19,16 @@ blocked by a deny rule** — the authoritative gate is GitHub branch protection
 `/start-task` to cut the branch and declare scope; use `/finish-task` to run
 `make check`, push, and open the PR.
 
+**Network egress is not denied at the Bash-permission layer** (`curl`/`wget`
+were dropped from `.claude/settings.json` deny rules — `python:*` could reach
+the network unrestricted too, so the Bash deny was incomplete coverage, not
+real control). Unattended runs that need real egress control should configure
+a `sandbox.network.allowedDomains` allowlist — see the example and rationale
+in `.claude/settings.local.json.example`. There is no safe one-size-fits-all
+domain list for this template, so it is not enabled by default; set it
+deliberately per project before running autonomously somewhere exfiltration
+risk matters.
+
 ## Session hygiene (/clear suggestions)
 
 A long conversation carries the trial-and-error log of already-merged work into
