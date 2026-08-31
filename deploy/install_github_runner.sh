@@ -3,11 +3,13 @@
 # repo (one-time, per host). .github/workflows/deploy.yml runs
 # deploy_ec2.sh on this runner whenever main is merged.
 #
-# Usage (from your machine):
+# Usage (from your machine). The token is piped over stdin rather than
+# passed as an argument so it never shows up in `ps` output or shell
+# history on the deploy host:
 #   TOKEN=$(gh api -X POST \
 #     /repos/<org>/<repo>/actions/runners/registration-token --jq .token)
 #   ssh <deploy-host> \
-#     'bash ~/path/to/<repo>/deploy/install_github_runner.sh' "$TOKEN"
+#     'bash ~/path/to/<repo>/deploy/install_github_runner.sh' <<< "$TOKEN"
 #
 # To deregister:
 #   TOKEN=$(gh api -X POST .../actions/runners/remove-token --jq .token)
@@ -27,7 +29,11 @@ TARBALL_SHA256="04cf0be1aff4c3ec3554466c39124ca250e3effd8873bb7e8d68535aa9505d5d
 REPO_URL="$(git -C "${REPO_ROOT}" remote get-url origin | sed -E 's#\.git$##; s#^git@github\.com:#https://github.com/#')"
 RUNNER_DIR="${HOME}/actions-runner/your_project_name"
 RUNNER_NAME="your_project_name"
-TOKEN="${1:?registration token required (see header comment)}"
+TOKEN="$(cat)"
+if [ -z "${TOKEN}" ]; then
+  echo "registration token required on stdin (see header comment)" >&2
+  exit 1
+fi
 
 # Running as root would put the runner (and its service) under /root
 # instead of the intended user's home.

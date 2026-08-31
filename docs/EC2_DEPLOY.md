@@ -38,11 +38,12 @@ if a second push lands while the first one is still going through CI.
    request workflows**, require approval before running workflows from
    fork PRs. A self-hosted runner executes whatever a triggered workflow
    says, so an unapproved fork PR must never reach it.
-4. Register the runner:
+4. Register the runner. The token goes over stdin, not an argument, so it
+   never shows up in `ps` or shell history on the deploy host:
    ```bash
    TOKEN=$(gh api -X POST /repos/<org>/<repo>/actions/runners/registration-token --jq .token)
    ssh <deploy-host> \
-     'bash ~/path/to/<repo>/deploy/install_github_runner.sh' "$TOKEN"
+     'bash ~/path/to/<repo>/deploy/install_github_runner.sh' <<< "$TOKEN"
    ```
 5. Verify it's actually online before trusting it:
    ```bash

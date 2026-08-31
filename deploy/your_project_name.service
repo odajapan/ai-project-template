@@ -5,7 +5,10 @@
 # CWD-relative.
 #
 # TODO before this is real: point ExecStart at this project's actual entry
-# point, and adjust WorkingDirectory to the checkout path on the deploy host.
+# point, and adjust WorkingDirectory to the checkout path on the deploy host
+# -- ReadWritePaths below must be kept in sync with WorkingDirectory, or
+# ProtectHome=read-only will make the app's own checkout (data/, models/,
+# logs, a SQLite file) read-only to itself.
 
 [Unit]
 Description=your_project_name
@@ -22,6 +25,7 @@ Environment=PYTHONUNBUFFERED=1
 NoNewPrivileges=yes
 PrivateTmp=yes
 ProtectHome=read-only
+ReadWritePaths=/home/ubuntu/your_project_name
 
 [Install]
 WantedBy=multi-user.target

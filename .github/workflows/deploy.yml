@@ -15,7 +15,12 @@ name: Deploy
 # - The runner is persistent (non-ephemeral) and registered to this repo
 #   only. Because a self-hosted runner lets a fork PR's workflow execute
 #   arbitrary code on the host, Settings > Actions > Fork pull request
-#   workflows must require approval for this repo.
+#   workflows must require approval for this repo. The `deploy` job's
+#   `if:` also refuses any workflow_run whose head_repository isn't this
+#   repo -- otherwise a `workflow_run.branches: [ main ]` filter matches
+#   on the *triggering run's head branch*, not "merged into main", so an
+#   approved fork PR whose branch happens to be named `main` would
+#   otherwise pass it.
 # - The runner user has NOPASSWD sudo (deploy_ec2.sh restarts the service
 #   via sudo systemctl).
 # - The persistent checkout's origin uses passphrase-less auth (deploy
@@ -29,8 +34,6 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
-# This job never calls the GitHub API -- the pull uses the persistent
-# checkout's own auth.
 permissions: {}
 
 # Prevent overlapping deploys. Let an in-flight run finish; queue only the
@@ -41,10 +44,41 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  preflight:
+    # `runs-on: self-hosted` with no online runner just leaves the deploy
+    # job queued (GitHub lets a queued job sit for hours) rather than
+    # failing -- exactly the "looks deployed, never actually ran" failure
+    # this pattern exists to catch (see docs/EC2_DEPLOY.md). Fail loudly
+    # here, on a GitHub-hosted runner, before deploy tries to queue.
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      actions: read
+    steps:
+      - name: Verify a self-hosted runner is online
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          online=$(gh api "repos/${{ github.repository }}/actions/runners" \
+            --jq '[.runners[] | select(.status == "online")] | length')
+          if [ "${online}" -lt 1 ]; then
+            echo "::error::No online self-hosted runner registered for this repo. See deploy/install_github_runner.sh and docs/EC2_DEPLOY.md." >&2
+            exit 1
+          fi
+
   deploy:
-    # workflow_run only fires this on CI success; workflow_dispatch is an
-    # explicit manual decision, so it always runs.
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    needs: preflight
+    # workflow_run only fires this on CI success from this repo (not a
+    # fork -- see the comment above); workflow_dispatch is an explicit
+    # manual decision, so it always runs.
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: self-hosted
     timeout-minutes: 15
     env:

@@ -67,13 +67,15 @@ them elsewhere (Makefile targets, `AGENTS.md` Commands table,
    default and `.github/workflows/ci.yml` to match — keep them identical
    (`tests/test_repo_consistency.py` checks this).
 6. If Phase 1 kept the EC2 deploy scaffolding: `rename_project.sh` rewrites
-   the `SERVICE`/`CONDA_ENV` variables inside `deploy/deploy_ec2.sh`, but it
-   does not rename `deploy/your_project_name.service` itself (the same
-   category of file it warns about in its own "Not renamed" output, like
-   `env.example`). Rename that file to match `SERVICE` in `deploy_ec2.sh`
-   and fill in its real `ExecStart`/`WorkingDirectory`, then follow
-   `docs/EC2_DEPLOY.md` to register the runner on the host — this is the
-   step most likely to be skipped, and a `deploy.yml` with no registered
+   the `SERVICE`/`CONDA_ENV` variables inside `deploy/deploy_ec2.sh`, but
+   `.service` isn't in its extension filter, so `deploy/your_project_name.service`
+   gets neither renamed nor rewritten — its `Description`, `WorkingDirectory`,
+   and `ExecStart` all still say `your_project_name` (the same category of
+   file it warns about in its own "Not renamed" output, like `env.example`).
+   Rename that file to match `SERVICE` in `deploy_ec2.sh` and fill in its
+   real `Description`/`ExecStart`/`WorkingDirectory`/`ReadWritePaths`, then
+   follow `docs/EC2_DEPLOY.md` to register the runner on the host — this is
+   the step most likely to be skipped, and a `deploy.yml` with no registered
    runner behind it silently never deploys.
 7. `make check` — must be green.
 8. Commit as `chore: initialize project from template`.
