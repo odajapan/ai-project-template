@@ -17,9 +17,10 @@ below.
    `^[a-z][a-z0-9_]*$`. If the human hasn't already named the project,
    derive a default suggestion from the repository directory name
    (lowercase, non-alphanumeric runs collapsed to `_`, leading
-   non-letter characters stripped) and confirm it with the human —
-   accept it, or a different name — before running the script. Never
-   run the rename on a guessed name without confirmation: a repo
+   non-letter characters stripped, trailing underscores stripped) and
+   confirm it with the human — accept it, or a different name — before
+   running the script. Never run the rename on a guessed name without
+   confirmation: a repo
    directory name is rarely an intentional package-name decision.
 2. Update `pyproject.toml`: `name`, `description`, `authors`, and
    `[project.scripts]` if the CLI entry point name should change.
