@@ -1,0 +1,27 @@
+# systemd unit for your_project_name. Install:
+#   sudo cp deploy/your_project_name.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable your_project_name
+# WorkingDirectory must be the checkout root -- paths in the app are
+# CWD-relative.
+#
+# TODO before this is real: point ExecStart at this project's actual entry
+# point, and adjust WorkingDirectory to the checkout path on the deploy host.
+
+[Unit]
+Description=your_project_name
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/your_project_name
+ExecStart=/home/ubuntu/miniconda/envs/your_project_name/bin/python -m your_project_name.serve
+Restart=always
+RestartSec=3
+Environment=PYTHONUNBUFFERED=1
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectHome=read-only
+
+[Install]
+WantedBy=multi-user.target

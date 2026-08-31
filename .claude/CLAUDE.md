@@ -18,6 +18,7 @@ the repo root `README.md` — read it on demand, it is not auto-loaded.
 | Tests | `tests/` (mirrors `src/`) |
 | Gate | `make check` (see `Makefile`) |
 | Standalone scripts | `scripts/` (not part of the installed package) |
+| Long-lived service deploy (optional) | `docs/EC2_DEPLOY.md` |
 
 Claude Code config under `.claude/`: `agents/`, `commands/`, `rules/`,
 `skills/`, `settings.json`. **Do not maintain a file list here — it goes
