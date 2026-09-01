@@ -167,6 +167,22 @@ the PR back to the issue. Setup and full command reference:
 [docs/JIRA_GITHUB_WORKFLOW.md](docs/JIRA_GITHUB_WORKFLOW.md). This is
 purely additive — skip it entirely if the project doesn't use Jira.
 
+### Optional: EC2 self-hosted-runner deploy
+
+Projects that run as a long-lived service (a dashboard, an API) can
+auto-deploy on every merge to `main`: `deploy/deploy_ec2.sh` +
+`.github/workflows/deploy.yml`, triggered by a self-hosted GitHub Actions
+runner registered on the deploy host (`deploy/install_github_runner.sh`).
+CI must pass before deploy runs, and the deploy pins to the exact commit
+CI tested. Setup and the full runbook:
+[docs/EC2_DEPLOY.md](docs/EC2_DEPLOY.md). This is purely additive — skip
+it entirely if the project has no long-lived service to deploy.
+
+**The runner registration step is manual and easy to forget** — adding
+the workflow file alone does nothing; without a registered runner online,
+every merge just queues a `Deploy` run that never starts. Verify with
+`gh api /repos/<org>/<repo>/actions/runners` after setup.
+
 ---
 
 ## Scope & stop conditions

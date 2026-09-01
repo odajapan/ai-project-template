@@ -31,6 +31,22 @@ jobs:
       - name: Run lint, type checks, and tests
         run: make check
 
+  # Lints every workflow file's YAML *and* GitHub Actions expressions
+  # (e.g. `if:`/`needs:` mistakes like a job's own `if:` silently
+  # dropping the implicit success()-of-needs guard) -- ruff/mypy/pytest
+  # never touch .github/workflows/, so this is the only check that would
+  # have caught that class of bug before merge.
+  actionlint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Run actionlint
+        uses: docker://rhysd/actionlint:latest
+        with:
+          args: -color
+
   # Runs only when the repo has a web/ workspace; otherwise every step
   # is skipped and the job still reports green, so it is safe to mark
   # as a required check. Job-level `if: hashFiles(...)` cannot be used

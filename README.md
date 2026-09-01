@@ -181,7 +181,9 @@ Slash commands available inside Claude Code:
 ├── models/                ← Serialized models
 ├── reports/figures/       ← Generated figures
 ├── references/            ← Data dictionaries and manuals
-└── docs/                  ← Sphinx documentation
+├── docs/                  ← Sphinx documentation
+└── deploy/                ← Optional: EC2 self-hosted-runner deploy
+                              scripts (see docs/EC2_DEPLOY.md)
 ```
 
 ---

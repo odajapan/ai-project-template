@@ -1,0 +1,109 @@
+name: Deploy
+
+# Runs after CI succeeds on main, on a self-hosted runner living on the
+# deploy host itself (a red main is never deployed). Runner setup:
+# deploy/install_github_runner.sh -- see docs/EC2_DEPLOY.md.
+#
+# Two-step design: pull the persistent checkout first (so a PR that edits
+# the deploy scripts themselves takes effect in the same merge that ships
+# it), then run deploy_ec2.sh with the CI-tested SHA pinned via TESTED_SHA
+# -- it checks out that exact commit rather than pulling main, so a push
+# landing on main after CI finishes is never deployed ahead of its own CI
+# run.
+#
+# Host assumptions (see docs/EC2_DEPLOY.md):
+# - The runner is persistent (non-ephemeral) and registered to this repo
+#   only. Because a self-hosted runner lets a fork PR's workflow execute
+#   arbitrary code on the host, Settings > Actions > Fork pull request
+#   workflows must require approval for this repo. The `deploy` job's
+#   `if:` also refuses any workflow_run whose head_repository isn't this
+#   repo -- otherwise a `workflow_run.branches: [ main ]` filter matches
+#   on the *triggering run's head branch*, not "merged into main", so an
+#   approved fork PR whose branch happens to be named `main` would
+#   otherwise pass it.
+# - The runner user has NOPASSWD sudo (deploy_ec2.sh restarts the service
+#   via sudo systemctl).
+# - The persistent checkout's origin uses passphrase-less auth (deploy
+#   key/PAT). GIT_TERMINAL_PROMPT=0 makes a missing/expired credential
+#   fail fast instead of hanging on a prompt.
+
+on:
+  workflow_run:
+    workflows: [ CI ]
+    types: [ completed ]
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions: {}
+
+# Prevent overlapping deploys. Let an in-flight run finish; queue only the
+# latest pending one -- each deploy pins its own TESTED_SHA, so a queued
+# run still deploys exactly the commit its own CI run passed.
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  preflight:
+    # `runs-on: self-hosted` with no online runner just leaves the deploy
+    # job queued (GitHub lets a queued job sit for hours) rather than
+    # failing -- exactly the "looks deployed, never actually ran" failure
+    # this pattern exists to catch (see docs/EC2_DEPLOY.md). Fail loudly
+    # here, on a GitHub-hosted runner, before deploy tries to queue.
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      actions: read
+    steps:
+      - name: Verify a self-hosted runner is online
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          online=$(gh api "repos/${{ github.repository }}/actions/runners" \
+            --jq '[.runners[] | select(.status == "online")] | length')
+          if [ "${online}" -lt 1 ]; then
+            echo "::error::No online self-hosted runner registered for this repo. See deploy/install_github_runner.sh and docs/EC2_DEPLOY.md." >&2
+            exit 1
+          fi
+
+  deploy:
+    needs: preflight
+    # An explicit `if:` on a job replaces the implicit success()-of-needs
+    # guard entirely, so `needs: preflight` alone does NOT stop this job
+    # from running when preflight fails -- needs.preflight.result must be
+    # checked here too, or a failed preflight (no online runner) still
+    # lets this job queue forever on runs-on: self-hosted, which is
+    # exactly the silent-hang failure this pattern exists to catch.
+    #
+    # workflow_run only fires this on CI success from this repo (not a
+    # fork -- see the comment above); workflow_dispatch is an explicit
+    # manual decision, so it always runs.
+    if: |
+      needs.preflight.result == 'success' &&
+      (github.event_name == 'workflow_dispatch' ||
+       (github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.head_repository.full_name == github.repository))
+    runs-on: self-hosted
+    timeout-minutes: 15
+    env:
+      # TODO: absolute path of the persistent checkout on the deploy host.
+      CLONE: /home/ubuntu/your_project_name
+      GIT_TERMINAL_PROMPT: "0"
+    steps:
+      - name: Update clone
+        run: |
+          git -C "$CLONE" fetch origin --prune
+          git -C "$CLONE" checkout main
+          git -C "$CLONE" pull --ff-only
+
+      # TESTED_SHA is empty for workflow_dispatch -- deploy_ec2.sh then
+      # falls back to pulling the current branch tip instead of checking
+      # out a specific commit.
+      - name: Deploy
+        env:
+          TESTED_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: bash "$CLONE/deploy/deploy_ec2.sh"
