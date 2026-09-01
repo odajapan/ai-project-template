@@ -87,17 +87,24 @@ pip install -e ".${EXTRAS:+[$EXTRAS]}" --quiet
 # echo "==> Building frontend..."
 # ( cd web && pnpm install --frozen-lockfile && pnpm build )
 
+health_check() {
+  for _ in $(seq 1 30); do
+    if curl -fsS "http://127.0.0.1:${PORT}/api/health" >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep 2
+  done
+  return 1
+}
+
 echo "==> Restarting ${SERVICE}..."
 sudo systemctl restart "${SERVICE}"
 
 echo "==> Health check..."
-for _ in $(seq 1 30); do
-  if curl -fsS "http://127.0.0.1:${PORT}/api/health" >/dev/null 2>&1; then
-    echo "Deployed: http://$(hostname -I | awk '{print $1}'):${PORT}/"
-    exit 0
-  fi
-  sleep 2
-done
+if health_check; then
+  echo "Deployed: http://$(hostname -I | awk '{print $1}'):${PORT}/"
+  exit 0
+fi
 
 echo "Health check failed. Recent logs:" >&2
 journalctl -u "${SERVICE}" -n 50 --no-pager >&2 || true
@@ -107,6 +114,14 @@ if [ "$(git rev-parse HEAD)" != "${PREV_SHA}" ]; then
   git checkout "${PREV_SHA}"
   pip install -e ".${EXTRAS:+[$EXTRAS]}" --quiet
   sudo systemctl restart "${SERVICE}"
+
+  echo "==> Re-checking health after rollback..." >&2
+  if health_check; then
+    echo "Rolled back to ${PREV_SHA}; ${SERVICE} is healthy again." >&2
+  else
+    echo "Rollback ALSO failed its health check -- ${SERVICE} is down at ${PREV_SHA}. Manual intervention required." >&2
+    journalctl -u "${SERVICE}" -n 50 --no-pager >&2 || true
+  fi
 fi
 
 exit 1
