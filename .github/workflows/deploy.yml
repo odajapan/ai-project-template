@@ -72,13 +72,21 @@ jobs:
 
   deploy:
     needs: preflight
+    # An explicit `if:` on a job replaces the implicit success()-of-needs
+    # guard entirely, so `needs: preflight` alone does NOT stop this job
+    # from running when preflight fails -- needs.preflight.result must be
+    # checked here too, or a failed preflight (no online runner) still
+    # lets this job queue forever on runs-on: self-hosted, which is
+    # exactly the silent-hang failure this pattern exists to catch.
+    #
     # workflow_run only fires this on CI success from this repo (not a
     # fork -- see the comment above); workflow_dispatch is an explicit
     # manual decision, so it always runs.
     if: |
-      github.event_name == 'workflow_dispatch' ||
-      (github.event.workflow_run.conclusion == 'success' &&
-       github.event.workflow_run.head_repository.full_name == github.repository)
+      needs.preflight.result == 'success' &&
+      (github.event_name == 'workflow_dispatch' ||
+       (github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.head_repository.full_name == github.repository))
     runs-on: self-hosted
     timeout-minutes: 15
     env:
