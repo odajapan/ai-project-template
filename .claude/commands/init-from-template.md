@@ -75,7 +75,8 @@ Steps:
 6. Run Phase 2 (rewrite `env.example`, trim `AGENTS.md`, refresh
    `.claude/CLAUDE.md`, rewrite `README.md`, sync `EXTRAS` across Makefile/CI).
 7. Confirm the exit criteria in `docs/TEMPLATE_INIT.md`: `make check` green,
-   `git grep -c your_project_name` is `0`, no dangling references to deleted
+   `git grep -c your_project_name` is `0` or only expected hits (see that
+   file's exit criteria for the list), no dangling references to deleted
    files.
 8. Commit as `chore: initialize project from template` and report what was
    kept vs. removed. Do not start a feature task in the same branch.

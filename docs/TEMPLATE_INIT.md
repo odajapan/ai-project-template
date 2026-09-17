@@ -77,17 +77,27 @@ them elsewhere (Makefile targets, `AGENTS.md` Commands table,
    follow `docs/EC2_DEPLOY.md` to register the runner on the host — this is
    the step most likely to be skipped, and a `deploy.yml` with no registered
    runner behind it silently never deploys.
-7. `make check` — must be green.
-8. Commit as `chore: initialize project from template`.
+7. `rename_project.sh` skips `.claude/skills/codebase-onboarding.md`
+   entirely (its "Starting a new project from this template" section must
+   keep saying `your_project_name` — that's instructions for a *future*
+   user templating off this repo again, not a reference to this one).
+   That means its "Key files" table, which legitimately should follow the
+   rename, doesn't either. Update that table by hand to the new
+   `src/<new_name>/` paths.
+8. `make check` — must be green.
+9. Commit as `chore: initialize project from template`.
 
 ## Exit criteria
 
 Do not start the first feature task until all of these hold:
 
 - `make check` passes.
-- `git grep -c your_project_name` returns `0` (or only expected hits, e.g.
-  in historical docs you intentionally kept, or `deploy/*.service` if you
-  haven't renamed it yet — see Phase 2 step 6).
+- `git grep -c your_project_name` returns `0` (or only expected hits: this
+  file, `.claude/commands/init-from-template.md`, and the bootstrap
+  section of `.claude/skills/codebase-onboarding.md` are intentionally
+  excluded from the rename sed and always match; historical docs you
+  intentionally kept; or `deploy/*.service` if you haven't renamed it yet
+  — see Phase 2 step 6).
 - No references remain to files deleted in Phase 1 (`make precommit`
   catches broken links via the standard hooks; also worth a manual
   `git grep` for filenames you removed).
