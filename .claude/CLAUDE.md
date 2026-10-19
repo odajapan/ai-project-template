@@ -73,6 +73,7 @@ Slash commands (run inside Claude Code):
 - `/start-task <name>` — cut a `claude/<name>` branch and declare scope
 - `/finish-task` — run checks, push, and open a PR
 - `/land [<pr>...]` — merge PR(s), retarget stacked children, sync main, and clean up
+- `/review [<PR#>|<branch>|<path>] [level]` — `code-review` + 指摘ごとの日本語説明と「直すべき / 任意 / 対応不要」の振り分け
 - `/debug <traceback>` — diagnose and fix a Python error systematically
 - `/add-example <name>` — scaffold a runnable script under `examples/`
 - `/worktree` — show commands to spin up an isolated git worktree
