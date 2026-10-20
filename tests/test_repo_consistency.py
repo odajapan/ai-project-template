@@ -10,7 +10,9 @@ diverging again.
 
 from __future__ import annotations
 
+import json
 import re
+import tomllib
 from pathlib import Path
 
 import pytest
@@ -93,3 +95,58 @@ def test_env_example_reviewed_after_template_rename() -> None:
         "review (e.g. '# reviewed: defaults are correct for this project') "
         "to acknowledge it and unblock this check."
     )
+
+
+# Commands that only make sense inside Claude Code (Jira helpers, a wrapper
+# around Claude Code's bundled code-review skill). Everything else under
+# .claude/commands/ needs a Codex copy — see AGENTS.md.
+CLAUDE_ONLY_COMMANDS = {"jira", "daily-report", "review-explained"}
+
+
+def test_every_claude_agent_has_a_codex_copy() -> None:
+    claude_agents = {p.stem for p in (REPO_ROOT / ".claude/agents").glob("*.md")}
+    codex_agents = {p.stem for p in (REPO_ROOT / ".codex/agents").glob("*.toml")}
+    assert claude_agents == codex_agents
+
+
+def test_every_workflow_command_has_a_codex_skill() -> None:
+    commands = {p.stem for p in (REPO_ROOT / ".claude/commands").glob("*.md")}
+    skills = {
+        p.parent.name.removeprefix("source-command-")
+        for p in (REPO_ROOT / ".agents/skills").glob("source-command-*/SKILL.md")
+    }
+    assert skills == commands - CLAUDE_ONLY_COMMANDS
+
+
+def test_codex_agent_files_are_valid() -> None:
+    for path in (REPO_ROOT / ".codex/agents").glob("*.toml"):
+        agent = tomllib.loads(path.read_text())
+        assert agent.get("name") == path.stem, path
+        assert agent.get("description"), path
+        assert agent.get("developer_instructions"), path
+
+
+def test_codex_skill_names_match_their_directories() -> None:
+    for path in (REPO_ROOT / ".agents/skills").glob("*/SKILL.md"):
+        match = re.search(r'^name: "?([^"\n]+)"?$', path.read_text(), re.M)
+        assert match and match.group(1) == path.parent.name, path
+
+
+def test_codex_hooks_json_is_valid() -> None:
+    json.loads((REPO_ROOT / ".codex/hooks.json").read_text())
+
+
+def test_codex_copies_drop_claude_specifics() -> None:
+    copies = [
+        *(REPO_ROOT / ".codex/agents").glob("*.toml"),
+        *(REPO_ROOT / ".agents/skills").glob("source-command-*/SKILL.md"),
+    ]
+    claude_only = re.compile(
+        r"(?<![.\w])claude/[a-z<$*{]|Codex/|\.Codex/|--dangerously-skip-permissions"
+    )
+    offenders = [
+        str(p.relative_to(REPO_ROOT))
+        for p in copies
+        if claude_only.search(p.read_text())
+    ]
+    assert not offenders, f"Claude-only branch prefix or CLI flag in: {offenders}"

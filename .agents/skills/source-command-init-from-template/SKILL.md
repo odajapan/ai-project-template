@@ -1,0 +1,71 @@
+---
+name: "source-command-init-from-template"
+description: "First-run checklist — adapt the template to this project before the first feature task."
+---
+
+# source-command-init-from-template
+
+Use this skill when the user asks to run the migrated source command `init-from-template`.
+`$ARGUMENTS` below stands for the argument the user gave with the request.
+
+## Command Template
+
+# /init-from-template — adapt the template to this project
+
+Read `docs/TEMPLATE_INIT.md` and execute its three phases in order. The
+argument `$ARGUMENTS` (if given) is the new project name for Phase 0.
+Otherwise, derive a default suggestion from the repository directory name
+and confirm it with the human rather than asking with no starting point:
+
+```bash
+name_guess=$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)" \
+  | tr '[:upper:]' '[:lower:]' \
+  | sed -E 's/[^a-z0-9]+/_/g; s/^[^a-z]+//; s/_+$//')
+```
+
+If `name_guess` is non-empty and matches `^[a-z][a-z0-9_]*$`, present it as
+the default and ask the human to confirm or override (e.g. via the question
+tool available in this session: "Use `<name_guess>` as the project name, or
+something else?"). If it's empty or invalid (directory name was all digits,
+symbols, etc.), fall back to asking outright with no suggestion. Either way,
+**never run the rename script on a guessed name without the human
+confirming it first** — a repo directory name is rarely an intentional
+package-name decision.
+
+This task cuts its own branch — it does not require `/start-task` first,
+and it is **exempt from `/start-task`'s ">3 files / >500 lines" stop
+condition**. Adapting a template legitimately touches many files and
+deletes several. Declare the deletion set up front (from the Phase 1
+answers) instead of treating file count as a stop signal.
+
+Two constraints that matter more here than in a normal task:
+
+1. **Ask all of Phase 1's questions in a single batch, then wait for the
+   human's answers before deleting anything.** Never infer that a
+   subsystem (LLM layer, data pipeline, Jira workflow, docs, web/) is
+   unused from the absence of a call site in the codebase — this is a
+   freshly cloned template, so nothing has been used yet regardless of
+   what the final project will need.
+2. **This task legitimately edits `env.example`.** Read it before editing,
+   per `.claude/rules/secrets.md` — never append blind.
+
+Steps:
+
+1. `git status` — stop if the tree isn't clean.
+2. `git checkout -b codex/init-from-template` (or ask for a different
+   branch name if this isn't the first task on this clone).
+3. Run Phase 0 from `docs/TEMPLATE_INIT.md` (rename script, `pyproject.toml`
+   metadata, `make requirements`, `make check`, `make hooks`).
+4. Ask the Phase 1 questions as one batch via the question tool available
+   in this session. Wait for all answers before deleting anything.
+5. Delete exactly what the answers authorize, plus any now-dangling
+   references (Makefile targets, `AGENTS.md` Commands table, `pyproject.toml`
+   extras, `.claude/CLAUDE.md`, and the matching `.codex/agents/` and
+   `.agents/skills/` copies).
+6. Run Phase 2 (rewrite `env.example`, trim `AGENTS.md`, refresh
+   `.claude/CLAUDE.md`, rewrite `README.md`, sync `EXTRAS` across Makefile/CI).
+7. Confirm the exit criteria in `docs/TEMPLATE_INIT.md`: `make check` green,
+   `git grep -c your_project_name` is `0`, no dangling references to deleted
+   files.
+8. Commit as `chore: initialize project from template` and report what was
+   kept vs. removed. Do not start a feature task in the same branch.
