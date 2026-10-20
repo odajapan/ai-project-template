@@ -71,7 +71,8 @@ Steps:
    in this session. Wait for all answers before deleting anything.
 5. Delete exactly what the answers authorize, plus any now-dangling
    references (Makefile targets, `AGENTS.md` Commands table, `pyproject.toml`
-   extras, `.claude/CLAUDE.md`).
+   extras, `.claude/CLAUDE.md`, and the matching `.codex/agents/` and
+   `.agents/skills/` copies).
 6. Run Phase 2 (rewrite `env.example`, trim `AGENTS.md`, refresh
    `.claude/CLAUDE.md`, rewrite `README.md`, sync `EXTRAS` across Makefile/CI).
 7. Confirm the exit criteria in `docs/TEMPLATE_INIT.md`: `make check` green,
