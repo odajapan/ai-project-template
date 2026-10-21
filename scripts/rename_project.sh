@@ -40,11 +40,12 @@ fi
 # below would rewrite the sentinel and the pyproject.toml name to the same
 # string, making the check's skip guard trivially true forever.
 #
-# Also excludes three docs that use "your_project_name" as a generic,
+# Also excludes four docs that use "your_project_name" as a generic,
 # illustrative placeholder rather than a reference to *this* checkout:
-# docs/TEMPLATE_INIT.md, .claude/commands/init-from-template.md (the
-# bootstrap checklist itself -- e.g. its own `git grep -c your_project_name`
-# exit-criteria check, which the sed would otherwise rewrite into a
+# docs/TEMPLATE_INIT.md, .claude/commands/init-from-template.md and its
+# Codex copy under .agents/skills/ (the bootstrap checklist itself -- e.g.
+# its own `git grep -c your_project_name` exit-criteria check, which the sed
+# would otherwise rewrite into a
 # tautology testing for the new name instead of the placeholder), and
 # .claude/skills/codebase-onboarding.md (its "Starting a new project from
 # this template" section, which must keep telling a *future* user to grep
@@ -73,6 +74,7 @@ FIND_FILES=(find . -type f
   ! -path "*/tests/test_repo_consistency.py"
   ! -path "*/docs/TEMPLATE_INIT.md"
   ! -path "*/.claude/commands/init-from-template.md"
+  ! -path "*/.agents/skills/source-command-init-from-template/SKILL.md"
   ! -path "*/.claude/skills/codebase-onboarding.md"
   ! -name "package-lock.json"
   ! -name "pnpm-lock.yaml"

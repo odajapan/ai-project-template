@@ -97,7 +97,8 @@ Do not start the first feature task until all of these hold:
 
 - `make check` passes.
 - `git grep -c your_project_name` returns `0` (or only expected hits: this
-  file, `.claude/commands/init-from-template.md`, and the bootstrap
+  file, `.claude/commands/init-from-template.md` and its Codex copy
+  `.agents/skills/source-command-init-from-template/SKILL.md`, and the bootstrap
   section of `.claude/skills/codebase-onboarding.md` are intentionally
   excluded from the rename sed and always match; historical docs you
   intentionally kept; or `deploy/*.service` if you haven't renamed it yet
