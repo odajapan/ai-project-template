@@ -72,6 +72,8 @@ Slash commands (run inside Claude Code):
 - `/new-rule <name>` — create a path-scoped rule under `.claude/rules/`
 - `/start-task <name>` — cut a `claude/<name>` branch and declare scope
 - `/finish-task` — run checks, push, and open a PR
+- `/pr-review [level] [--fix|--comment]` — run `/code-review` on this branch's
+  whole PR diff against its base (bare `/code-review` sees nothing once pushed)
 - `/land [<pr>...]` — merge PR(s), retarget stacked children, sync main, and clean up
 - `/review-explained [<PR#>|<branch>|<path>] [level]` — run `code-review`, then explain each finding in the user's language and triage into must-fix / optional / no action
 - `/debug <traceback>` — diagnose and fix a Python error systematically
