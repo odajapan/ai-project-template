@@ -1,3 +1,4 @@
+# ported-from: .claude/agents/test-runner.md sha256:ae42c1ada9c5
 name = "test-runner"
 description = "Use for running pytest / make check / ruff and summarizing the outcome. Cheap — prefer when you only need pass/fail and the failure hotspots, not the full log. Never edits code."
 developer_instructions = """

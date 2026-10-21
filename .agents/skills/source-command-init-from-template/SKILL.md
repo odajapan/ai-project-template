@@ -3,6 +3,8 @@ name: "source-command-init-from-template"
 description: "First-run checklist — adapt the template to this project before the first feature task."
 ---
 
+<!-- ported-from: .claude/commands/init-from-template.md sha256:a5a44549b04b -->
+
 # source-command-init-from-template
 
 Use this skill when the user asks to run the migrated source command `init-from-template`.
@@ -32,8 +34,8 @@ symbols, etc.), fall back to asking outright with no suggestion. Either way,
 confirming it first** — a repo directory name is rarely an intentional
 package-name decision.
 
-This task cuts its own branch — it does not require `/start-task` first,
-and it is **exempt from `/start-task`'s ">3 files / >500 lines" stop
+This task cuts its own branch — it does not require `source-command-start-task`
+first, and it is **exempt from that skill's ">3 files / >500 lines" stop
 condition**. Adapting a template legitimately touches many files and
 deletes several. Declare the deletion set up front (from the Phase 1
 answers) instead of treating file count as a stop signal.
@@ -47,7 +49,7 @@ Two constraints that matter more here than in a normal task:
    freshly cloned template, so nothing has been used yet regardless of
    what the final project will need.
 2. **This task legitimately edits `env.example`.** Read it before editing,
-   per `.claude/rules/secrets.md` — never append blind.
+   per `AGENTS.md` → Security & forbidden actions — never append blind.
 
 Steps:
 
@@ -62,7 +64,8 @@ Steps:
    references (Makefile targets, `AGENTS.md` Commands table, `pyproject.toml`
    extras, `.claude/CLAUDE.md`, and the matching `.codex/agents/` and
    `.agents/skills/` copies).
-6. Run Phase 2 (rewrite `env.example`, trim `AGENTS.md`, refresh
+6. Run Phase 2 (rewrite `env.example`, trim `AGENTS.md` including its Codex
+   paragraph, refresh
    `.claude/CLAUDE.md`, rewrite `README.md`, sync `EXTRAS` across Makefile/CI).
 7. Confirm the exit criteria in `docs/TEMPLATE_INIT.md`: `make check` green,
    `git grep -c your_project_name` is `0`, no dangling references to deleted

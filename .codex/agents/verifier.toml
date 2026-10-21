@@ -1,3 +1,4 @@
+# ported-from: .claude/agents/verifier.md sha256:6c89999453fb
 name = "verifier"
 description = 'Use for adversarial verification of a single review finding, bug hypothesis, or design claim — "is this issue real?" Returns CONFIRMED / PLAUSIBLE / REFUTED grounded in actual code. For broad review of a whole diff, use code-reviewer instead.'
 developer_instructions = """

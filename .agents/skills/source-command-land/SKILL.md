@@ -3,6 +3,8 @@ name: "source-command-land"
 description: "Merge PR(s), retarget stacked children, sync main, and clean up."
 ---
 
+<!-- ported-from: .claude/commands/land.md sha256:ce8cf9a3ac6f -->
+
 # source-command-land
 
 Use this skill when the user asks to run the migrated source command `land`.
@@ -45,14 +47,16 @@ main`.
 
 ## After all PRs
 
-6. **Clean stale worktrees.** Under `.claude/worktrees/` only (gitignored
-   runtime state; never the current worktree from `git rev-parse
-   --show-toplevel`, never sibling worktrees made by `source-command-worktree`),
-   remove any worktree whose branch is merged into main or that is detached: `git worktree remove --force <path>`. If a
-   worktree looks active (unmerged branch, uncommitted work), **list it
-   and stop** rather than removing it.
-7. **Suggest a fresh session.** Propose to start a fresh session with a one-line handoff — only once the PR is
-   merged and follow-through is done, nothing is still running, the tree
+6. **Clean stale worktrees.** Candidates are worktrees under
+   `.claude/worktrees/` and sibling `../<repo>-<task>` worktrees on a
+   `codex/*` branch (what `source-command-worktree` creates). Never touch
+   the current worktree (`git rev-parse --show-toplevel`) or any other
+   worktree. Remove a candidate whose branch is merged into main, or that
+   is detached, with `git worktree remove <path>` — add `--force` only for
+   `.claude/worktrees/`. If a candidate looks active (unmerged branch,
+   uncommitted work), **list it and stop** rather than removing it.
+7. **Suggest a fresh session.** Propose to start a fresh session with a
+   one-line handoff — only once the PR is merged and follow-through is done, nothing is still running, the tree
    is clean, and anything worth keeping is in the PR body or `AGENTS.md`.
 
 If any step blocks and the cause is non-obvious, stop and report before

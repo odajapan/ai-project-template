@@ -1,3 +1,4 @@
+# ported-from: .claude/agents/implementer.md sha256:de759df0e7f3
 name = "implementer"
 description = "Use for feature implementation, refactoring, bug fixes, and writing or updating tests once the plan is agreed. Can edit files and run local checks via `make`. Does not push, open PRs, or merge."
 developer_instructions = """

@@ -3,6 +3,8 @@ name: "source-command-worktree"
 description: "Show the commands to spin up an isolated git worktree for a Codex task."
 ---
 
+<!-- ported-from: .claude/commands/worktree.md sha256:00b1a1da34e6 -->
+
 # source-command-worktree
 
 Use this skill when the user asks to run the migrated source command `worktree`.

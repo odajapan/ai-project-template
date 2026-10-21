@@ -3,6 +3,8 @@ name: "source-command-llm-test"
 description: "Verify the Claude (Anthropic) API is reachable and the project's ClaudeClient works end-to-end."
 ---
 
+<!-- ported-from: .claude/commands/llm-test.md sha256:eca28fa670b5 -->
+
 # source-command-llm-test
 
 Use this skill when the user asks to run the migrated source command `llm-test`.

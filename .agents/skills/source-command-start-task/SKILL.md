@@ -3,6 +3,8 @@ name: "source-command-start-task"
 description: "Cut a fresh codex/<task> branch from latest main and declare the task scope."
 ---
 
+<!-- ported-from: .claude/commands/start-task.md sha256:7f109f385205 -->
+
 # source-command-start-task
 
 Use this skill when the user asks to run the migrated source command `start-task`.

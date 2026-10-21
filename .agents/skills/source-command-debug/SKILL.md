@@ -3,6 +3,8 @@ name: "source-command-debug"
 description: "Systematically diagnose and fix a Python error or failing test. Paste the traceback or test output as the argument."
 ---
 
+<!-- ported-from: .claude/commands/debug.md sha256:c0298da8adce -->
+
 # source-command-debug
 
 Use this skill when the user asks to run the migrated source command `debug`.

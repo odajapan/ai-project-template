@@ -10,6 +10,7 @@ diverging again.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import tomllib
@@ -132,8 +133,28 @@ def test_codex_skill_names_match_their_directories() -> None:
         assert match and match.group(1) == path.parent.name, path
 
 
-def test_codex_hooks_json_is_valid() -> None:
-    json.loads((REPO_ROOT / ".codex/hooks.json").read_text())
+def test_codex_format_hook_matches_apply_patch() -> None:
+    hooks = json.loads((REPO_ROOT / ".codex/hooks.json").read_text())["hooks"]
+    matchers = [group.get("matcher", "") for group in hooks["PostToolUse"]]
+    assert any(re.search(m, "apply_patch") for m in matchers), matchers
+
+
+def test_codex_copies_are_in_sync_with_their_source() -> None:
+    copies = [
+        *(REPO_ROOT / ".codex/agents").glob("*.toml"),
+        *(REPO_ROOT / ".agents/skills").glob("source-command-*/SKILL.md"),
+    ]
+    stale = []
+    for copy in copies:
+        match = re.search(r"ported-from: (\S+) sha256:([0-9a-f]{12})", copy.read_text())
+        assert match, f"{copy} has no ported-from marker"
+        source = (REPO_ROOT / match.group(1)).read_bytes()
+        if hashlib.sha256(source).hexdigest()[:12] != match.group(2):
+            stale.append(str(copy.relative_to(REPO_ROOT)))
+    assert not stale, (
+        f"Source changed since these were ported: {stale}. Port the change by "
+        "hand (see AGENTS.md), then update the sha256 in the ported-from marker."
+    )
 
 
 def test_codex_copies_drop_claude_specifics() -> None:
@@ -141,12 +162,16 @@ def test_codex_copies_drop_claude_specifics() -> None:
         *(REPO_ROOT / ".codex/agents").glob("*.toml"),
         *(REPO_ROOT / ".agents/skills").glob("source-command-*/SKILL.md"),
     ]
+    # `claude/<anything>` branch refs (but not `.claude/` paths), the Claude
+    # CLI flag, and the `Codex/*` / `.Codex/` casing a blind replace produces.
     claude_only = re.compile(
-        r"(?<![.\w])claude/[a-z<$*{]|Codex/|\.Codex/|--dangerously-skip-permissions"
+        r"(?<![.\w])claude/[\w<$*{]|\bCodex/|--dangerously-skip-permissions"
     )
     offenders = [
         str(p.relative_to(REPO_ROOT))
         for p in copies
         if claude_only.search(p.read_text())
     ]
-    assert not offenders, f"Claude-only branch prefix or CLI flag in: {offenders}"
+    assert not offenders, (
+        f"Claude branch prefix, CLI flag or bad Codex casing in: {offenders}"
+    )

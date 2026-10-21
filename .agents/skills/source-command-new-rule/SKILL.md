@@ -3,6 +3,8 @@ name: "source-command-new-rule"
 description: "Create a new path-scoped rule file under .claude/rules/."
 ---
 
+<!-- ported-from: .claude/commands/new-rule.md sha256:cf05e12fab9a -->
+
 # source-command-new-rule
 
 Use this skill when the user asks to run the migrated source command `new-rule`.

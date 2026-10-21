@@ -1,3 +1,4 @@
+# ported-from: .claude/agents/code-reviewer.md sha256:2178408b88df
 name = "code-reviewer"
 description = "Use proactively before opening a PR, when validating a design decision, or when the user asks for code review, diff review, or a second opinion on an approach. Read-only — never edits files or runs git/gh commands."
 developer_instructions = """
@@ -20,7 +21,7 @@ modify files and never run shell-mutating, git, or `gh` commands.
   writes under `data/raw/`, no reads of `.env` / `.env.*` (env.example is fine).
 - **Autonomous-run compliance.** Branch is `codex/*`, commits follow
   Conventional Commits, no edits to forbidden paths, scope stays
-  within what was declared in `/start-task`.
+  within what was declared by the `source-command-start-task` skill.
 
 ## Safety summary (inherited)
 

@@ -13,8 +13,12 @@ specifics live under `.claude/`; Codex specifics live under `.codex/` (subagents
 and `.claude/commands/*.md` — branch prefix `codex/`, Codex CLI flags and tool names,
 and no reliance on `CLAUDE.md` (Codex does not load it). When you change a source,
 port the change to its copy by hand in the same PR; do not regenerate the copy, or
-the adaptations are lost. `tests/test_repo_consistency.py` fails when a copy is
-missing, malformed, or still uses the `claude/` prefix. Claude-only commands
+the adaptations are lost. Each copy carries a `ported-from: <source> sha256:<12 hex>`
+marker; after porting, set it to the first 12 hex digits of `shasum -a 256 <source>`.
+`tests/test_repo_consistency.py` fails when a copy is missing, malformed, stale
+against its source, or still uses the `claude/` prefix. Codex runs `.codex/hooks.json`
+only after the project's `.codex/` layer is trusted and the hook is approved via
+`/hooks`. Claude-only commands
 (`jira`, `daily-report`, `review-explained`) and `.claude/rules/` have no Codex copy.
 Codex subagents cannot be restricted to read-only per agent (`sandbox_mode` is not
 overridable in an agent file), so the "read-only" agents rely on their instructions.

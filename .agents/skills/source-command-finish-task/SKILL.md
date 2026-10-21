@@ -3,6 +3,8 @@ name: "source-command-finish-task"
 description: "Verify checks, push the codex/* branch, and open a PR."
 ---
 
+<!-- ported-from: .claude/commands/finish-task.md sha256:6465a4c16d38 -->
+
 # source-command-finish-task
 
 Use this skill when the user asks to run the migrated source command `finish-task`.
@@ -11,7 +13,7 @@ Use this skill when the user asks to run the migrated source command `finish-tas
 
 # /finish-task — wrap up an autonomous task
 
-Run only after `/start-task` and the actual work are complete.
+Run only after the `source-command-start-task` skill and the actual work are complete.
 
 Steps:
 

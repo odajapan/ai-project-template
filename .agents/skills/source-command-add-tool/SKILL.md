@@ -3,6 +3,8 @@ name: "source-command-add-tool"
 description: "Scaffold a new ToolDefinition (Pydantic) plus a handler stub and unit test."
 ---
 
+<!-- ported-from: .claude/commands/add-tool.md sha256:5d11ba5ced18 -->
+
 # source-command-add-tool
 
 Use this skill when the user asks to run the migrated source command `add-tool`.

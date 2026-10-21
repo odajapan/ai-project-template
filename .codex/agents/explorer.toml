@@ -1,3 +1,4 @@
+# ported-from: .claude/agents/explorer.md sha256:afb28a4abbe9
 name = "explorer"
 description = 'Use for codebase exploration, locating symbols, answering "where is X defined / which files reference Y", and read-only investigation. Cheap and fast — prefer for lookups before reaching for heavier agents.'
 developer_instructions = """

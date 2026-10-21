@@ -3,6 +3,8 @@ name: "source-command-add-example"
 description: "Scaffold a new runnable example script under examples/. Shows how to use a specific project feature end-to-end."
 ---
 
+<!-- ported-from: .claude/commands/add-example.md sha256:5d1f3cc751dc -->
+
 # source-command-add-example
 
 Use this skill when the user asks to run the migrated source command `add-example`.
