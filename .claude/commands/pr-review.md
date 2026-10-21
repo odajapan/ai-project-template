@@ -1,9 +1,14 @@
 ---
 description: Run the built-in /code-review on this branch's open PR (by PR number) — avoids the bare /code-review default, which reviews only unpushed commits (empty once you've pushed).
-argument-hint: "[low|medium|high|xhigh|max|ultra] [--fix] [--comment]"
+argument-hint: "[low|medium|high|xhigh|max|ultra] [--fix] [--comment] [--max-findings <n>] [--post|--no-post]"
 allowed-tools:
-  - Bash
   - Skill
+  - Bash
+  - Read
+  - Grep
+  - Glob
+  - Edit
+  - Write
 ---
 
 # /pr-review — code review scoped to the current PR's diff
@@ -24,25 +29,33 @@ work with.
 
 1. **Resolve the PR.**
    ```bash
-   gh pr view --json number,baseRefName,url
+   gh pr view --json number,state,baseRefName,headRefOid,url
    ```
    If this fails (no PR for the current branch, or `gh` not
    authenticated), **stop** and tell the user: push the branch and open a
    PR first, or run `/code-review <level> <path>` directly for a pre-PR
-   review. Do not guess a base branch.
-2. **Parse `$ARGUMENTS`.** Accept only these words, in any order:
-   - at most one level: `low`, `medium`, `high`, `xhigh`, `max`, `ultra`
-   - `--fix`, `--comment`
-
-   If any other word appears (a path, a PR number, a second level), stop
-   and tell the user this wrapper takes no target — use `/code-review`
-   directly for a custom target. Do not forward unknown words.
-3. **Call the skill.** Invoke the `Skill` tool with `skill: "code-review"`
-   and `args` set to `<PR number>`, followed by the level (only if one was
-   given — otherwise omit it so `/code-review` keeps its own default, the
-   level you used last) and any flags, e.g. `"63"`, `"63 max --fix"`.
-   Before invoking, print one line naming the PR (`url`, base
-   `baseRefName`) being reviewed.
+   review. Do not guess a base branch. If `state` is not `OPEN` (the
+   branch's PR is merged or closed), stop and say so — do not review a
+   stale diff.
+2. **Parse `$ARGUMENTS`.**
+   - At most one level: `low`, `medium`, `high`, `xhigh`, `max`, `ultra`.
+   - Any word starting with `--` is a flag and is forwarded as-is;
+     `--max-findings` also takes the next word as its value.
+   - Any other word (a path, a PR number, a second level) means the user
+     wanted a custom target: stop and tell them to call `/code-review`
+     directly. Do not forward it.
+   - `ultra` with `--fix` is rejected: ultra runs in the cloud and returns
+     its findings later, so there is nothing for `--fix` to apply.
+3. **Check the local tree before `--fix`.** The review reads the PR as
+   pushed to GitHub, but `--fix` edits the local working tree. If `--fix`
+   was given and `git rev-parse HEAD` differs from `headRefOid`, stop and
+   tell the user to push (or pull) first so the two match.
+4. **Call the skill.** Print one line naming the PR (`url`, base
+   `baseRefName`), then invoke the `Skill` tool with
+   `skill: "code-review"` and `args` set to `<PR number>`, followed by the
+   level (only if one was given — otherwise omit it so `/code-review`
+   keeps its own default, the level you used last) and the flags, e.g.
+   `"63"`, `"63 max --fix"`, `"63 ultra --post"`.
 
 ## Notes
 
