@@ -5,7 +5,28 @@ repository. Claude Code reads it via `@AGENTS.md` in `CLAUDE.md`. Other agents (
 Cursor, GitHub Copilot, Gemini CLI, Jules, Aider, goose, …) read it directly.
 
 Harness-specific configuration stays in each agent's native directory — Claude Code
-specifics live under `.claude/`.
+specifics live under `.claude/`; Codex specifics live under `.codex/` (subagents in
+`.codex/agents/*.toml`, hooks in `.codex/hooks.json`) and `.agents/skills/`
+(`source-command-<name>/SKILL.md`, one per workflow command).
+
+`.claude/` is the source; the Codex files are adapted copies of `.claude/agents/*.md`
+and `.claude/commands/*.md` — branch prefix `codex/`, Codex CLI flags and tool names,
+and no reliance on `CLAUDE.md` (Codex does not load it). When you change a source,
+port the change to its copy by hand in the same PR; do not regenerate the copy, or
+the adaptations are lost. Each copy carries a `ported-from: <source> sha256:<12 hex>`
+marker; after porting, set it to the hash the failing test prints (the source's
+sha256 with the package name normalized back to `your_project_name`).
+`tests/test_repo_consistency.py` fails when a copy is missing, malformed, stale
+against its source, or still uses the `claude/` prefix. Codex runs `.codex/hooks.json`
+only after the project's `.codex/` layer is trusted and the hook is approved via
+`/hooks`. Claude-only commands
+(`jira`, `daily-report`, `review-explained`) and `.claude/rules/` have no Codex copy.
+Codex subagents cannot be restricted to read-only per agent (`sandbox_mode` is not
+overridable in an agent file), so the "read-only" agents rely on their instructions.
+They set no `model`, so they run on the parent session's model — the
+haiku/sonnet/opus cost split in `.claude/agents/` has no Codex equivalent yet.
+Codex has no counterpart to the `.claude/settings.json` deny rules, so prefer the
+`workspace-write` sandbox over `--dangerously-bypass-approvals-and-sandbox`.
 
 ---
 

@@ -17,17 +17,17 @@ requires-python = ">=3.12"
 # wrappers around these definitions for convenient installation).
 dependencies = [
   "click",
-  "python-dotenv>=0.5.1",
+  "python-dotenv>=1.2.4",
   "numpy",
   "pandas",
   "tqdm",
-  "pydantic>=2.13.4,<3",
+  "pydantic>=2.14.1,<3",
 ]
 
 [project.optional-dependencies]
 # Claude / Anthropic SDK (floor covers adaptive thinking + output_config)
 claude = [
-  "anthropic>=0.92",
+  "anthropic>=1.15.0",
 ]
 
 # Optional Jira <-> GitHub workflow tooling (scripts/jira_task.py, daily_report.py)
