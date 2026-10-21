@@ -98,7 +98,7 @@ def test_env_example_reviewed_after_template_rename() -> None:
     )
 
 
-# Commands that only make sense inside Claude Code (Jira helpers, a wrapper
+# Commands that only make sense inside Claude Code (Jira helpers, wrappers
 # around Claude Code's bundled code-review skill). Everything else under
 # .claude/commands/ needs a Codex copy — see AGENTS.md.
 CLAUDE_ONLY_COMMANDS = {"jira", "daily-report", "review-explained", "pr-review"}

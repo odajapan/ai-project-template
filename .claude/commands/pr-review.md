@@ -1,5 +1,5 @@
 ---
-description: Run the built-in /code-review scoped to this branch's diff against its base branch — avoids the bare /code-review default, which reviews only unpushed commits (empty once you've pushed).
+description: Run the built-in /code-review on this branch's open PR (by PR number) — avoids the bare /code-review default, which reviews only unpushed commits (empty once you've pushed).
 argument-hint: "[low|medium|high|xhigh|max|ultra] [--fix] [--comment]"
 allowed-tools:
   - Bash
@@ -15,30 +15,39 @@ The built-in `/code-review` with no target defaults to
 only when there's no upstream). Once a branch is fully pushed, that range
 is **empty** — the review silently covers nothing (or falls through to
 whatever is in the working tree), not the PR's actual change set. Passing
-a branch name as the target fixes this: it reviews the current branch's
-diff against that branch, which is the same diff GitHub shows for the PR.
+the PR number as the target fixes this: `/code-review` then reviews the
+PR's own diff against its real base (whatever GitHub shows, including
+non-default or retargeted bases), and `--comment` / `ultra` have a PR to
+work with.
 
 ## Steps
 
-1. **Resolve the base branch.**
+1. **Resolve the PR.**
    ```bash
-   git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@'
+   gh pr view --json number,baseRefName,url
    ```
-   If that fails (no `origin/HEAD`), fall back to `main`.
-2. **Resolve the level.** Take the first word of `$ARGUMENTS` if it's one
-   of `low`, `medium`, `high`, `xhigh`, `max`, `ultra`; otherwise default
-   to `high`. Keep any remaining words (`--fix`, `--comment`) — do not
-   drop them.
+   If this fails (no PR for the current branch, or `gh` not
+   authenticated), **stop** and tell the user: push the branch and open a
+   PR first, or run `/code-review <level> <path>` directly for a pre-PR
+   review. Do not guess a base branch.
+2. **Parse `$ARGUMENTS`.** Accept only these words, in any order:
+   - at most one level: `low`, `medium`, `high`, `xhigh`, `max`, `ultra`
+   - `--fix`, `--comment`
+
+   If any other word appears (a path, a PR number, a second level), stop
+   and tell the user this wrapper takes no target — use `/code-review`
+   directly for a custom target. Do not forward unknown words.
 3. **Call the skill.** Invoke the `Skill` tool with `skill: "code-review"`
-   and `args` set to `<level> <base-branch>`, followed by any remaining
-   flags from step 2, e.g. `"high main --fix"`.
+   and `args` set to `<PR number>`, followed by the level (only if one was
+   given — otherwise omit it so `/code-review` keeps its own default, the
+   level you used last) and any flags, e.g. `"63"`, `"63 max --fix"`.
+   Before invoking, print one line naming the PR (`url`, base
+   `baseRefName`) being reviewed.
 
 ## Notes
 
-- This only pins the *target*. If you also want to narrow scope to a
-  specific module or path (cheaper, fewer finder subagents), call
-  `/code-review <level> <path>` directly instead of this wrapper — a path
-  target replaces the branch target, it doesn't combine with it.
-- Prefer running this right after `/clear` or in a fresh session: the
-  review forks the current conversation context, so a long session makes
-  it more expensive.
+- This only pins the *target*. To narrow scope to a specific module or
+  path, call `/code-review <level> <path>` directly — a path target
+  replaces the PR target, it doesn't combine with it.
+- Cost and recall depend on the level, exactly as for `/code-review`;
+  this wrapper adds nothing on top.
