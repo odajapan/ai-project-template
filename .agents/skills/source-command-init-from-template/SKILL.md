@@ -3,7 +3,7 @@ name: "source-command-init-from-template"
 description: "First-run checklist — adapt the template to this project before the first feature task."
 ---
 
-<!-- ported-from: .claude/commands/init-from-template.md sha256:a5a44549b04b -->
+<!-- ported-from: .claude/commands/init-from-template.md sha256:ec76af498569 -->
 
 # source-command-init-from-template
 

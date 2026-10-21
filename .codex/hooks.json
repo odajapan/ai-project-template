@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "make format 2>/dev/null || true"
+            "command": "make -C \"$(git rev-parse --show-toplevel)\" format 2>/dev/null || true"
           }
         ]
       }

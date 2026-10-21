@@ -34,11 +34,10 @@ Steps:
    `<type>(<scope>): <subject>` (Conventional Commits).
 7. Report the PR URL and stop. Do not run `gh pr merge` — merging is
    a human decision.
-8. After the human has merged the PR and any follow-through (pipeline
-   re-runs, deploys) is done, proactively suggest to start a fresh session with a one-line handoff — only once the PR is
-   merged and follow-through is done, nothing is still running, the tree
-   is clean, and anything worth keeping is in the PR body or `AGENTS.md`.
-   Never suggest it mid-task.
+8. Once the human has merged the PR, any follow-through (pipeline
+   re-runs, deploys) is done, nothing is still running, the tree is clean,
+   and anything worth keeping is in the PR body or `AGENTS.md`, suggest
+   starting a fresh session with a one-line handoff. Never mid-task.
 
 If any step blocks and the cause is non-obvious, stop and ask before
 guessing.

@@ -103,13 +103,40 @@ def test_env_example_reviewed_after_template_rename() -> None:
 # .claude/commands/ needs a Codex copy — see AGENTS.md.
 CLAUDE_ONLY_COMMANDS = {"jira", "daily-report", "review-explained"}
 
+# Projects that answer "no" to the Codex question in docs/TEMPLATE_INIT.md
+# delete both directories; the Codex checks then have nothing to guard.
+requires_codex = pytest.mark.skipif(
+    not (REPO_ROOT / ".codex").is_dir() and not (REPO_ROOT / ".agents").is_dir(),
+    reason="Codex layer removed via /init-from-template",
+)
 
+
+def _codex_copies() -> list[Path]:
+    return [
+        *(REPO_ROOT / ".codex/agents").glob("*.toml"),
+        *(REPO_ROOT / ".agents/skills").glob("source-command-*/SKILL.md"),
+    ]
+
+
+def _ported_from_hash(source: Path) -> str:
+    # rename_project.sh rewrites the package name in sources and copies alike
+    # but never touches the markers, so hash the source as the template wrote it.
+    text = source.read_text()
+    pyproject = (REPO_ROOT / "pyproject.toml").read_text()
+    name_match = re.search(r'(?m)^name = "([^"]+)"', pyproject)
+    if name_match and name_match.group(1) != "your_project_name":
+        text = text.replace(name_match.group(1), "your_project_name")
+    return hashlib.sha256(text.encode()).hexdigest()[:12]
+
+
+@requires_codex
 def test_every_claude_agent_has_a_codex_copy() -> None:
     claude_agents = {p.stem for p in (REPO_ROOT / ".claude/agents").glob("*.md")}
     codex_agents = {p.stem for p in (REPO_ROOT / ".codex/agents").glob("*.toml")}
     assert claude_agents == codex_agents
 
 
+@requires_codex
 def test_every_workflow_command_has_a_codex_skill() -> None:
     commands = {p.stem for p in (REPO_ROOT / ".claude/commands").glob("*.md")}
     skills = {
@@ -119,6 +146,7 @@ def test_every_workflow_command_has_a_codex_skill() -> None:
     assert skills == commands - CLAUDE_ONLY_COMMANDS
 
 
+@requires_codex
 def test_codex_agent_files_are_valid() -> None:
     for path in (REPO_ROOT / ".codex/agents").glob("*.toml"):
         agent = tomllib.loads(path.read_text())
@@ -127,41 +155,39 @@ def test_codex_agent_files_are_valid() -> None:
         assert agent.get("developer_instructions"), path
 
 
+@requires_codex
 def test_codex_skill_names_match_their_directories() -> None:
     for path in (REPO_ROOT / ".agents/skills").glob("*/SKILL.md"):
         match = re.search(r'^name: "?([^"\n]+)"?$', path.read_text(), re.M)
         assert match and match.group(1) == path.parent.name, path
 
 
+@requires_codex
 def test_codex_format_hook_matches_apply_patch() -> None:
     hooks = json.loads((REPO_ROOT / ".codex/hooks.json").read_text())["hooks"]
     matchers = [group.get("matcher", "") for group in hooks["PostToolUse"]]
     assert any(re.search(m, "apply_patch") for m in matchers), matchers
 
 
+@requires_codex
 def test_codex_copies_are_in_sync_with_their_source() -> None:
-    copies = [
-        *(REPO_ROOT / ".codex/agents").glob("*.toml"),
-        *(REPO_ROOT / ".agents/skills").glob("source-command-*/SKILL.md"),
-    ]
     stale = []
-    for copy in copies:
+    for copy in _codex_copies():
         match = re.search(r"ported-from: (\S+) sha256:([0-9a-f]{12})", copy.read_text())
         assert match, f"{copy} has no ported-from marker"
-        source = (REPO_ROOT / match.group(1)).read_bytes()
-        if hashlib.sha256(source).hexdigest()[:12] != match.group(2):
-            stale.append(str(copy.relative_to(REPO_ROOT)))
+        source = REPO_ROOT / match.group(1)
+        assert source.is_file(), f"{copy} was ported from missing {match.group(1)}"
+        expected = _ported_from_hash(source)
+        if expected != match.group(2):
+            stale.append(f"{copy.relative_to(REPO_ROOT)} (sha256:{expected})")
     assert not stale, (
         f"Source changed since these were ported: {stale}. Port the change by "
-        "hand (see AGENTS.md), then update the sha256 in the ported-from marker."
+        "hand (see AGENTS.md), then set the ported-from marker to the hash shown."
     )
 
 
+@requires_codex
 def test_codex_copies_drop_claude_specifics() -> None:
-    copies = [
-        *(REPO_ROOT / ".codex/agents").glob("*.toml"),
-        *(REPO_ROOT / ".agents/skills").glob("source-command-*/SKILL.md"),
-    ]
     # `claude/<anything>` branch refs (but not `.claude/` paths), the Claude
     # CLI flag, and the `Codex/*` / `.Codex/` casing a blind replace produces.
     claude_only = re.compile(
@@ -169,7 +195,7 @@ def test_codex_copies_drop_claude_specifics() -> None:
     )
     offenders = [
         str(p.relative_to(REPO_ROOT))
-        for p in copies
+        for p in _codex_copies()
         if claude_only.search(p.read_text())
     ]
     assert not offenders, (

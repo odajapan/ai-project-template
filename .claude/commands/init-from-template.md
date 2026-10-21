@@ -73,7 +73,8 @@ Steps:
    references (Makefile targets, `AGENTS.md` Commands table, `pyproject.toml`
    extras, `.claude/CLAUDE.md`, and the matching `.codex/agents/` and
    `.agents/skills/` copies).
-6. Run Phase 2 (rewrite `env.example`, trim `AGENTS.md`, refresh
+6. Run Phase 2 (rewrite `env.example`, trim `AGENTS.md` including its Codex
+   paragraph, refresh
    `.claude/CLAUDE.md`, rewrite `README.md`, sync `EXTRAS` across Makefile/CI).
 7. Confirm the exit criteria in `docs/TEMPLATE_INIT.md`: `make check` green,
    `git grep -c your_project_name` is `0`, no dangling references to deleted

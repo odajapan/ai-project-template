@@ -44,11 +44,15 @@ site — nothing in a freshly-cloned template has been used yet.
 | Does this project use Jira? | `scripts/{jira_task.py,daily_report.py,daily_report.sh}`, `tests/scripts/`, `docs/JIRA_GITHUB_WORKFLOW.md`, `.claude/commands/{jira,daily-report}.md`, the `jira` extra in `pyproject.toml` and its allow rules in `.claude/settings.json`, `jira` in the Makefile `EXTRAS` default |
 | Sphinx docs? | `docs/*.rst`, `docs/{conf.py,Makefile,make.bat}`, the `docs` extra |
 | TypeScript workspace? | `.claude/rules/web.md`, the `web` CI job, the `AGENTS.md` §web section, `Bash(pnpm:*)` in `.claude/settings.json` |
+| Will anyone use OpenAI Codex on this repo? | `.codex/`, `.agents/`, the Codex paragraph at the top of `AGENTS.md` (the Codex checks in `tests/test_repo_consistency.py` skip themselves once both directories are gone) |
 | Does this project run as a long-lived service deployed to a host via a self-hosted GitHub Actions runner? | `deploy/`, `.github/workflows/deploy.yml`, `docs/EC2_DEPLOY.md`, `.claude/rules/ec2-deploy.md`, the `AGENTS.md` §EC2 deploy section |
 
 Deleting a row's files also means removing any now-dangling references to
 them elsewhere (Makefile targets, `AGENTS.md` Commands table,
-`.claude/CLAUDE.md`, `pyproject.toml` extras).
+`.claude/CLAUDE.md`, `pyproject.toml` extras). If Codex is kept, deleting a
+`.claude/agents/<name>.md` or `.claude/commands/<name>.md` also means deleting
+its copy, `.codex/agents/<name>.toml` or
+`.agents/skills/source-command-<name>/`.
 
 ## Phase 2 — Re-anchor
 

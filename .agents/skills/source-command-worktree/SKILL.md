@@ -32,7 +32,7 @@ git worktree add "../${REPO_NAME}-${TASK_NAME}" -b "codex/${TASK_NAME}" origin/m
 
 # Then in another terminal:
 cd "../${REPO_NAME}-${TASK_NAME}"
-codex --sandbox workspace-write --ask-for-approval never
+codex --sandbox workspace-write --ask-for-approval on-request
 ```
 
 Then briefly explain (1–2 lines) why this is useful:
@@ -40,3 +40,7 @@ Then briefly explain (1–2 lines) why this is useful:
 - The autonomous run is isolated from the user's main checkout.
 - The user can keep editing the main worktree while Codex works.
 - Removing the worktree afterward: `git worktree remove <path>`.
+- Expect approval prompts for `git commit` (the worktree's git dir lives
+  in the main repo's `.git/worktrees/`, outside the writable root) and for
+  `git push` / `gh pr create` (the sandbox has no network). Keep approvals
+  on rather than bypassing the sandbox — Codex has no deny-rule backstop.

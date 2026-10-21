@@ -47,17 +47,19 @@ main`.
 
 ## After all PRs
 
-6. **Clean stale worktrees.** Candidates are worktrees under
-   `.claude/worktrees/` and sibling `../<repo>-<task>` worktrees on a
-   `codex/*` branch (what `source-command-worktree` creates). Never touch
-   the current worktree (`git rev-parse --show-toplevel`) or any other
-   worktree. Remove a candidate whose branch is merged into main, or that
-   is detached, with `git worktree remove <path>` — add `--force` only for
-   `.claude/worktrees/`. If a candidate looks active (unmerged branch,
-   uncommitted work), **list it and stop** rather than removing it.
-7. **Suggest a fresh session.** Propose to start a fresh session with a
-   one-line handoff — only once the PR is merged and follow-through is done, nothing is still running, the tree
-   is clean, and anything worth keeping is in the PR body or `AGENTS.md`.
+6. **Clean stale worktrees.** Consider only sibling `../<repo>-<task>`
+   worktrees on a `codex/*` branch (what `source-command-worktree` creates)
+   and anything under `.claude/worktrees/` (a Claude Code session may share
+   this clone). Leave the current worktree (`git rev-parse --show-toplevel`)
+   and every worktree outside those two sets alone. Remove a candidate whose
+   branch is merged into main, or that is detached, with
+   `git worktree remove <path>` (`--force` only under `.claude/worktrees/`).
+   If a candidate looks active (unmerged branch, uncommitted work), **list
+   it and stop** rather than removing it.
+7. **Suggest a fresh session.** Once the PR is merged, follow-through is
+   done, nothing is still running, the tree is clean, and anything worth
+   keeping is in the PR body or `AGENTS.md`, propose a fresh session with a
+   one-line handoff.
 
 If any step blocks and the cause is non-obvious, stop and report before
 guessing. Never use `gh pr merge` outside this human-initiated flow.

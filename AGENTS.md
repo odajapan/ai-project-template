@@ -14,7 +14,8 @@ and `.claude/commands/*.md` — branch prefix `codex/`, Codex CLI flags and tool
 and no reliance on `CLAUDE.md` (Codex does not load it). When you change a source,
 port the change to its copy by hand in the same PR; do not regenerate the copy, or
 the adaptations are lost. Each copy carries a `ported-from: <source> sha256:<12 hex>`
-marker; after porting, set it to the first 12 hex digits of `shasum -a 256 <source>`.
+marker; after porting, set it to the hash the failing test prints (the source's
+sha256 with the package name normalized back to `your_project_name`).
 `tests/test_repo_consistency.py` fails when a copy is missing, malformed, stale
 against its source, or still uses the `claude/` prefix. Codex runs `.codex/hooks.json`
 only after the project's `.codex/` layer is trusted and the hook is approved via
