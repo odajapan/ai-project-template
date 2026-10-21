@@ -32,8 +32,9 @@ Steps:
 3. Run `git checkout -b claude/$ARGUMENTS`. If the branch already
    exists, stop and ask the user whether to resume it or pick a new
    name.
-4. Re-read `CLAUDE.md` "Autonomous run rules" and `.claude/CLAUDE.md`
-   so the constraints are fresh in context.
+4. Re-read the "Security & forbidden actions" and "Scope & stop conditions"
+   sections of `AGENTS.md`, plus `.claude/CLAUDE.md`, so the constraints are
+   fresh in context.
 5. Emit a short scope declaration in this exact shape and stop for the
    user to confirm before any further work:
 
