@@ -42,7 +42,7 @@ user to decide.
 
 1. **Resolve the PR.**
    ```bash
-   gh pr view --json number,state,baseRefName,headRefName,headRefOid,url
+   gh pr view --json number,state,baseRefName,headRefName,headRefOid,isCrossRepository,url
    ```
    If this fails (no PR for the current branch, or `gh` not
    authenticated), **stop** and tell the user: push the branch and open a
@@ -70,7 +70,8 @@ user to decide.
    - Review-only mode: if `git rev-parse HEAD` differs from `headRefOid`,
      continue but warn in one line that the pushed version is reviewed
      and local-only commits are not covered.
-   - Fix loop: **stop** unless all of these hold — the current branch is
+   - Fix loop: **stop** unless all of these hold — `isCrossRepository` is
+     false (fix commits are pushed to `origin`); the current branch is
      `headRefName` and is not `main` / `master`; `git rev-parse HEAD`
      equals `headRefOid` (push or pull first); `git status --porcelain` is
      empty (commit or stash first, so fixes never mix with unrelated
@@ -81,7 +82,10 @@ user to decide.
    level (only if one was given — otherwise omit it so `/code-review`
    keeps its own default, the level used last) and the forwarded flags,
    e.g. `"63"`, `"63 max"`, `"63 ultra --post"`. Do not pass `--fix` to the
-   skill — this command decides what gets fixed. With `ultra`, go
+   skill — this command decides what gets fixed. Each `code-review` call
+   is one round: its own output contract (a findings block, or
+   `ReportFindings`) closes that round, not this command — keep going
+   with the next step. With `ultra`, go
    straight to step 7. In review-only mode, triage (step 5), then go to
    step 7.
 5. **Triage every finding** of the round into exactly one bucket. Read the
@@ -110,25 +114,29 @@ user to decide.
    3. If a Fix item repeats a finding already fixed in an earlier round
       (same problem at the same place), the fix did not hold: move it to
       Ask the user and do not fix it again.
-   4. Apply the remaining Fix items. Run `make check`. If it fails and two
-      diagnostic attempts do not make it pass, stop: leave this round's
-      edits uncommitted, do not push, and report the failure output
-      together with step 7.
-   5. If the fixes grow beyond 3 files or 500 lines more than the PR
-      already changes, stop the same way: this round's edits stay
-      uncommitted, nothing is pushed, and step 7 reports it.
+   4. Apply the remaining Fix items. If the fixes so far, measured from
+      the original head (`git diff --stat <headRefOid>`, step 1's value,
+      not the moving PR), exceed 3 files or 500 lines, stop before
+      running `make check`: this round's edits stay uncommitted, nothing
+      is pushed, and step 7 reports it.
+   5. Run `make check`. If it fails and two diagnostic attempts do not
+      make it pass, stop the same way: this round's edits stay
+      uncommitted, nothing is pushed, and step 7 reports the failure
+      output.
    6. Stage only the files you changed and commit one Conventional Commit
       per round, e.g. `fix: address review findings (round 1)`, listing
       the fixed findings in the body.
-   7. Re-review: invoke `code-review` with
+   7. Re-review: re-run step 1's `gh pr view`; if the PR is no longer
+      `OPEN` or `baseRefName` changed, stop and report. Then
+      `git fetch origin <baseRefName>` and invoke `code-review` with
       `args` = `origin/<baseRefName>...HEAD` plus the same level and
       forwarded flags. The PR number cannot be used here — it reads the
       pushed state, and the fix commits are local until step 8. This is a
       full review of the PR as it now stands, not just the fixes. Return
       to step 5 with this round's findings.
    8. When the loop ends with at least one fix commit and `make check`
-      green, `git push` once (plain push to `headRefName` — never force).
-      Do not push if the loop stopped on a failing `make check`.
+      green, push once with `git push origin HEAD:<headRefName>` (never
+      force). Do not push if the loop stopped at 6.4 or 6.5.
 7. **Report**, in the user's language (from CLAUDE.md or memory if set,
    otherwise the conversation's language; keep identifiers, paths, and
    the skill's raw output as-is). Do not paste the skill's output a second
