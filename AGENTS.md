@@ -20,7 +20,8 @@ sha256 with the package name normalized back to `your_project_name`).
 against its source, or still uses the `claude/` prefix. Codex runs `.codex/hooks.json`
 only after the project's `.codex/` layer is trusted and the hook is approved via
 `/hooks`. Claude-only commands
-(`jira`, `daily-report`, `review-explained`) and `.claude/rules/` have no Codex copy.
+(`jira`, `daily-report`, `review-explained`, `pr-review`) and `.claude/rules/` have no
+Codex copy.
 Codex subagents cannot be restricted to read-only per agent (`sandbox_mode` is not
 overridable in an agent file), so the "read-only" agents rely on their instructions.
 They set no `model`, so they run on the parent session's model — the
