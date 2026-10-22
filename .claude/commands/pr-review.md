@@ -35,7 +35,8 @@ user to decide.
   re-review, at most **3 reviews** in total, then push once.
   **Autonomous runs** (`--dangerously-skip-permissions` or unattended)
   never use it — CLAUDE.md says they open the PR and stop — so they run
-  as `--no-fix`; say so in one line.
+  as `--no-fix`, reject `--comment` / `--post` (no outward-facing posts
+  without a human), and say so in one line.
 - **`--no-fix` — review only.** One review, then the triage (step 5)
   and the report (step 7). Nothing is edited, committed, or pushed.
 - **`ultra`** implies `--no-fix`: it runs in the cloud and returns its
@@ -111,18 +112,19 @@ user to decide.
      enforce. Give the reason.
    When unsure between Fix and Ask, choose Ask.
 6. **Fix and re-review** (fix loop only).
-   1. If the Fix bucket is empty, go to step 7.
+   1. If the Fix bucket is empty, go to 6.8.
    2. If this was review round 3, do **not** fix — unreviewed fixes would
       be pushed. Move the Fix items to the report as "fixable, not
-      applied (round limit)" and go to step 7.
+      applied (round limit)" and go to 6.8.
    3. If a Fix item repeats a finding already fixed in an earlier round
-      (same problem at the same place), the fix did not hold: move it to
-      Ask the user and do not fix it again.
+      (the same problem in the same function or section — match on the
+      problem, not the line number, since fixes shift lines), the fix did
+      not hold: move it to Ask the user and do not fix it again.
    4. Apply the remaining Fix items. If the fixes so far, measured from
       the original head (`git diff --stat <headRefOid>`, step 1's value,
       not the moving PR), exceed 3 files or 500 lines, stop before
       running `make check`: this round's edits stay uncommitted, and
-      step 8 still pushes the earlier rounds' commits.
+      6.8 still pushes the earlier rounds' commits.
    5. Run `make check`. If it fails and two diagnostic attempts do not
       make it pass, stop the same way, and step 7 reports the failure
       output.
@@ -135,7 +137,7 @@ user to decide.
       `git fetch origin <baseRefName>` and invoke `code-review` with
       `args` = `origin/<baseRefName>...HEAD` plus the same level and
       forwarded flags. The PR number cannot be used here — it reads the
-      pushed state, and the fix commits are local until step 8. This is a
+      pushed state, and the fix commits are local until 6.8. This is a
       full review of the PR as it now stands, not just the fixes. Return
       to step 5 with this round's findings.
    8. If there is at least one fix commit, push once with
@@ -143,7 +145,7 @@ user to decide.
       green in `make check` and re-reviewed by the following round; a
       stop at 6.4 / 6.5 leaves only that round's edits uncommitted. Do
       not push after a stop at 6.7. If the push is rejected, stop and
-      report — never force.
+      report — never force. Then go to step 7.
 7. **Report**, in the user's language (from CLAUDE.md or memory if set,
    otherwise the conversation's language; keep identifiers, paths, and
    the skill's raw output as-is). Do not paste the skill's output a second
@@ -154,10 +156,11 @@ user to decide.
    - **Fixed**: one line per finding.
    - **Fixable, not applied**: Fix-bucket items in review-only mode or
      after the round limit, one line each with the intended fix.
-   - **Needs your decision**: for each, keep the review's numbering and
-     write
+   - **Needs your decision**: for each, number it `R<round>-<n>` (the
+     review's own number within that round, so items from different
+     rounds never collide) and write
      ```
-     N. **<file> <line>: <the problem in one sentence>**
+     R<round>-<n>. **<file> <line>: <the problem in one sentence>**
         What can break: <which input/state breaks what>
         Options: <the reasonable fixes, with trade-offs>
         Recommendation: <yours, with one reason>
