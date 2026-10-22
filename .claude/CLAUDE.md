@@ -72,7 +72,7 @@ Slash commands (run inside Claude Code):
 - `/new-rule <name>` — create a path-scoped rule under `.claude/rules/`
 - `/start-task <name>` — cut a `claude/<name>` branch and declare scope
 - `/finish-task` — run checks, push, and open a PR
-- `/pr-review [level] [--no-fix] [--comment]` — run `/code-review` on this branch's
+- `/pr-review [level] [--no-fix [--comment]]` — run `/code-review` on this branch's
   open PR by number, fix the obvious findings and re-review (max 3 reviews),
   then explain what is left for you to decide (bare `/code-review` sees
   nothing once pushed)

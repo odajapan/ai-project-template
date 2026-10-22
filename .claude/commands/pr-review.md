@@ -33,8 +33,8 @@ user to decide.
 
 - **Default — fix loop.** Review → fix the obvious findings → commit →
   re-review, at most **3 reviews** in total, then push once.
-- **`--no-fix` — review only.** One review, then the explanation and
-  triage (step 7). Nothing is edited, committed, or pushed.
+- **`--no-fix` — review only.** One review, then the triage (step 5)
+  and the report (step 7). Nothing is edited, committed, or pushed.
 - **`ultra`** implies `--no-fix`: it runs in the cloud and returns its
   findings later, so there is nothing to loop on.
 
@@ -53,7 +53,9 @@ user to decide.
    - At most one level: `low`, `medium`, `high`, `xhigh`, `max`, `ultra`
      (case-insensitive; forward it lowercased).
    - `--no-fix` selects review-only mode. `--fix` is accepted as a no-op
-     (fixing is the default) — say so in one line.
+     (fixing is the default) — say so in one line. `ultra` with `--fix`
+     is rejected: the cloud review returns its findings later, so there
+     is nothing to fix in this turn.
    - `--max-findings` takes the next word as its value, which must be a
      positive integer, `all`, or `default` — if it is missing or anything
      else, stop and say so. It is forwarded on every review round.
@@ -79,8 +81,9 @@ user to decide.
    level (only if one was given — otherwise omit it so `/code-review`
    keeps its own default, the level used last) and the forwarded flags,
    e.g. `"63"`, `"63 max"`, `"63 ultra --post"`. Do not pass `--fix` to the
-   skill — this command decides what gets fixed. In review-only mode, go
-   to step 7.
+   skill — this command decides what gets fixed. With `ultra`, go
+   straight to step 7. In review-only mode, triage (step 5), then go to
+   step 7.
 5. **Triage every finding** of the round into exactly one bucket. Read the
    cited code first; do not trust the finding's line numbers blindly.
    - **Fix** — all of: you agree the problem is real; there is one
@@ -92,7 +95,8 @@ user to decide.
    - **Ask the user** — anything else that is real: several reasonable
      fixes, a behavior or API change, a trade-off (security, cost,
      performance vs. simplicity), a fix outside the PR's scope, anything
-     touching forbidden paths (`AGENTS.md`), or a finding that contradicts
+     touching a path `AGENTS.md` forbids or protects (`data/raw/`,
+     `models/`, `.env*`, `secrets/`), or a finding that contradicts
      the PR's stated design.
    - **No action** — you can show it is not a problem (quote the guard or
      the code that refutes it), or it is pure style the project does not
@@ -107,10 +111,12 @@ user to decide.
       (same problem at the same place), the fix did not hold: move it to
       Ask the user and do not fix it again.
    4. Apply the remaining Fix items. Run `make check`. If it fails and two
-      diagnostic attempts do not make it pass, stop: leave the working
-      tree as it is, and report the failure output together with step 7.
-   5. Stop and report (step 7) if the fixes grow beyond 3 files or 500
-      lines more than the PR already changes.
+      diagnostic attempts do not make it pass, stop: leave this round's
+      edits uncommitted, do not push, and report the failure output
+      together with step 7.
+   5. If the fixes grow beyond 3 files or 500 lines more than the PR
+      already changes, stop the same way: this round's edits stay
+      uncommitted, nothing is pushed, and step 7 reports it.
    6. Stage only the files you changed and commit one Conventional Commit
       per round, e.g. `fix: address review findings (round 1)`, listing
       the fixed findings in the body.
@@ -144,8 +150,15 @@ user to decide.
      limit / repeated finding / `make check` failure / scope limit.
    - **Pushed**: the new head SHA, or "nothing pushed" with the reason.
      PR CI reruns on the push; `/pr-review` does not wait for it.
-   If there were no findings at all, say so and list in 2–3 lines what
-   the reviewer checked.
+   - **Left local** (only when the loop stopped without pushing): the
+     unpushed commits (`git log --oneline origin/<headRefName>..HEAD`) and
+     the uncommitted files (`git status --short`). Say that earlier
+     rounds' commits passed `make check`, and that the next `/pr-review`
+     refuses to run until the tree is clean and pushed.
+   With `ultra`, report only that the cloud review was launched and its
+   findings arrive later — never "no findings". Otherwise, if there were
+   no findings at all, say so and list in 2–3 lines what the reviewer
+   checked.
 
 ## Notes
 
