@@ -33,6 +33,9 @@ user to decide.
 
 - **Default — fix loop.** Review → fix the obvious findings → commit →
   re-review, at most **3 reviews** in total, then push once.
+  **Autonomous runs** (`--dangerously-skip-permissions` or unattended)
+  never use it — CLAUDE.md says they open the PR and stop — so they run
+  as `--no-fix`; say so in one line.
 - **`--no-fix` — review only.** One review, then the triage (step 5)
   and the report (step 7). Nothing is edited, committed, or pushed.
 - **`ultra`** implies `--no-fix`: it runs in the cloud and returns its
@@ -53,9 +56,10 @@ user to decide.
    - At most one level: `low`, `medium`, `high`, `xhigh`, `max`, `ultra`
      (case-insensitive; forward it lowercased).
    - `--no-fix` selects review-only mode. `--fix` is accepted as a no-op
-     (fixing is the default) — say so in one line. `ultra` with `--fix`
-     is rejected: the cloud review returns its findings later, so there
-     is nothing to fix in this turn.
+     (fixing is the default) — say so in one line. `--fix` together with
+     `--no-fix` is rejected as contradictory, and so is `ultra` with
+     `--fix`: the cloud review returns its findings later, so there is
+     nothing to fix in this turn.
    - `--max-findings` takes the next word as its value, which must be a
      positive integer, `all`, or `default` — if it is missing or anything
      else, stop and say so. It is forwarded on every review round.
@@ -75,7 +79,7 @@ user to decide.
      `headRefName` and is not `main` / `master`; `git rev-parse HEAD`
      equals `headRefOid` (push or pull first); `git status --porcelain` is
      empty (commit or stash first, so fixes never mix with unrelated
-     work). Then `git fetch origin <baseRefName>`.
+     work).
 4. **Review round 1.** Print one line naming the PR (`url`, base
    `baseRefName`), then invoke the `Skill` tool with
    `skill: "code-review"` and `args` set to `<PR number>`, followed by the
@@ -117,26 +121,29 @@ user to decide.
    4. Apply the remaining Fix items. If the fixes so far, measured from
       the original head (`git diff --stat <headRefOid>`, step 1's value,
       not the moving PR), exceed 3 files or 500 lines, stop before
-      running `make check`: this round's edits stay uncommitted, nothing
-      is pushed, and step 7 reports it.
+      running `make check`: this round's edits stay uncommitted, and
+      step 8 still pushes the earlier rounds' commits.
    5. Run `make check`. If it fails and two diagnostic attempts do not
-      make it pass, stop the same way: this round's edits stay
-      uncommitted, nothing is pushed, and step 7 reports the failure
+      make it pass, stop the same way, and step 7 reports the failure
       output.
    6. Stage only the files you changed and commit one Conventional Commit
       per round, e.g. `fix: address review findings (round 1)`, listing
       the fixed findings in the body.
    7. Re-review: re-run step 1's `gh pr view`; if the PR is no longer
-      `OPEN` or `baseRefName` changed, stop and report. Then
+      `OPEN`, `baseRefName` changed, or `headRefOid` moved (someone else
+      pushed), stop, do not push, and report. Then
       `git fetch origin <baseRefName>` and invoke `code-review` with
       `args` = `origin/<baseRefName>...HEAD` plus the same level and
       forwarded flags. The PR number cannot be used here — it reads the
       pushed state, and the fix commits are local until step 8. This is a
       full review of the PR as it now stands, not just the fixes. Return
       to step 5 with this round's findings.
-   8. When the loop ends with at least one fix commit and `make check`
-      green, push once with `git push origin HEAD:<headRefName>` (never
-      force). Do not push if the loop stopped at 6.4 or 6.5.
+   8. If there is at least one fix commit, push once with
+      `git push origin <headRefName>` (never force). Every commit was
+      green in `make check` and re-reviewed by the following round; a
+      stop at 6.4 / 6.5 leaves only that round's edits uncommitted. Do
+      not push after a stop at 6.7. If the push is rejected, stop and
+      report — never force.
 7. **Report**, in the user's language (from CLAUDE.md or memory if set,
    otherwise the conversation's language; keep identifiers, paths, and
    the skill's raw output as-is). Do not paste the skill's output a second
@@ -145,6 +152,8 @@ user to decide.
    - **Rounds**: one line per round — number of findings and how many
      were fixed / asked / no action; the fix commit SHA.
    - **Fixed**: one line per finding.
+   - **Fixable, not applied**: Fix-bucket items in review-only mode or
+     after the round limit, one line each with the intended fix.
    - **Needs your decision**: for each, keep the review's numbering and
      write
      ```
@@ -155,14 +164,15 @@ user to decide.
      ```
    - **No action**: one line each with the reason.
    - **Why it stopped**: no findings left / only decisions left / round
-     limit / repeated finding / `make check` failure / scope limit.
+     limit / repeated finding / `make check` failure / scope limit / PR
+     changed on GitHub / push rejected.
    - **Pushed**: the new head SHA, or "nothing pushed" with the reason.
      PR CI reruns on the push; `/pr-review` does not wait for it.
-   - **Left local** (only when the loop stopped without pushing): the
-     unpushed commits (`git log --oneline origin/<headRefName>..HEAD`) and
-     the uncommitted files (`git status --short`). Say that earlier
-     rounds' commits passed `make check`, and that the next `/pr-review`
-     refuses to run until the tree is clean and pushed.
+   - **Left local** (whenever anything is): the unpushed commits
+     (`git log --oneline origin/<headRefName>..HEAD`) and the uncommitted
+     files (`git status --short`), with the choices — keep and commit
+     the edits, or discard them (`git restore`) — and that the next
+     `/pr-review` refuses to run until the tree is clean and pushed.
    With `ultra`, report only that the cloud review was launched and its
    findings arrive later — never "no findings". Otherwise, if there were
    no findings at all, say so and list in 2–3 lines what the reviewer
@@ -175,5 +185,4 @@ user to decide.
 - Every round costs a full review at the chosen level, so the default
   loop can cost up to three reviews. Use `--no-fix` when you only want
   the findings.
-- Autonomous runs may use the fix loop (it pushes only to the PR's own
-  branch), but never merge — merging stays with `/land` and a human.
+- Never merge — merging stays with `/land` and a human.
