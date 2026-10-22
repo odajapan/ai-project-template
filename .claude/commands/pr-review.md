@@ -36,7 +36,9 @@ user to decide.
   **Autonomous runs** (`--dangerously-skip-permissions` or unattended)
   never use it — CLAUDE.md says they open the PR and stop — so they run
   as `--no-fix`, reject `--comment` / `--post` (no outward-facing posts
-  without a human), and say so in one line.
+  without a human), and say so in one line. This override comes before
+  step 2's flag checks: a `--fix` from an autonomous caller is ignored,
+  not reported as contradicting `--no-fix`.
 - **`--no-fix` — review only.** One review, then the triage (step 5)
   and the report (step 7). Nothing is edited, committed, or pushed.
 - **`ultra`** implies `--no-fix`: it runs in the cloud and returns its
@@ -112,14 +114,14 @@ user to decide.
      enforce. Give the reason.
    When unsure between Fix and Ask, choose Ask.
 6. **Fix and re-review** (fix loop only).
-   1. If the Fix bucket is empty, go to 6.8.
-   2. If this was review round 3, do **not** fix — unreviewed fixes would
-      be pushed. Move the Fix items to the report as "fixable, not
-      applied (round limit)" and go to 6.8.
-   3. If a Fix item repeats a finding already fixed in an earlier round
+   1. If a Fix item repeats a finding already fixed in an earlier round
       (the same problem in the same function or section — match on the
       problem, not the line number, since fixes shift lines), the fix did
       not hold: move it to Ask the user and do not fix it again.
+   2. If the Fix bucket is now empty, go to 6.8.
+   3. If this was review round 3, do **not** fix — unreviewed fixes would
+      be pushed. Move the Fix items to the report as "fixable, not
+      applied (round limit)" and go to 6.8.
    4. Apply the remaining Fix items. If the fixes so far, measured from
       the original head (`git diff --stat <headRefOid>`, step 1's value,
       not the moving PR), exceed 3 files or 500 lines, stop before
@@ -140,8 +142,10 @@ user to decide.
       pushed state, and the fix commits are local until 6.8. This is a
       full review of the PR as it now stands, not just the fixes. Return
       to step 5 with this round's findings.
-   8. If there is at least one fix commit, push once with
-      `git push origin <headRefName>` (never force). Every commit was
+   8. If there is at least one fix commit, re-run step 1's
+      `gh pr view` first — if the PR is no longer `OPEN`, `baseRefName`
+      changed, or `headRefOid` moved, do not push. Otherwise push once
+      with `git push origin <headRefName>` (never force). Every commit was
       green in `make check` and re-reviewed by the following round; a
       stop at 6.4 / 6.5 leaves only that round's edits uncommitted. Do
       not push after a stop at 6.7. If the push is rejected, stop and
