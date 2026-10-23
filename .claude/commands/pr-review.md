@@ -132,10 +132,10 @@ user to decide.
    3. If this was review round 3, do **not** fix — unreviewed fixes would
       be pushed. Move the Fix items to the report as "fixable, not
       applied (round limit)" and go to 6.8.
-   4. Apply the remaining Fix items. The `make format` PostToolUse hook
-      formats all of `src/`, `tests/`, and `scripts/`, so it can rewrite
-      files the fix never touched: `git restore` every modified file that
-      is neither in the PR (`gh pr diff <number> --name-only`) nor a test
+   4. Apply the remaining Fix items. The PostToolUse hook formats only
+      the file just edited, so `git status` should list nothing but your
+      fixes; if it does, `git restore` every modified file that is
+      neither in the PR (`gh pr diff <number> --name-only`) nor a test
       of a PR file. Then measure the fixes so far against the original
       head (step 1's `headRefOid`, not the moving PR): stop if more than
       3 files outside the PR's file list are touched (new tests count),

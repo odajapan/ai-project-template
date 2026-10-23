@@ -11,7 +11,7 @@ A Python 3.12+ project scaffold pre-wired for Claude AI development:
 - `ClaudeClient` wrapper with caching, streaming, tool use, and multi-turn
 - Click CLI (`ask` / `chat` subcommands) calling Claude out of the box
 - `make check` = ruff + mypy + pytest in one command
-- Claude Code config: opusplan model, role-based subagents, slash commands, skills
+- Claude Code config: role-based subagents, slash commands, skills, sandbox example
 
 ## Key files — read these first
 
