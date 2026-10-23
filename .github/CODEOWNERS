@@ -1,14 +1,6 @@
-# Every PR needs a review from an owner before it can merge (enforced by the
-# "Require review from a Code Owner" branch-protection rule in
-# docs/branch-protection.md). Downstream projects: replace the handle with this
-# project's maintainers (docs/TEMPLATE_INIT.md Phase 0).
+# Every PR requests a review from the owner, and the "Require review from a
+# Code Owner" branch-protection rule (docs/branch-protection.md) can make it
+# mandatory. Downstream projects: replace the handle with this project's
+# maintainers (docs/TEMPLATE_INIT.md Phase 0). Last matching rule wins, so a
+# narrower path rule added below this line overrides it for that path.
 *       @odajapan
-
-# The harness itself gets an owner review even if a path-specific rule below
-# ever narrows the default.
-/.claude/            @odajapan
-/.codex/             @odajapan
-/.agents/            @odajapan
-/.github/            @odajapan
-/AGENTS.md           @odajapan
-/CLAUDE.md           @odajapan

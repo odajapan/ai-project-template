@@ -31,10 +31,12 @@ case "$file" in
   *) exit 0 ;;
 esac
 
-if command -v ruff >/dev/null 2>&1; then
-  ruff="ruff"
-elif [ -x "$root/.venv/bin/ruff" ]; then
+# Prefer the project's ruff so the hook agrees with `make check` and
+# pre-commit even when the venv is not activated in the launching shell.
+if [ -x "$root/.venv/bin/ruff" ]; then
   ruff="$root/.venv/bin/ruff"
+elif command -v ruff >/dev/null 2>&1; then
+  ruff="ruff"
 else
   exit 0
 fi

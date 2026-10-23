@@ -16,16 +16,18 @@ repos:
   # pinned-rev mirrors drifted: a ruff fixed by the hook could still fail
   # `make lint`, and mirrors-mypy runs in an isolated env without the
   # project's dependencies, so its verdict differed from `make typecheck`.
+  # Order matters: `check --fix` first, then `format`, as ruff documents,
+  # so the formatter sees the fixed code and one run converges.
   - repo: local
     hooks:
-      - id: ruff-format
-        name: ruff format
-        entry: ruff format
-        language: system
-        types_or: [python, pyi]
       - id: ruff-check
         name: ruff check --fix
         entry: ruff check --fix
+        language: system
+        types_or: [python, pyi]
+      - id: ruff-format
+        name: ruff format
+        entry: ruff format
         language: system
         types_or: [python, pyi]
       - id: mypy

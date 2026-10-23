@@ -14,7 +14,12 @@ after cloning this template.
   - Require at least 1 approving review
   - Dismiss stale approvals when new commits are pushed
   - Require review from a Code Owner (`.github/CODEOWNERS` ships with the
-    template — update the handle in Phase 0 of `docs/TEMPLATE_INIT.md`)
+    template — update the handle in Phase 0 of `docs/TEMPLATE_INIT.md`).
+    **Solo-maintainer repos:** GitHub never counts the author's own
+    approval, so with one owner neither this rule nor "1 approving
+    review" can be satisfied on the owner's PRs. Either add a second
+    reviewer account to `CODEOWNERS`, or leave both review rules off and
+    keep the status-check and no-direct-push rules as the gate.
 - **Require status checks to pass before merging**
   - Require branches to be up to date before merging
   - Required checks: `checks` (from `.github/workflows/ci.yml`,

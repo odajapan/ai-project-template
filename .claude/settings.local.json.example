@@ -8,7 +8,7 @@
       "Bash(open:*)"
     ]
   },
-  "$comment_sandbox": "Permission rules are prefix matches on the command text, not a security boundary: `Bash(rm -rf:*)` does not see `/bin/rm -rf` or `bash -c 'rm -rf ..'`, and a `Read(.env)` deny does not stop a Python one-liner from opening the file. The OS-level control is the sandbox below (macOS Seatbelt built in; Linux/WSL2 need bubblewrap + socat). The filesystem lists mirror AGENTS.md's forbidden paths and are safe to enable as-is. The network allowlist has no one-size-fits-all value — tune it to what this project's tooling actually calls (Jira host, npm registry, …) before running unattended somewhere exfiltration risk matters, then set `enabled` to true.",
+  "$comment_sandbox": "Permission rules are prefix matches on the command text, not a security boundary: `Bash(rm -rf:*)` does not see `/bin/rm -rf` or `bash -c 'rm -rf ..'`, and a `Read(.env)` deny does not stop a Python one-liner from opening the file. The OS-level control is the sandbox below (macOS Seatbelt built in; Linux/WSL2 need bubblewrap + socat). The filesystem lists mirror AGENTS.md's forbidden paths. Caveat: the app itself reads `.env` via load_dotenv(), so with `.env` in denyRead the CLI, `/llm-test` and examples/ fail inside sandboxed Bash — either run those outside the sandbox / export ANTHROPIC_API_KEY in the shell instead, or drop `.env` from denyRead and rely on the Read/Edit deny rules for it. The network allowlist has no one-size-fits-all value — tune it to what this project's tooling actually calls (Jira host, npm registry, …) before running unattended somewhere exfiltration risk matters, then set `enabled` to true.",
   "sandbox": {
     "enabled": false,
     "filesystem": {

@@ -34,9 +34,12 @@ below.
    maintainers — the template ships the template author's handle.
 8. Lock dependencies: `uv lock` creates `uv.lock`; commit it and switch
    the CI install step to `uv sync --locked --extra dev --extra claude
-   --extra jira` (or the project's canonical extras). The template itself
-   ships no lockfile so it never over-constrains downstream, but a real
-   project should install the same versions in CI and locally.
+   --extra jira` (or the project's canonical extras). Update the regex in
+   `tests/test_repo_consistency.py::test_ci_extras_match_canonical` to
+   read the `--extra` flags in the same edit, or `make check` goes red on
+   the pattern it no longer finds. The template itself ships no lockfile
+   so it never over-constrains downstream, but a real project should
+   install the same versions in CI and locally.
 9. If PRs should get an automatic Claude review, add the
    `ANTHROPIC_API_KEY` (or `CLAUDE_CODE_OAUTH_TOKEN`) repository secret
    — `.github/workflows/claude-code-review.yml` skips itself while the
@@ -51,12 +54,13 @@ site — nothing in a freshly-cloned template has been used yet.
 
 | Question | If **No**, delete |
 |---|---|
-| Does this project call the Claude API? | `src/**/llm.py`, `src/**/schemas.py`, `examples/`, `tests/test_llm.py`, `tests/integration/`, `.claude/rules/llm-development.md`, `.claude/commands/{llm-test,add-tool,add-example}.md`, `.claude/skills/{claude-sdk,agentic-engineering,eval-harness}/`, `.github/workflows/claude-code-review.yml`, the `claude` extra in `pyproject.toml`, the `ask`/`chat` CLI commands in `cli.py`, the API-key block in `env.example` |
+| Does this project call the Claude API? | `src/**/llm.py`, `src/**/schemas.py`, `examples/`, `tests/test_llm.py`, `tests/integration/`, `.claude/rules/llm-development.md`, `.claude/commands/{llm-test,add-tool,add-example}.md`, `.claude/skills/{claude-sdk,agentic-engineering,eval-harness}/`, the `claude` extra in `pyproject.toml`, the `ask`/`chat` CLI commands in `cli.py`, the API-key block in `env.example` |
 | Is there a data pipeline? | `src/**/data/`, `data/`, `notebooks/`, `models/`, `references/`, `reports/`, `.claude/rules/{data-pipeline,data-raw-immutable,notebooks}.md`, `.claude/agents/data-analyst.md`, the `make data` / `sync_data_*` Makefile targets, the `data/` negation block in `.gitignore`, the `nbstripout` pre-commit hook |
 | Does this project use Jira? | `scripts/{jira_task.py,daily_report.py,daily_report.sh}`, `tests/scripts/`, `docs/JIRA_GITHUB_WORKFLOW.md`, `.claude/commands/{jira,daily-report}.md`, the `jira` extra in `pyproject.toml` and its allow rules in `.claude/settings.json`, `jira` in the Makefile `EXTRAS` default |
 | Sphinx docs? | `docs/*.rst`, `docs/{conf.py,Makefile,make.bat}`, the `docs` extra |
 | TypeScript workspace? | `.claude/rules/web.md`, the `web` CI job, the `AGENTS.md` §web section, `Bash(pnpm:*)` in `.claude/settings.json` |
 | Will anyone use OpenAI Codex on this repo? | `.codex/`, `.agents/`, `docs/CODEX.md` and the Codex pointer at the top of `AGENTS.md` (the Codex checks in `tests/test_repo_consistency.py` skip themselves once both directories are gone) |
+| Will PRs get an automatic Claude review in CI? (independent of whether the app itself calls Claude) | `.github/workflows/claude-code-review.yml`, Phase 0 step 9, the "Claude Code Review" note in `docs/branch-protection.md` |
 | Does this project run as a long-lived service deployed to a host via a self-hosted GitHub Actions runner? | `deploy/`, `.github/workflows/deploy.yml`, `docs/EC2_DEPLOY.md`, `.claude/rules/ec2-deploy.md`, the `AGENTS.md` §EC2 deploy section |
 
 Deleting a row's files also means removing any now-dangling references to
