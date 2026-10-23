@@ -45,9 +45,10 @@ clean:
 	find . -type d -name "__pycache__" -delete
 	find . -type d -name "*.egg-info" -not -path "./.claude/*" -exec rm -r {} +
 
-## Lint using ruff
+## Lint using ruff (style rules + formatting drift)
 lint:
 	ruff check src tests scripts
+	ruff format --check src tests scripts
 
 ## Format code with ruff
 format:
