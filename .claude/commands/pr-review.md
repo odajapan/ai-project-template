@@ -140,7 +140,8 @@ user to decide.
       6.8 still pushes the earlier rounds' commits.
    5. Run `make check`. If it fails and two diagnostic attempts do not
       make it pass, stop the same way, and step 7 reports the failure
-      output.
+      output. Diagnostic edits follow the Fix-bucket rules (step 5): if
+      making it pass needs a change outside them, stop instead.
    6. Stage every file `git status --porcelain` shows — the tree was
       clean at step 3, so these are this round's fixes plus any files the
       `make format` PostToolUse hook rewrote, all checked by 6.5 — and
