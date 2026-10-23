@@ -42,8 +42,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
+      # Pinned tag: Dependabot does not track docker:// action refs, so
+      # `latest` would float silently. Bump by hand when upgrading.
       - name: Run actionlint
-        uses: docker://rhysd/actionlint:latest
+        uses: docker://rhysd/actionlint:1.7.12
         with:
           args: -color
 

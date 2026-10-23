@@ -1,4 +1,4 @@
-.PHONY: clean data lint requirements requirements-all sync_data_to_s3 sync_data_from_s3 test coverage format check typecheck precommit activate hooks
+.PHONY: clean data lint requirements requirements-all sync_data_to_s3 sync_data_from_s3 test coverage format check typecheck precommit activate hooks create_environment
 
 #################################################################################
 # GLOBALS                                                                       #
@@ -26,7 +26,8 @@ endif
 #################################################################################
 
 ## Install Python Dependencies (development environment)
-requirements: test_environment
+requirements:
+	$(PYTHON_INTERPRETER) -c 'import sys; assert sys.version_info >= (3, 12), f"Python 3.12+ required, found {sys.version}"'
 	$(PYTHON_INTERPRETER) -m pip install -U pip
 	$(PYTHON_INTERPRETER) -m pip install -e ".[$(EXTRAS)]"
 
@@ -87,10 +88,6 @@ endif
 ## Show the command to activate the conda environment for this project
 activate:
 	@echo "conda activate $(PROJECT_NAME)"
-
-## Test python environment is setup correctly
-test_environment:
-	$(PYTHON_INTERPRETER) test_environment.py
 
 #################################################################################
 # PROJECT RULES                                                                 #
