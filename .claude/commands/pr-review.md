@@ -55,6 +55,11 @@ user to decide.
    PR first, or run `/code-review <level> <path>` directly for a pre-PR
    review. Do not guess a base branch. If `state` is not `OPEN`, stop and
    say so — do not review a stale diff.
+
+   **PR guard** (used by 6.7 and 6.8): re-run this `gh pr view`; it
+   passes only if `state` is still `OPEN` and `baseRefName` and
+   `headRefOid` are unchanged from this step (a moved head means someone
+   else pushed).
 2. **Parse `$ARGUMENTS`.**
    - At most one level: `low`, `medium`, `high`, `xhigh`, `max`, `ultra`
      (case-insensitive; forward it lowercased).
@@ -123,8 +128,10 @@ user to decide.
       be pushed. Move the Fix items to the report as "fixable, not
       applied (round limit)" and go to 6.8.
    4. Apply the remaining Fix items. If the fixes so far, measured from
-      the original head (`git diff --stat <headRefOid>`, step 1's value,
-      not the moving PR), exceed 3 files or 500 lines, stop before
+      the original head (step 1's `headRefOid`, not the moving PR) —
+      `git diff --stat <headRefOid>` plus any new untracked files in
+      `git status --porcelain`, counted with their lines — exceed 3
+      files or 500 lines, stop before
       running `make check`: this round's edits stay uncommitted, and
       6.8 still pushes the earlier rounds' commits.
    5. Run `make check`. If it fails and two diagnostic attempts do not
@@ -133,23 +140,22 @@ user to decide.
    6. Stage only the files you changed and commit one Conventional Commit
       per round, e.g. `fix: address review findings (round 1)`, listing
       the fixed findings in the body.
-   7. Re-review: re-run step 1's `gh pr view`; if the PR is no longer
-      `OPEN`, `baseRefName` changed, or `headRefOid` moved (someone else
-      pushed), stop, do not push, and report. Then
-      `git fetch origin <baseRefName>` and invoke `code-review` with
+   7. Re-review: if the PR guard fails, stop, do not push, and report.
+      Then `git fetch origin <baseRefName>`; if the fetch fails, stop
+      the same way — a stale base would review a different change set.
+      Invoke `code-review` with
       `args` = `origin/<baseRefName>...HEAD` plus the same level and
       forwarded flags. The PR number cannot be used here — it reads the
       pushed state, and the fix commits are local until 6.8. This is a
       full review of the PR as it now stands, not just the fixes. Return
       to step 5 with this round's findings.
-   8. If there is at least one fix commit, re-run step 1's
-      `gh pr view` first — if the PR is no longer `OPEN`, `baseRefName`
-      changed, or `headRefOid` moved, do not push. Otherwise push once
-      with `git push origin <headRefName>` (never force). Every commit was
+   8. If there is at least one fix commit, run the PR guard first — if
+      it fails, do not push. Otherwise push once with
+      `git push origin <headRefName>` (never force). Every commit was
       green in `make check` and re-reviewed by the following round; a
       stop at 6.4 / 6.5 leaves only that round's edits uncommitted. Do
-      not push after a stop at 6.7. If the push is rejected, stop and
-      report — never force. Then go to step 7.
+      not push after a stop at 6.7 (PR guard or fetch). If the push is
+      rejected, stop and report — never force. Then go to step 7.
 7. **Report**, in the user's language (from CLAUDE.md or memory if set,
    otherwise the conversation's language; keep identifiers, paths, and
    the skill's raw output as-is). Do not paste the skill's output a second
@@ -172,14 +178,16 @@ user to decide.
    - **No action**: one line each with the reason.
    - **Why it stopped**: no findings left / only decisions left / round
      limit / repeated finding / `make check` failure / scope limit / PR
-     changed on GitHub / push rejected.
+     changed on GitHub / base fetch failed / push rejected.
    - **Pushed**: the new head SHA, or "nothing pushed" with the reason.
      PR CI reruns on the push; `/pr-review` does not wait for it.
    - **Left local** (whenever anything is): the unpushed commits
      (`git log --oneline origin/<headRefName>..HEAD`) and the uncommitted
      files (`git status --short`), with the choices — keep and commit
-     the edits, or discard them (`git restore`) — and that the next
-     `/pr-review` refuses to run until the tree is clean and pushed.
+     the edits, or discard them (`git restore` for tracked files; delete
+     new untracked ones) — and that the next fix-loop `/pr-review`
+     refuses to run until the tree is clean and pushed (`--no-fix` still
+     runs, reviewing the pushed head with a warning).
    With `ultra`, report only that the cloud review was launched and its
    findings arrive later — never "no findings". Otherwise, if there were
    no findings at all, say so and list in 2–3 lines what the reviewer
