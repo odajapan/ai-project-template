@@ -12,11 +12,15 @@
 
 set -uo pipefail
 
-if ! command -v jq >/dev/null 2>&1; then
+# python3 is a hard requirement of this project, so it is the primary JSON
+# reader; jq is only a fallback (macOS does not ship it).
+if command -v python3 >/dev/null 2>&1; then
+  file=$(python3 -c 'import json,sys; print(json.load(sys.stdin).get("tool_input", {}).get("file_path", ""))' 2>/dev/null)
+elif command -v jq >/dev/null 2>&1; then
+  file=$(jq -r '.tool_input.file_path // empty' 2>/dev/null)
+else
   exit 0
 fi
-
-file=$(jq -r '.tool_input.file_path // empty' 2>/dev/null)
 
 case "$file" in
   *.py) ;;

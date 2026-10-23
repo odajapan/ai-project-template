@@ -51,8 +51,8 @@ lint:
 
 ## Format code with ruff
 format:
-	ruff format src tests scripts
 	ruff check --fix src tests scripts
+	ruff format src tests scripts
 
 ## Run static type checks with mypy
 typecheck:

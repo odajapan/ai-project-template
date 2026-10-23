@@ -5,7 +5,10 @@ name: Claude Code Review
 # command. Each run is a billable Claude API call, so the job skips itself
 # until a human has added the ANTHROPIC_API_KEY (or CLAUDE_CODE_OAUTH_TOKEN,
 # from `claude setup-token`) repository secret -- see docs/TEMPLATE_INIT.md
-# Phase 0. GitHub withholds secrets from fork PRs and Dependabot, so those
+# Phase 0. The secret alone is not enough: the Claude GitHub App must be
+# installed on the repo too (`/install-github-app` does both), or the action
+# cannot mint a token that posts comments and the job fails instead of
+# skipping. GitHub withholds secrets from fork PRs and Dependabot, so those
 # are skipped as well.
 #
 # `id-token: write` is what lets the action authenticate as the Claude GitHub

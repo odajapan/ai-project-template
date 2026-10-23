@@ -3,11 +3,11 @@
 `.claude/` is the source of truth for agents and workflow commands. OpenAI
 Codex reads neither `CLAUDE.md` nor `.claude/`, so it gets adapted copies:
 
-| Source (Claude Code)          | Copy (Codex)                                   |
-|-------------------------------|------------------------------------------------|
-| `.claude/agents/<name>.md`    | `.codex/agents/<name>.toml`                    |
-| `.claude/commands/<name>.md`  | `.agents/skills/source-command-<name>/SKILL.md` |
-| `.claude/settings.json` hooks | `.codex/hooks.json`                            |
+| Source (Claude Code)          | Copy (Codex)                                    | Sync check |
+|-------------------------------|-------------------------------------------------|------------|
+| `.claude/agents/<name>.md`    | `.codex/agents/<name>.toml`                     | `ported-from` hash |
+| `.claude/commands/<name>.md`  | `.agents/skills/source-command-<name>/SKILL.md` | `ported-from` hash |
+| `.claude/settings.json` hooks | `.codex/hooks.json`                             | **none** — independent files; the test only checks that a matcher covers `apply_patch` (see Known gaps) |
 
 ## Porting rules
 

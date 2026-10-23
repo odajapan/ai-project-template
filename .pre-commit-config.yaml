@@ -16,8 +16,11 @@ repos:
   # pinned-rev mirrors drifted: a ruff fixed by the hook could still fail
   # `make lint`, and mirrors-mypy runs in an isolated env without the
   # project's dependencies, so its verdict differed from `make typecheck`.
+  # Consequence: the project env must be active (or `.venv/bin` on PATH)
+  # when pre-commit runs — the same requirement `make check` already has.
   # Order matters: `check --fix` first, then `format`, as ruff documents,
-  # so the formatter sees the fixed code and one run converges.
+  # so the formatter sees the fixed code and one run converges (`make
+  # format` uses the same order).
   - repo: local
     hooks:
       - id: ruff-check
