@@ -72,10 +72,11 @@ user to decide.
    - `--max-findings` takes the next word as its value, which must be a
      positive integer, `all`, or `default` — if it is missing or anything
      else, stop and say so. It is forwarded on every review round.
-   - `--comment` is allowed only with `--no-fix` or `ultra` (in the loop,
-     comments would describe findings that are about to be fixed).
-     `--post` / `--no-post` are allowed only with `ultra`. Otherwise stop
-     and say which combination was rejected.
+   - `--comment` is allowed only with `--no-fix` and not with `ultra`
+     (in the loop, comments would describe findings that are about to be
+     fixed; `ultra` has no in-turn findings to comment on and posts with
+     `--post` instead). `--post` / `--no-post` are allowed only with
+     `ultra`. Otherwise stop and say which combination was rejected.
    - Any other `--` flag is forwarded as-is. Any other word (a path, a PR
      number, a second level) means the user wanted a custom target: stop
      and tell them to call `/code-review` directly.
@@ -84,7 +85,9 @@ user to decide.
      continue but warn in one line that the pushed version is reviewed
      and local-only commits are not covered.
    - Fix loop: **stop** unless all of these hold — `isCrossRepository` is
-     false (fix commits are pushed to `origin`); the current branch is
+     false and `git remote get-url origin` names the same owner/repo as
+     `gh repo view --json nameWithOwner` (fix commits are pushed to, and
+     the base fetched from, `origin`); the current branch is
      `headRefName` and is not `main` / `master`; `git rev-parse HEAD`
      equals `headRefOid` (push or pull first); `git status --porcelain` is
      empty (commit or stash first, so fixes never mix with unrelated
@@ -138,9 +141,12 @@ user to decide.
    5. Run `make check`. If it fails and two diagnostic attempts do not
       make it pass, stop the same way, and step 7 reports the failure
       output.
-   6. Stage only the files you changed and commit one Conventional Commit
-      per round, e.g. `fix: address review findings (round 1)`, listing
-      the fixed findings in the body. If a pre-commit hook rewrites files
+   6. Stage every file `git status --porcelain` shows — the tree was
+      clean at step 3, so these are this round's fixes plus any files the
+      `make format` PostToolUse hook rewrote, all checked by 6.5 — and
+      commit one Conventional Commit per round, e.g.
+      `fix: address review findings (round 1)`, listing the fixed
+      findings in the body. If a pre-commit hook rewrites files
       and aborts the commit, re-stage the same files and commit once
       more; if that also fails, stop as in 6.5 — never re-review with the
       round's fixes uncommitted.
