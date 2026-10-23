@@ -85,9 +85,10 @@ user to decide.
      continue but warn in one line that the pushed version is reviewed
      and local-only commits are not covered.
    - Fix loop: **stop** unless all of these hold — `isCrossRepository` is
-     false and `git remote get-url origin` names the same owner/repo as
-     `gh repo view --json nameWithOwner` (fix commits are pushed to, and
-     the base fetched from, `origin`); the current branch is
+     false and `git remote get-url origin` (SSH or HTTPS form) names the
+     same `<owner>/<repo>` as step 1's `url`
+     (`https://github.com/<owner>/<repo>/pull/<n>`) — fix commits are
+     pushed to, and the base fetched from, `origin`; the current branch is
      `headRefName` and is not `main` / `master`; `git rev-parse HEAD`
      equals `headRefOid` (push or pull first); `git status --porcelain` is
      empty (commit or stash first, so fixes never mix with unrelated
@@ -131,21 +132,25 @@ user to decide.
    3. If this was review round 3, do **not** fix — unreviewed fixes would
       be pushed. Move the Fix items to the report as "fixable, not
       applied (round limit)" and go to 6.8.
-   4. Apply the remaining Fix items. If the fixes so far, measured from
-      the original head (step 1's `headRefOid`, not the moving PR) —
-      `git diff --stat <headRefOid>` plus any new untracked files in
-      `git status --porcelain`, counted with their lines — exceed 3
-      files or 500 lines, stop before
-      running `make check`: this round's edits stay uncommitted, and
-      6.8 still pushes the earlier rounds' commits.
+   4. Apply the remaining Fix items. The `make format` PostToolUse hook
+      formats all of `src/`, `tests/`, and `scripts/`, so it can rewrite
+      files the fix never touched: `git restore` every modified file that
+      is neither in the PR (`gh pr diff <number> --name-only`) nor a test
+      of a PR file. Then measure the fixes so far against the original
+      head (step 1's `headRefOid`, not the moving PR): stop if more than
+      3 files outside the PR's file list are touched (new tests count),
+      or if `git diff --shortstat <headRefOid>` plus the lines of new
+      untracked files exceeds 500 lines (insertions + deletions). On a
+      stop, do it before running `make check`: this round's edits stay
+      uncommitted, and 6.8 still pushes the earlier rounds' commits.
    5. Run `make check`. If it fails and two diagnostic attempts do not
       make it pass, stop the same way, and step 7 reports the failure
       output. Diagnostic edits follow the Fix-bucket rules (step 5): if
       making it pass needs a change outside them, stop instead.
    6. Stage every file `git status --porcelain` shows — the tree was
-      clean at step 3, so these are this round's fixes plus any files the
-      `make format` PostToolUse hook rewrote, all checked by 6.5 — and
-      commit one Conventional Commit per round, e.g.
+      clean at step 3 and 6.4 restored out-of-scope rewrites, so these
+      are this round's fixes, all checked by 6.5 — and commit one
+      Conventional Commit per round, e.g.
       `fix: address review findings (round 1)`, listing the fixed
       findings in the body. If a pre-commit hook rewrites files
       and aborts the commit, re-stage the same files and commit once
