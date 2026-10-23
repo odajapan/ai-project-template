@@ -146,6 +146,11 @@ def test_every_workflow_command_has_a_codex_skill() -> None:
     assert skills == commands - CLAUDE_ONLY_COMMANDS
 
 
+def test_claude_only_commands_exist() -> None:
+    commands = {p.stem for p in (REPO_ROOT / ".claude/commands").glob("*.md")}
+    assert commands >= CLAUDE_ONLY_COMMANDS
+
+
 @requires_codex
 def test_codex_agent_files_are_valid() -> None:
     for path in (REPO_ROOT / ".codex/agents").glob("*.toml"):

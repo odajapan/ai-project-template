@@ -60,7 +60,8 @@ user to decide.
    passes only if `state` is still `OPEN` and `baseRefName` and
    `headRefOid` are unchanged from this step (a moved head means someone
    else pushed).
-2. **Parse `$ARGUMENTS`.**
+2. **Parse `$ARGUMENTS`.** First split any `--flag=value` into
+   `--flag value`, so every rule below sees the same form.
    - At most one level: `low`, `medium`, `high`, `xhigh`, `max`, `ultra`
      (case-insensitive; forward it lowercased).
    - `--no-fix` selects review-only mode. `--fix` is accepted as a no-op
@@ -139,7 +140,10 @@ user to decide.
       output.
    6. Stage only the files you changed and commit one Conventional Commit
       per round, e.g. `fix: address review findings (round 1)`, listing
-      the fixed findings in the body.
+      the fixed findings in the body. If a pre-commit hook rewrites files
+      and aborts the commit, re-stage the same files and commit once
+      more; if that also fails, stop as in 6.5 — never re-review with the
+      round's fixes uncommitted.
    7. Re-review: if the PR guard fails, stop, do not push, and report.
       Then `git fetch origin <baseRefName>`; if the fetch fails, stop
       the same way — a stale base would review a different change set.
