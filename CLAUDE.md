@@ -28,7 +28,11 @@ The OS-level control is Claude Code's **sandbox** — filesystem `denyRead` /
 `allowedDomains` allowlist. A ready-to-copy block is in
 `.claude/settings.local.json.example`. It is off by default only because the
 domain list has no one-size-fits-all value; set it per project before running
-unattended somewhere exfiltration risk matters.
+unattended somewhere exfiltration risk matters. **Two settings must live in
+`~/.claude/settings.json` (or managed settings), not in the repo**, or
+`--dangerously-skip-permissions` auto-approves the gap: `sandbox.network.strictAllowlist: true` (project files cannot set it) and
+`sandbox.allowUnsandboxedCommands: false` (a project `true` would override
+a repo-level `false`).
 
 **The PostToolUse hook ruff-formats only the file just edited** (see
 `.claude/hooks/format-edited-file.sh`); lint autofix stays in `make format`.

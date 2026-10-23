@@ -27,7 +27,7 @@ endif
 
 ## Install Python Dependencies (development environment)
 requirements:
-	$(PYTHON_INTERPRETER) -c 'import sys; assert sys.version_info >= (3, 12), f"Python 3.12+ required, found {sys.version}"'
+	$(PYTHON_INTERPRETER) -c 'import sys; sys.version_info >= (3, 12) or sys.exit(f"Python 3.12+ required, found {sys.version}")'
 	$(PYTHON_INTERPRETER) -m pip install -U pip
 	$(PYTHON_INTERPRETER) -m pip install -e ".[$(EXTRAS)]"
 
@@ -109,9 +109,11 @@ precommit:
 	pre-commit run --all-files
 
 ## Install repo-local Git hooks (branch guards in .githooks/)
+# The hook files are committed with the executable bit set, so no chmod is
+# needed — which also keeps this target working when the sandbox denies
+# writes under .githooks/.
 hooks:
 	git config core.hooksPath .githooks
-	chmod +x .githooks/*
 	@echo ">>> Git hooks installed (.githooks/ via core.hooksPath)."
 #################################################################################
 # Self Documenting Commands                                                     #

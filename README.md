@@ -253,7 +253,10 @@ session being able to do anything genuinely dangerous. The guardrails:
   prefix matches on the command text, not a security boundary — the
   OS-level control is the `sandbox` block in
   `.claude/settings.local.json.example` (filesystem deny lists + network
-  allowlist); enable it before unattended runs. Merging
+  allowlist); enable it before unattended runs, and put
+  `strictAllowlist: true` + `allowUnsandboxedCommands: false` in
+  `~/.claude/settings.json` — in bypass-permissions mode the repo-level
+  block alone still lets off-list hosts through. Merging
   is not enforced by a deny rule — see "Human merges" below and
   `docs/branch-protection.md` for the actual gate.
 - `.github/workflows/claude-code-review.yml` — automatic Claude review on

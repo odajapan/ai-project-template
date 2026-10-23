@@ -29,11 +29,10 @@ esac
 
 [ -f "$file" ] || exit 0
 
+# No path-prefix scoping: a worktree, a symlinked checkout, or macOS's
+# /tmp -> /private/tmp would make a literal prefix compare skip real edits.
+# ruff finds the nearest pyproject.toml itself and honors its excludes.
 root="${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
-case "$file" in
-  "$root"/src/*|"$root"/tests/*|"$root"/scripts/*) ;;
-  *) exit 0 ;;
-esac
 
 # Prefer the project's ruff so the hook agrees with `make check` and
 # pre-commit even when the venv is not activated in the launching shell.

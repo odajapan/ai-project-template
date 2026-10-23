@@ -20,18 +20,21 @@ repos:
   # when pre-commit runs — the same requirement `make check` already has.
   # Order matters: `check --fix` first, then `format`, as ruff documents,
   # so the formatter sees the fixed code and one run converges (`make
-  # format` uses the same order).
+  # format` uses the same order). `files:` pins the same src/tests/scripts
+  # set that `make lint` / `make format` cover, so both gates agree.
   - repo: local
     hooks:
       - id: ruff-check
         name: ruff check --fix
         entry: ruff check --fix
         language: system
+        files: ^(src|tests|scripts)/
         types_or: [python, pyi]
       - id: ruff-format
         name: ruff format
         entry: ruff format
         language: system
+        files: ^(src|tests|scripts)/
         types_or: [python, pyi]
       - id: mypy
         name: mypy (make typecheck)
