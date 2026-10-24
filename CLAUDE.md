@@ -19,15 +19,23 @@ blocked by a deny rule** — the authoritative gate is GitHub branch protection
 `/start-task` to cut the branch and declare scope; use `/finish-task` to run
 `make check`, push, and open the PR.
 
-**Network egress is not denied at the Bash-permission layer** (`curl`/`wget`
-were dropped from `.claude/settings.json` deny rules — `python:*` could reach
-the network unrestricted too, so the Bash deny was incomplete coverage, not
-real control). Unattended runs that need real egress control should configure
-a `sandbox.network.allowedDomains` allowlist — see the example and rationale
-in `.claude/settings.local.json.example`. There is no safe one-size-fits-all
-domain list for this template, so it is not enabled by default; set it
-deliberately per project before running autonomously somewhere exfiltration
-risk matters.
+**Permission rules are tripwires, not a security boundary.** They match the
+command text as a prefix: `Bash(rm -rf:*)` does not see `/bin/rm -rf` or
+`bash -c '...'`, a `Read(.env)` deny does not stop a Python one-liner from
+opening the file, and `curl`/`wget`/`python:*` reach the network freely.
+The OS-level control is Claude Code's **sandbox** — filesystem `denyRead` /
+`denyWrite` for `.env`, `secrets/`, `data/raw/`, `models/`, plus a network
+`allowedDomains` allowlist. A ready-to-copy block is in
+`.claude/settings.local.json.example`. It is off by default only because the
+domain list has no one-size-fits-all value; set it per project before running
+unattended somewhere exfiltration risk matters. **Two settings must live in
+`~/.claude/settings.json` (or managed settings), not in the repo**, or
+`--dangerously-skip-permissions` auto-approves the gap: `sandbox.network.strictAllowlist: true` (project files cannot set it) and
+`sandbox.allowUnsandboxedCommands: false` (a project `true` would override
+a repo-level `false`).
+
+**The PostToolUse hook ruff-formats only the file just edited** (see
+`.claude/hooks/format-edited-file.sh`); lint autofix stays in `make format`.
 
 ## Session hygiene (/clear suggestions)
 

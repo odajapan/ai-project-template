@@ -23,7 +23,8 @@ the repo root `README.md` — read it on demand, it is not auto-loaded.
 Claude Code config under `.claude/`: `agents/`, `commands/`, `rules/`,
 `skills/`, `settings.json`. **Do not maintain a file list here — it goes
 stale.** To discover what exists, read each file's frontmatter
-`description`: `head -5 .claude/{agents,commands,rules,skills}/*.md`.
+`description`:
+`head -5 .claude/{agents,commands,rules}/*.md .claude/skills/*/SKILL.md`.
 
 ---
 

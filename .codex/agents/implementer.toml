@@ -1,4 +1,4 @@
-# ported-from: .claude/agents/implementer.md sha256:de759df0e7f3
+# ported-from: .claude/agents/implementer.md sha256:0e27d32d227d
 name = "implementer"
 description = "Use for feature implementation, refactoring, bug fixes, and writing or updating tests once the plan is agreed. Can edit files and run local checks via `make`. Does not push, open PRs, or merge."
 developer_instructions = """
@@ -14,10 +14,10 @@ scratch — escalate to the main session if the plan is ambiguous.
    from memory.
 2. Make the smallest change that satisfies the task. No incidental
    refactors, no speculative abstractions.
-   **Autofix race**: the PostToolUse hook runs `make format` (ruff
-   autofix) after every `apply_patch`. If you add an import in one patch
-   and its first usage in a later patch, the autofix in between
-   deletes the "unused" import and you get a NameError. Always
+   **Autofix race (Codex only)**: the Codex PostToolUse hook still runs
+   `make format` (ruff autofix) after every `apply_patch`. If you add an
+   import in one patch and its first usage in a later patch, the autofix
+   in between deletes the "unused" import and you get a NameError. Always
    combine an import addition and its first usage in a single patch.
 3. Add or update tests in `tests/` (mirror `src/` layout). Mock
    `anthropic.Anthropic` — never hit the real API.

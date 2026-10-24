@@ -1,8 +1,29 @@
 {
-  "$comment": "Personal overrides for Claude Code. Copy to settings.local.json (gitignored). The Claude Code harness authenticates via `claude login` — do not put ANTHROPIC_API_KEY here, that silently switches the harness to API billing. The application reads ANTHROPIC_API_KEY from .env (see env.example). To re-enable curl locally, add \"Bash(curl:*)\" to permissions.allow below. `Bash(curl *)`/`Bash(wget *)` are NOT denied by default (python:* isn't either, so a Bash-permission deny gave a false sense of coverage) — for real egress control, especially on autonomous/unattended runs, add a `sandbox` block restricting network access by domain, e.g.: `\"sandbox\": {\"network\": {\"allowedDomains\": [\"api.anthropic.com\", \"github.com\", \"*.githubusercontent.com\", \"pypi.org\", \"files.pythonhosted.org\"], \"strictAllowlist\": true}}`. Tune the domain list to what this project's tooling actually calls (add your Jira host, npm/pnpm registry, etc. if used) — there is no one-size-fits-all list, which is why it isn't enabled by default.",
+  "$comment": "Personal overrides for Claude Code. Copy to settings.local.json (gitignored). The Claude Code harness authenticates via `claude login` — do not put ANTHROPIC_API_KEY here, that silently switches the harness to API billing. The application reads ANTHROPIC_API_KEY from .env (see env.example).",
+  "$comment_model": "`model` is a personal choice, so it lives here rather than in the committed settings.json (a project-level `model` re-applies on every launch and overrides each user's /model pick). `opusplan` = Opus while planning, Sonnet while executing. Delete the key to keep the account default.",
+  "model": "opusplan",
+  "$comment_permissions": "`Bash(curl *)` / `Bash(wget *)` are NOT denied by default — `python:*` isn't either, so a Bash-permission deny gave a false sense of coverage. Add \"Bash(curl:*)\" to permissions.allow below to stop the prompt for curl.",
   "permissions": {
     "allow": [
       "Bash(open:*)"
     ]
+  },
+  "$comment_sandbox": "Permission rules are prefix matches on the command text, not a security boundary: `Bash(rm -rf:*)` does not see `/bin/rm -rf` or `bash -c 'rm -rf ..'`, and a `Read(.env)` deny does not stop a Python one-liner from opening the file. The OS-level control is the sandbox below (macOS Seatbelt built in; Linux/WSL2 need bubblewrap + socat). The filesystem lists mirror AGENTS.md's forbidden paths. Caveat: the app itself reads `.env` via load_dotenv(), so with `.env` in denyRead the CLI, `/llm-test` and examples/ fail inside sandboxed Bash — either run those outside the sandbox / export ANTHROPIC_API_KEY in the shell instead, or drop `.env` from denyRead and rely on the Read/Edit deny rules for it. The network allowlist has no one-size-fits-all value — tune it to what this project's tooling actually calls (Jira host, npm registry, …) before running unattended somewhere exfiltration risk matters, then set `enabled` to true. `denyWrite` names `.githooks` because `make hooks` points core.hooksPath there; `.git/config` is left writable on purpose (`git push -u` writes it). Two things this project-level file CANNOT do, per the sandboxing docs: (1) in bypassPermissions mode (`--dangerously-skip-permissions`) a host outside allowedDomains is allowed WITHOUT a prompt unless `sandbox.network.strictAllowlist: true` is set — and that key is honored only in ~/.claude/settings.json, managed settings, or `--settings`, never here; put it in ~/.claude/settings.json before any unattended run. (2) `allowUnsandboxedCommands: false` below disables the unsandboxed-retry escape hatch (which bypassPermissions also auto-approves); a `true` from any project file can be overridden by a `false` in user/managed settings, so mirror it there too if you administer several checkouts.",
+  "sandbox": {
+    "enabled": false,
+    "allowUnsandboxedCommands": false,
+    "filesystem": {
+      "denyRead": [".env", ".env.*", ".envrc", "secrets"],
+      "denyWrite": ["data/raw", "models", ".githooks"]
+    },
+    "network": {
+      "allowedDomains": [
+        "api.anthropic.com",
+        "github.com",
+        "*.githubusercontent.com",
+        "pypi.org",
+        "files.pythonhosted.org"
+      ]
+    }
   }
 }

@@ -3,7 +3,7 @@ name: "source-command-init-from-template"
 description: "First-run checklist — adapt the template to this project before the first feature task."
 ---
 
-<!-- ported-from: .claude/commands/init-from-template.md sha256:7ece39d60ab4 -->
+<!-- ported-from: .claude/commands/init-from-template.md sha256:dae26235bd8e -->
 
 # source-command-init-from-template
 
@@ -64,8 +64,8 @@ Steps:
    references (Makefile targets, `AGENTS.md` Commands table, `pyproject.toml`
    extras, `.claude/CLAUDE.md`, and the matching `.codex/agents/` and
    `.agents/skills/` copies).
-6. Run Phase 2 (rewrite `env.example`, trim `AGENTS.md` including its Codex
-   paragraph, refresh
+6. Run Phase 2 (rewrite `env.example`, trim `AGENTS.md` and drop its Codex
+   pointer if Codex was pruned, refresh
    `.claude/CLAUDE.md`, rewrite `README.md`, sync `EXTRAS` across Makefile/CI).
 7. Confirm the exit criteria in `docs/TEMPLATE_INIT.md`: `make check` green,
    `git grep -c your_project_name` is `0` or only expected hits (see that

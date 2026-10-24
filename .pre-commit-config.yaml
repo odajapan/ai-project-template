@@ -11,18 +11,37 @@ repos:
       - id: detect-private-key
       - id: check-added-large-files
 
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.11.9
+  # ruff and mypy run from the project environment (`language: system`) so
+  # pre-commit judges with exactly the versions `make check` and CI use. The
+  # pinned-rev mirrors drifted: a ruff fixed by the hook could still fail
+  # `make lint`, and mirrors-mypy runs in an isolated env without the
+  # project's dependencies, so its verdict differed from `make typecheck`.
+  # Consequence: the project env must be active (or `.venv/bin` on PATH)
+  # when pre-commit runs — the same requirement `make check` already has.
+  # Order matters: `check --fix` first, then `format`, as ruff documents,
+  # so the formatter sees the fixed code and one run converges (`make
+  # format` uses the same order). `files:` pins the same src/tests/scripts
+  # set that `make lint` / `make format` cover, so both gates agree.
+  - repo: local
     hooks:
-      - id: ruff
-        args: [--fix]
+      - id: ruff-check
+        name: ruff check --fix
+        entry: ruff check --fix
+        language: system
+        files: ^(src|tests|scripts)/
+        types_or: [python, pyi]
       - id: ruff-format
-
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.15.0
-    hooks:
+        name: ruff format
+        entry: ruff format
+        language: system
+        files: ^(src|tests|scripts)/
+        types_or: [python, pyi]
       - id: mypy
-        additional_dependencies: ["types-tqdm"]
+        name: mypy (make typecheck)
+        entry: mypy src scripts
+        language: system
+        pass_filenames: false
+        types_or: [python, pyi]
 
   - repo: https://github.com/asottile/pyupgrade
     rev: v3.20.0

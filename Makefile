@@ -1,4 +1,4 @@
-.PHONY: clean data lint requirements requirements-all sync_data_to_s3 sync_data_from_s3 test coverage format check typecheck precommit activate hooks
+.PHONY: clean data lint requirements requirements-all sync_data_to_s3 sync_data_from_s3 test coverage format check typecheck precommit activate hooks create_environment
 
 #################################################################################
 # GLOBALS                                                                       #
@@ -26,7 +26,8 @@ endif
 #################################################################################
 
 ## Install Python Dependencies (development environment)
-requirements: test_environment
+requirements:
+	$(PYTHON_INTERPRETER) -c 'import sys; sys.version_info >= (3, 12) or sys.exit(f"Python 3.12+ required, found {sys.version}")'
 	$(PYTHON_INTERPRETER) -m pip install -U pip
 	$(PYTHON_INTERPRETER) -m pip install -e ".[$(EXTRAS)]"
 
@@ -44,14 +45,15 @@ clean:
 	find . -type d -name "__pycache__" -delete
 	find . -type d -name "*.egg-info" -not -path "./.claude/*" -exec rm -r {} +
 
-## Lint using ruff
+## Lint using ruff (style rules + formatting drift)
 lint:
 	ruff check src tests scripts
+	ruff format --check src tests scripts
 
 ## Format code with ruff
 format:
-	ruff format src tests scripts
 	ruff check --fix src tests scripts
+	ruff format src tests scripts
 
 ## Run static type checks with mypy
 typecheck:
@@ -88,10 +90,6 @@ endif
 activate:
 	@echo "conda activate $(PROJECT_NAME)"
 
-## Test python environment is setup correctly
-test_environment:
-	$(PYTHON_INTERPRETER) test_environment.py
-
 #################################################################################
 # PROJECT RULES                                                                 #
 #################################################################################
@@ -112,9 +110,11 @@ precommit:
 	pre-commit run --all-files
 
 ## Install repo-local Git hooks (branch guards in .githooks/)
+# The hook files are committed with the executable bit set, so no chmod is
+# needed — which also keeps this target working when the sandbox denies
+# writes under .githooks/.
 hooks:
 	git config core.hooksPath .githooks
-	chmod +x .githooks/*
 	@echo ">>> Git hooks installed (.githooks/ via core.hooksPath)."
 #################################################################################
 # Self Documenting Commands                                                     #

@@ -47,10 +47,10 @@ fi
 # its own `git grep -c your_project_name` exit-criteria check, which the sed
 # would otherwise rewrite into a
 # tautology testing for the new name instead of the placeholder), and
-# .claude/skills/codebase-onboarding.md (its "Starting a new project from
-# this template" section, which must keep telling a *future* user to grep
-# for "your_project_name" regardless of what this project got renamed to).
-# codebase-onboarding.md also has a "Key files" table that legitimately
+# .claude/skills/codebase-onboarding/SKILL.md (its "Starting a new project
+# from this template" section, which must keep telling a *future* user to
+# grep for "your_project_name" regardless of what this project got renamed
+# to). That skill also has a "Key files" table that legitimately
 # should follow the rename -- docs/TEMPLATE_INIT.md Phase 2 has a manual
 # step for that, since a single sed pass can't tell the two apart.
 FIND_FILES=(find . -type f
@@ -75,7 +75,7 @@ FIND_FILES=(find . -type f
   ! -path "*/docs/TEMPLATE_INIT.md"
   ! -path "*/.claude/commands/init-from-template.md"
   ! -path "*/.agents/skills/source-command-init-from-template/SKILL.md"
-  ! -path "*/.claude/skills/codebase-onboarding.md"
+  ! -path "*/.claude/skills/codebase-onboarding/SKILL.md"
   ! -name "package-lock.json"
   ! -name "pnpm-lock.yaml"
   ! -name "uv.lock"
@@ -105,5 +105,5 @@ echo "Not renamed (do these by hand if needed):"
 echo "  - env.example / .env contents"
 echo "  - an already-created conda environment name"
 echo "  - the GitHub remote / repository name"
-echo "  - .claude/skills/codebase-onboarding.md's 'Key files' table"
+echo "  - .claude/skills/codebase-onboarding/SKILL.md's 'Key files' table"
 echo "    (see docs/TEMPLATE_INIT.md Phase 2)"

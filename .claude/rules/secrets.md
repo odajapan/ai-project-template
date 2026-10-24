@@ -20,7 +20,11 @@ logs, PR descriptions, or chat output.
 **Real env files — never read, never write.**
 `.env`, `.env.local`, `.env.production`, `**/*.env`, anything under
 `secrets/`. The deny rules in `.claude/settings.json` block Read *and*
-Edit on these. Do not work around them with `cat`, `head`, `git show`,
+Edit on these (and `cat`/`head`/`sed` in Bash). They are text-prefix
+rules, not OS enforcement: a Python one-liner can still open the file
+unless the human has copied and enabled the sandbox block from
+`.claude/settings.local.json.example` — assume it is **not** active.
+Do not work around them with `cat`, `head`, `git show`,
 or shell redirection.
 
 **`env.example` — an ordinary source file.**

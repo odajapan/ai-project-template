@@ -13,11 +13,19 @@ after cloning this template.
 - **Require a pull request before merging**
   - Require at least 1 approving review
   - Dismiss stale approvals when new commits are pushed
-  - Require review from a Code Owner (if `CODEOWNERS` is in use)
+  - Require review from a Code Owner (`.github/CODEOWNERS` ships with the
+    template — update the handle in Phase 0 of `docs/TEMPLATE_INIT.md`).
+    **Solo-maintainer repos:** GitHub never counts the author's own
+    approval, so with one owner neither this rule nor "1 approving
+    review" can be satisfied on the owner's PRs. Either add a second
+    reviewer account to `CODEOWNERS`, or leave both review rules off and
+    keep the status-check and no-direct-push rules as the gate.
 - **Require status checks to pass before merging**
   - Require branches to be up to date before merging
   - Required checks: `checks` (from `.github/workflows/ci.yml`,
-    both Python `3.12` and `3.13` matrix jobs)
+    both Python `3.12` and `3.13` matrix jobs). Do **not** require the
+    `Claude Code Review` job — it is advisory and skips itself without a
+    secret.
 - **Require conversation resolution before merging**
 - **Do not allow bypassing the above settings**
 - **Restrict who can push to matching branches**

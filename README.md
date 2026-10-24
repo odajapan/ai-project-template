@@ -140,10 +140,19 @@ Slash commands available inside Claude Code:
 ├── environment.yml        ← Conda environment definition
 ├── Dockerfile
 ├── env.example            ← Environment variable template
+├── .github/
+│   ├── CODEOWNERS         ← Owner review required on every PR (branch protection)
+│   └── workflows/
+│       ├── ci.yml                   ← make check on 3.12 / 3.13 + actionlint
+│       └── claude-code-review.yml   ← Automatic Claude PR review (needs a secret)
 ├── .claude/
 │   ├── CLAUDE.md          ← Template baseline instructions for Claude Code
 │   ├── settings.json      ← Claude Code permissions and hooks
+│   ├── settings.local.json.example  ← Personal model pick + sandbox block to copy
+│   ├── hooks/             ← PostToolUse: ruff-format the edited file only
+│   ├── agents/            ← Role-based subagents (haiku / sonnet / opus)
 │   ├── commands/          ← Project-specific slash commands
+│   ├── skills/<name>/SKILL.md  ← On-demand reference skills
 │   └── rules/             ← Path-scoped rules loaded per file context
 │
 ├── src/
@@ -240,9 +249,19 @@ session being able to do anything genuinely dangerous. The guardrails:
   conditions.
 - `.claude/settings.json` — `allow`/`deny` lists for the everyday
   autonomous-run commands; explicit denies for force push, push to
-  `main`, `git reset --hard`, and reads *or writes* of `.env`. Merging
+  `main`, `git reset --hard`, and reads *or writes* of `.env`. These are
+  prefix matches on the command text, not a security boundary — the
+  OS-level control is the `sandbox` block in
+  `.claude/settings.local.json.example` (filesystem deny lists + network
+  allowlist); enable it before unattended runs, and put
+  `strictAllowlist: true` + `allowUnsandboxedCommands: false` in
+  `~/.claude/settings.json` — in bypass-permissions mode the repo-level
+  block alone still lets off-list hosts through. Merging
   is not enforced by a deny rule — see "Human merges" below and
   `docs/branch-protection.md` for the actual gate.
+- `.github/workflows/claude-code-review.yml` — automatic Claude review on
+  every PR once the `ANTHROPIC_API_KEY` (or `CLAUDE_CODE_OAUTH_TOKEN`)
+  secret is set; advisory, never a required check.
 - `.claude/rules/data-raw-immutable.md`, `secrets.md`, `notebooks.md` —
   path-scoped guards that activate when matching files are in scope.
 - `.githooks/pre-commit` and `.githooks/pre-push` — refuse direct

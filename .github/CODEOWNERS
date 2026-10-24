@@ -1,0 +1,6 @@
+# Every PR requests a review from the owner, and the "Require review from a
+# Code Owner" branch-protection rule (docs/branch-protection.md) can make it
+# mandatory. Downstream projects: replace the handle with this project's
+# maintainers (docs/TEMPLATE_INIT.md Phase 0). Last matching rule wins, so a
+# narrower path rule added below this line overrides it for that path.
+*       @odajapan

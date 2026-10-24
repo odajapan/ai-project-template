@@ -100,7 +100,7 @@ def test_env_example_reviewed_after_template_rename() -> None:
 
 # Commands that only make sense inside Claude Code (Jira helpers, the wrapper
 # around Claude Code's bundled code-review skill). Everything else under
-# .claude/commands/ needs a Codex copy — see AGENTS.md.
+# .claude/commands/ needs a Codex copy — see docs/CODEX.md.
 CLAUDE_ONLY_COMMANDS = {"jira", "daily-report", "pr-review"}
 
 # Projects that answer "no" to the Codex question in docs/TEMPLATE_INIT.md
@@ -182,7 +182,8 @@ def test_codex_copies_are_in_sync_with_their_source() -> None:
             stale.append(f"{copy.relative_to(REPO_ROOT)} (sha256:{expected})")
     assert not stale, (
         f"Source changed since these were ported: {stale}. Port the change by "
-        "hand (see AGENTS.md), then set the ported-from marker to the hash shown."
+        "hand (see docs/CODEX.md), then set the ported-from marker to the hash "
+        "shown."
     )
 
 
