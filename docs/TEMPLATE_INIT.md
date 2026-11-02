@@ -41,7 +41,8 @@ below.
    so it never over-constrains downstream, but a real project should
    install the same versions in CI and locally.
 9. If PRs should get an automatic Claude review, run `/install-github-app`
-   inside Claude Code: it installs the Claude GitHub App on the repo
+   in the terminal CLI (the IDE extensions do not offer this command): it
+   installs the Claude GitHub App on the repo
    **and** stores the `ANTHROPIC_API_KEY` (or `CLAUDE_CODE_OAUTH_TOKEN`)
    secret. Both are required — with the secret but no App the action
    cannot mint a token to post comments and the job fails instead of
