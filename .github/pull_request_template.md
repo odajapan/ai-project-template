@@ -21,6 +21,14 @@ $ make check
 ...
 ```
 
+## Done when
+
+<!-- The task's definition of done, as declared in /start-task: one
+     pass/fail check per line. /pr-review marks each one ✓ / ✗. -->
+
+- 
+- 
+
 ## Verification steps
 
 <!-- How can a reviewer reproduce / sanity-check the change? -->

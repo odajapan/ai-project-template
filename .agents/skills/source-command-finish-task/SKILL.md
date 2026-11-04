@@ -3,7 +3,7 @@ name: "source-command-finish-task"
 description: "Verify checks, push the codex/* branch, and open a PR."
 ---
 
-<!-- ported-from: .claude/commands/finish-task.md sha256:6465a4c16d38 -->
+<!-- ported-from: .claude/commands/finish-task.md sha256:2a280a4fac39 -->
 
 # source-command-finish-task
 
@@ -31,7 +31,12 @@ Steps:
    investigate — do NOT use `--force` or `--force-with-lease`.
 6. Open the PR with `gh pr create`. Use the project's
    `.github/pull_request_template.md` as the body. Title format:
-   `<type>(<scope>): <subject>` (Conventional Commits).
+   `<type>(<scope>): <subject>` (Conventional Commits). Fill the
+   `## Done when` section with the `Done when` lines from this task's
+   scope declaration, verbatim — reviewers check the PR against them.
+   If the task had no scope declaration, write the checks you
+   actually ran instead; never leave the section as the template
+   placeholder.
 7. Report the PR URL and stop. Do not run `gh pr merge` — merging is
    a human decision.
 8. Once the human has merged the PR, any follow-through (pipeline

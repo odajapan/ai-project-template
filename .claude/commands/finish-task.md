@@ -37,7 +37,12 @@ Steps:
    investigate — do NOT use `--force` or `--force-with-lease`.
 6. Open the PR with `gh pr create`. Use the project's
    `.github/pull_request_template.md` as the body. Title format:
-   `<type>(<scope>): <subject>` (Conventional Commits).
+   `<type>(<scope>): <subject>` (Conventional Commits). Fill the
+   `## Done when` section with the `Done when` lines from this task's
+   scope declaration, verbatim — `/pr-review` reads them from the PR
+   body. If the task had no scope declaration, write the checks you
+   actually ran instead; never leave the section as the template
+   placeholder.
 7. Report the PR URL and stop. Do not run `gh pr merge` — merging is
    a human decision.
 8. After the human has merged the PR and any follow-through (pipeline
