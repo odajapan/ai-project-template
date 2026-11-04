@@ -106,7 +106,10 @@ jobs:
   # installed on the repo too (`/install-github-app` does both), or the
   # action cannot mint a token that posts comments and the job fails
   # instead of skipping. GitHub withholds secrets from fork PRs and
-  # Dependabot, so those are skipped as well.
+  # Dependabot, so those are skipped as well. The action also skips
+  # itself on any PR whose copy of this file differs from main's (it
+  # logs "Workflow validation failed"), so a change to this job can only
+  # be seen working on the next PR after it merges.
   #
   # `success()` is spelled out: a job-level `if:` replaces the implicit
   # success()-of-needs guard, and without it the review would run on a
