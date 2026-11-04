@@ -68,9 +68,10 @@ that implements it:
   (what counts as done); `/pr-review`'s lane pass (how far a change can
   blast: `contained` / `wide` / `irreversible`).
 - **code node** — merge / dedupe / rank done by plain code, no model.
-  Delegated to `/code-review`. `/code-review ultra` is the ready-made
-  multi-agent graph and the costliest review: ask the user before
-  launching it — and before building one of your own.
+  None here yet: `/code-review` dedupes model-side, and `/pr-review`'s
+  cross-round repeat check is the manual stand-in. `/code-review ultra`
+  is the ready-made multi-agent graph and the costliest review: ask the
+  user before launching it — and before building one of your own.
 - **correction edge** — short return path, this run only: a failed check
   sends the *unit* back to the producer (fix loop round N → N+1).
 - **learning edge** — long return path, every later run: an accepted
