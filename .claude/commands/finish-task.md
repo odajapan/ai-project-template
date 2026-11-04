@@ -43,8 +43,14 @@ Steps:
    body. If the task had no scope declaration, write the checks you
    actually ran instead; never leave the section as the template
    placeholder.
-7. Report the PR URL and stop. Do not run `gh pr merge` — merging is
-   a human decision.
+7. Report the PR URL. **Autonomous runs stop here.** In an interactive
+   session, offer to watch CI and start the review when it is green; if
+   the user agrees, run `gh pr checks <number> --watch` in the
+   background and, when it completes: every check green → invoke
+   `/pr-review` (its default level); any check failed → report the
+   failing check with its URL and stop — the human decides whether to
+   review a red PR. Do not run `gh pr merge` — merging is a human
+   decision.
 8. After the human has merged the PR and any follow-through (pipeline
    re-runs, deploys) is done, proactively suggest `/clear` with a
    one-line handoff (open questions, premise of the next task), per

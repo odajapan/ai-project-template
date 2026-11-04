@@ -3,7 +3,7 @@ name: "source-command-finish-task"
 description: "Verify checks, push the codex/* branch, and open a PR."
 ---
 
-<!-- ported-from: .claude/commands/finish-task.md sha256:2a280a4fac39 -->
+<!-- ported-from: .claude/commands/finish-task.md sha256:ad26b8512da4 -->
 
 # source-command-finish-task
 
@@ -37,8 +37,13 @@ Steps:
    If the task had no scope declaration, write the checks you
    actually ran instead; never leave the section as the template
    placeholder.
-7. Report the PR URL and stop. Do not run `gh pr merge` — merging is
-   a human decision.
+7. Report the PR URL. **Autonomous runs stop here.** In an interactive
+   session, offer to watch CI; if the user agrees, run
+   `gh pr checks <number> --watch` in the background and, when it
+   completes: every check green → say so and offer a review of the PR
+   diff; any check failed → report the failing check with its URL and
+   stop — the human decides whether to review a red PR. Do not run
+   `gh pr merge` — merging is a human decision.
 8. Once the human has merged the PR, any follow-through (pipeline
    re-runs, deploys) is done, nothing is still running, the tree is clean,
    and anything worth keeping is in the PR body or `AGENTS.md`, suggest
