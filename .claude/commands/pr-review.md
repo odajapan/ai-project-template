@@ -39,8 +39,9 @@ user to decide.
   without a human), and say so in one line. This override comes before
   step 2's flag checks: a `--fix` from an autonomous caller is ignored,
   not reported as contradicting `--no-fix`.
-- **`--no-fix` — review only.** One review, then the triage (step 5)
-  and the report (step 7). Nothing is edited, committed, or pushed.
+- **`--no-fix` — review only.** One review, then the triage (step 6),
+  the report (step 8) and the candidate constraints (step 9). Nothing is
+  edited, committed, or pushed.
 - **`ultra`** implies `--no-fix`: it runs in the cloud and returns its
   findings later, so there is nothing to loop on.
 
@@ -56,7 +57,7 @@ user to decide.
    review. Do not guess a base branch. If `state` is not `OPEN`, stop and
    say so — do not review a stale diff.
 
-   **PR guard** (used by 6.7 and 6.8): re-run this `gh pr view`; it
+   **PR guard** (used by 7.7 and 7.8): re-run this `gh pr view`; it
    passes only if `state` is still `OPEN` and `baseRefName` and
    `headRefOid` are unchanged from this step (a moved head means someone
    else pushed).
@@ -93,7 +94,25 @@ user to decide.
      equals `headRefOid` (push or pull first); `git status --porcelain` is
      empty (commit or stash first, so fixes never mix with unrelated
      work).
-4. **Review round 1.** Print one line naming the PR (`url`, base
+4. **Lane pass**, only when `gh pr diff <number> --name-only` lists more
+   than 3 files (smaller PRs skip this step; say so in one line). Put
+   every changed file in exactly one lane by blast radius, not by
+   folder, and print one table (`file | lane | reason`, reasons of a few
+   words):
+   - `irreversible` — anything whose effect outlives a revert: writes or
+     deletions under `data/`, `models/`, `deploy/`, migrations and schema
+     changes to stored data, file deletions, secrets handling,
+     `.github/workflows/`, release or version bumps.
+   - `wide` — many callers or consumers: shared helpers, `schemas.py`,
+     CLI flags, config keys, public function signatures, `Makefile`,
+     `pyproject.toml`, instruction files other agents read (`AGENTS.md`,
+     `.claude/`).
+   - `contained` — everything else: an isolated function with its own
+     tests, a single test file, copy, examples.
+   When in doubt between two lanes, pick the wider one. The lanes change
+   nothing about what the reviewer looks at; they decide in step 6 what
+   this command may fix on its own.
+5. **Review round 1.** Print one line naming the PR (`url`, base
    `baseRefName`), then invoke the `Skill` tool with
    `skill: "code-review"` and `args` set to `<PR number>`, followed by the
    level (only if one was given — otherwise omit it so `/code-review`
@@ -103,35 +122,54 @@ user to decide.
    is one round: its own output contract (a findings block, or
    `ReportFindings`) closes that round, not this command — keep going
    with the next step. With `ultra`, go
-   straight to step 7. In review-only mode, triage (step 5), then go to
-   step 7.
-5. **Triage every finding** of the round into exactly one bucket. Read the
+   straight to step 8. In review-only mode, triage (step 6), then go to
+   step 8.
+6. **Triage every finding** of the round into exactly one bucket. Read the
    cited code first; do not trust the finding's line numbers blindly.
+
+   First, in round 1 only, the **Done-when check**: read the PR body
+   (`gh pr view <number> --json body`) and its `## Done when` section. If
+   the section is missing or still the template placeholder, say so in
+   one line and skip the check. Otherwise verify each item against the
+   pushed PR: run it when it is a command or a test (read-only — this is
+   not a fix), read the code when it is a statement. Record ✓ / ✗ with
+   the evidence for the report. An ✗ is missing work, not a review
+   finding — it goes to the report as `D-<n>` under Needs your decision
+   and is never fixed by this loop.
+
+   Then bucket each finding:
    - **Fix** — all of: you agree the problem is real; there is one
      obvious fix that a reviewer would not argue with; it stays within the
      PR's declared intent and touches only files the PR already changes
      (or their tests); it changes no public interface (CLI flags, function
      signatures, schemas, config keys, file formats) beyond what the PR
-     already changes.
+     already changes; and the file's lane (step 4) allows it —
+     `contained`: yes; `wide`: only when `make check` or an existing test
+     exercises the changed behavior (name it in the commit body);
+     `irreversible`: never. When the lane pass was skipped, judge the lane
+     by the same definitions on the spot.
    - **Ask the user** — anything else that is real: several reasonable
      fixes, a behavior or API change, a trade-off (security, cost,
-     performance vs. simplicity), a fix outside the PR's scope, anything
-     touching a path `AGENTS.md` forbids or protects (`data/raw/`,
-     `models/`, `.env*`, `secrets/`), or a finding that contradicts
-     the PR's stated design.
+     performance vs. simplicity), a fix outside the PR's scope, a finding
+     in an `irreversible` file, anything touching a path `AGENTS.md`
+     forbids or protects (`data/raw/`, `models/`, `.env*`, `secrets/`),
+     or a finding that contradicts the PR's stated design.
    - **No action** — you can show it is not a problem (quote the guard or
-     the code that refutes it), or it is pure style the project does not
-     enforce. Give the reason.
+     the code that refutes it), it is pure style the project does not
+     enforce, or it asks for work beyond the PR's Done when (an extra
+     feature, a test for a case the PR does not introduce). Give the
+     reason. A reviewer asked to find problems always finds something;
+     fixing every finding is how a PR grows abstraction it does not need.
    When unsure between Fix and Ask, choose Ask.
-6. **Fix and re-review** (fix loop only).
+7. **Fix and re-review** (fix loop only).
    1. If a Fix item repeats a finding already fixed in an earlier round
       (the same problem in the same function or section — match on the
       problem, not the line number, since fixes shift lines), the fix did
       not hold: move it to Ask the user and do not fix it again.
-   2. If the Fix bucket is now empty, go to 6.8.
+   2. If the Fix bucket is now empty, go to 7.8.
    3. If this was review round 3, do **not** fix — unreviewed fixes would
       be pushed. Move the Fix items to the report as "fixable, not
-      applied (round limit)" and go to 6.8.
+      applied (round limit)" and go to 7.8.
    4. Apply the remaining Fix items. The PostToolUse hook formats only
       the file just edited, so `git status` should list nothing but your
       fixes; if it does, `git restore` every modified file that is
@@ -142,19 +180,19 @@ user to decide.
       or if `git diff --shortstat <headRefOid>` plus the lines of new
       untracked files exceeds 500 lines (insertions + deletions). On a
       stop, do it before running `make check`: this round's edits stay
-      uncommitted, and 6.8 still pushes the earlier rounds' commits.
+      uncommitted, and 7.8 still pushes the earlier rounds' commits.
    5. Run `make check`. If it fails and two diagnostic attempts do not
-      make it pass, stop the same way, and step 7 reports the failure
-      output. Diagnostic edits follow the Fix-bucket rules (step 5): if
+      make it pass, stop the same way, and step 8 reports the failure
+      output. Diagnostic edits follow the Fix-bucket rules (step 6): if
       making it pass needs a change outside them, stop instead.
    6. Stage every file `git status --porcelain` shows — the tree was
-      clean at step 3 and 6.4 restored out-of-scope rewrites, so these
-      are this round's fixes, all checked by 6.5 — and commit one
+      clean at step 3 and 7.4 restored out-of-scope rewrites, so these
+      are this round's fixes, all checked by 7.5 — and commit one
       Conventional Commit per round, e.g.
       `fix: address review findings (round 1)`, listing the fixed
       findings in the body. If a pre-commit hook rewrites files
       and aborts the commit, re-stage the same files and commit once
-      more; if that also fails, stop as in 6.5 — never re-review with the
+      more; if that also fails, stop as in 7.5 — never re-review with the
       round's fixes uncommitted.
    7. Re-review: if the PR guard fails, stop, do not push, and report.
       Then `git fetch origin <baseRefName>`; if the fetch fails, stop
@@ -162,23 +200,27 @@ user to decide.
       Invoke `code-review` with
       `args` = `origin/<baseRefName>...HEAD` plus the same level and
       forwarded flags. The PR number cannot be used here — it reads the
-      pushed state, and the fix commits are local until 6.8. This is a
+      pushed state, and the fix commits are local until 7.8. This is a
       full review of the PR as it now stands, not just the fixes. Return
-      to step 5 with this round's findings.
+      to step 6 with this round's findings.
    8. If there is at least one fix commit, run the PR guard first — if
       it fails, do not push. Otherwise push once with
       `git push origin <headRefName>` (never force). Every commit was
       green in `make check` and re-reviewed by the following round; a
-      stop at 6.4 / 6.5 leaves only that round's edits uncommitted. Do
-      not push after a stop at 6.7 (PR guard or fetch). If the push is
-      rejected, stop and report — never force. Then go to step 7.
-7. **Report**, in the user's language (from CLAUDE.md or memory if set,
+      stop at 7.4 / 7.5 leaves only that round's edits uncommitted. Do
+      not push after a stop at 7.7 (PR guard or fetch). If the push is
+      rejected, stop and report — never force. Then go to step 8.
+8. **Report**, in the user's language (from CLAUDE.md or memory if set,
    otherwise the conversation's language; keep identifiers, paths, and
    the skill's raw output as-is). Do not paste the skill's output a second
    time; if a round's findings arrived only as a tool result the user
    cannot see, paste them once, verbatim. Then:
    - **Rounds**: one line per round — number of findings and how many
      were fixed / asked / no action; the fix commit SHA.
+   - **Done when** (only when the PR body has the section): one line per
+     item, ✓ or ✗, with the evidence — the command and its result, or
+     `file:line`.
+   - **Lanes** (only when step 4 ran): the table from step 4, unchanged.
    - **Fixed**: one line per finding.
    - **Fixable, not applied**: Fix-bucket items in review-only mode or
      after the round limit, one line each with the intended fix.
@@ -208,6 +250,26 @@ user to decide.
    findings arrive later — never "no findings". Otherwise, if there were
    no findings at all, say so and list in 2–3 lines what the reviewer
    checked.
+9. **Candidate constraints (learning edge).** Skip this step entirely —
+   no heading — unless the report has at least one Needs-your-decision
+   item or a finding that 7.1 moved to Ask because it repeated. For each
+   such item, derive the constraint that would have prevented it: a rule
+   phrased as a check, not advice (`schemas.py` changes need a test that
+   loads the previous fixture — not "be careful with schemas"). Print
+   them under a heading `## Candidate constraints (learning edge)`, one
+   line each:
+   ```
+   DERIVED <constraint> | FROM R<round>-<n> | LANDS IN <target>
+   ```
+   (`FROM D-<n>` for an unmet Done-when item.) `<target>` is one of `tests/<file>` (a deterministic check — prefer
+   this whenever the rule can be code), `.claude/rules/<name>.md`
+   (path-scoped, Claude only), `.claude/agents/<name>.md` (one worker's
+   lens), or `AGENTS.md` (global, binds every agent). Pick the narrowest
+   target that catches the finding. After the list, offer the next move
+   for each: `/new-rule <name>` for a rule target, or the test's name and
+   the case it would cover for a `tests/` target. Write none of them —
+   the human picks, and the next task starts from the rule. Never derive
+   from Fixed or No-action items.
 
 ## Notes
 
