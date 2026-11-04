@@ -206,7 +206,7 @@ def test_codex_copies_drop_claude_specifics() -> None:
 
 # Learning edge from the /pr-review runs on PR #64 and #69: the command files
 # are prose specs that cross-reference their own numbered steps ("go to 8.8",
-# "steps 4–5") and the PR template's headings ("the `## Done when` section").
+# "steps 4-5") and the PR template's headings ("the `## Done when` section").
 # Every renumbering or heading rename silently broke one of those references
 # until a reviewer happened to notice. These checks make the references a
 # machine-evaluable gate instead.
@@ -215,10 +215,10 @@ COMMANDS_DIR = REPO_ROOT / ".claude" / "commands"
 _FENCE = re.compile(r"^\s*```")
 _TOP_STEP = re.compile(r"^(\d+)\. ")
 _SUB_STEP = re.compile(r"^ +(\d+)\. ")
-# "step 7", "steps 4–5", "step 8.8"; the trailing group collects the rest of
-# a list or range ("4–5", "4 and 5", "4, 5").
+# "step 7", "steps 4-5", "step 8.8"; the trailing group collects the rest of
+# a list or range: "4-5" (hyphen or en dash), "4 and 5", "4, 5".
 _STEP_WORD = re.compile(
-    r"\bsteps?\s+(\d+(?:\.\d+)?)((?:\s*(?:[–-]|,|and)\s*\d+(?:\.\d+)?)*)", re.I
+    r"\bsteps?\s+(\d+(?:\.\d+)?)((?:\s*(?:[\u2013-]|,|and)\s*\d+(?:\.\d+)?)*)", re.I
 )
 # A bare "8.8" counts as a sub-step reference only when the file defines
 # sub-steps under step 8 — "Python 3.12" never has a sub-step 12 to resolve.
@@ -280,7 +280,7 @@ def test_command_step_references_resolve() -> None:
 
 
 def test_step_reference_check_detects_dangling() -> None:
-    spec = "1. First.\n2. Second — see step 3.\n   1. Sub.\n   2. Go to 2.9.\n"
+    spec = "1. First.\n2. Second, see step 3.\n   1. Sub.\n   2. Go to 2.9.\n"
     assert _defined_steps(spec) == {"1", "2", "2.1", "2.2"}
     assert [ref for _, ref in _step_references(spec)] == ["3", "2.9"]
 
