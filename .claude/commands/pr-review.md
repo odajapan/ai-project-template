@@ -31,8 +31,10 @@ user to decide.
 
 ## Modes
 
-- **Default — fix loop.** Review → fix the obvious findings → commit →
-  re-review, at most **3 reviews** in total, then push once.
+- **Default — fix loop.** Review → fix what one revert can undo → commit
+  → re-review, at most **3 reviews** in total (2 when round 2 changed
+  only Markdown), then push once. The human decides only what a revert
+  cannot undo — see step 7.
   **Autonomous runs** (`--dangerously-skip-permissions` or unattended)
   never use it — CLAUDE.md says they open the PR and stop — so they run
   as `--no-fix`, reject `--comment` / `--post` (no outward-facing posts
@@ -135,9 +137,10 @@ user to decide.
 6. **Review round 1.** Print one line naming the PR (`url`, base
    `baseRefName`), then invoke the `Skill` tool with
    `skill: "code-review"` and `args` set to `<PR number>`, followed by the
-   level (only if one was given — otherwise omit it so `/code-review`
-   keeps its own default, the level used last) and the forwarded flags,
-   e.g. `"63"`, `"63 max"`, `"63 ultra --post"`. Do not pass `--fix` to the
+   level (the one given, otherwise `low` — few, high-confidence findings;
+   every finding costs the human attention, so ask for more only on
+   purpose) and the forwarded flags, e.g. `"63 low"`, `"63 max"`,
+   `"63 ultra --post"`. Do not pass `--fix` to the
    skill — this command decides what gets fixed. Each `code-review` call
    is one round: its own output contract (a findings block, or
    `ReportFindings`) closes that round, not this command — keep going
@@ -146,26 +149,24 @@ user to decide.
    step 9.
 7. **Triage every finding** of the round into exactly one bucket. Read the
    cited code first; do not trust the finding's line numbers blindly.
-   - **Fix** — all of: you agree the problem is real; there is one
-     obvious fix that a reviewer would not argue with; it stays within the
-     PR's declared intent and touches only files the PR already changes
-     (or their tests); it changes no public interface (CLI flags, function
-     signatures, schemas, config keys, file formats) beyond what the PR
-     already changes; and the file's lane (step 4) allows it —
-     `contained`: yes. `wide`, code: only with a test that fails before
-     the fix and passes after it (existing or added in the same commit),
-     named in the commit body — `make check` passing is not enough.
-     `wide`, instruction files (`*.md` under `.claude/` or `.agents/`,
-     `AGENTS.md`, templates): only when the fix changes wording, not
-     which steps run or what they are allowed to do. `irreversible`:
-     never. When the lane pass was skipped, judge the lane by the same
-     definitions on the spot.
-   - **Ask the user** — anything else that is real: several reasonable
-     fixes, a behavior or API change, a trade-off (security, cost,
-     performance vs. simplicity), a fix outside the PR's scope, a finding
-     in an `irreversible` file, anything touching a path `AGENTS.md`
-     forbids or protects (`data/raw/`, `models/`, `.env*`, `secrets/`),
-     or a finding that contradicts the PR's stated design.
+   Every item handed to the human costs attention, so **Fix is the
+   default and Ask is the exception**: a fix that one `git revert`
+   undoes, with `make check` green and the human reading the diff before
+   `/land`, is cheaper than a decision.
+   - **Skipped** — the user already declined this finding in an earlier
+     run of this command on the same PR (you know this from the
+     conversation; match on the problem, not the line). List it once as
+     `skipped (R<round>-<n>)` and do not triage it again.
+   - **Ask the user** — only when at least one of these holds:
+     1. the file is in the `irreversible` lane (step 4, or judged by the
+        same definitions when the lane pass was skipped), or on a path
+        `AGENTS.md` forbids or protects (`data/raw/`, `models/`, `.env*`,
+        `secrets/`);
+     2. the fix changes a public interface — CLI flags, function
+        signatures, schemas, config keys, file formats — beyond what the
+        PR already changes;
+     3. the fix contradicts the PR's stated design or its Done when, or
+        the finding needs a file outside the PR and its tests.
    - **No action** — you can show it is not a problem (quote the guard or
      the code that refutes it), it is pure style the project does not
      enforce, or it asks for work beyond the PR's Done when — an extra
@@ -174,7 +175,15 @@ user to decide.
      whatever Done when says. Give the reason. A reviewer asked to find
      problems always finds something; fixing every finding is how a PR
      grows abstraction it does not need.
-   When unsure between Fix and Ask, choose Ask.
+   - **Fix** — everything else that is real, in `contained` and `wide`
+     files alike, instruction files included. When several fixes are
+     reasonable, apply the one you would recommend and name the
+     alternatives in the commit body — the human can revert, which is
+     cheaper than deciding in advance. For a `wide` code file, add or
+     name the test that exercises the change in the same commit when one
+     is cheap; do not block on it.
+   When unsure between Fix and No action, Fix. When unsure whether an Ask
+   condition holds, it does not: Ask needs a reason you can quote.
 8. **Fix and re-review** (fix loop only).
    1. If a Fix item repeats a finding already fixed in an earlier round
       (the same problem in the same function or section — match on the
@@ -208,7 +217,11 @@ user to decide.
       and aborts the commit, re-stage the same files and commit once
       more; if that also fails, stop as in 8.5 — never re-review with the
       round's fixes uncommitted.
-   7. Re-review: if the PR guard fails, stop, do not push, and report.
+   7. Re-review — unless this was round 2 and its fixes touched only
+      Markdown files: a third review of freshly written prose finds only
+      new wording, so go to 8.8 and let the human's diff read before
+      `/land` cover those fixes. Otherwise: if the PR guard fails, stop,
+      do not push, and report.
       Then `git fetch origin <baseRefName>`; if the fetch fails, stop
       the same way — a stale base would review a different change set.
       Invoke `code-review` with
@@ -238,6 +251,7 @@ user to decide.
    - **Fixed**: one line per finding.
    - **Fixable, not applied**: Fix-bucket items in review-only mode or
      after the round limit, one line each with the intended fix.
+   - **Skipped**: one line each, `skipped (R<round>-<n>)` — nothing more.
    - **Needs your decision**: for each, number it `R<round>-<n>` (the
      review's own number within that round, so items from different
      rounds never collide) and write
