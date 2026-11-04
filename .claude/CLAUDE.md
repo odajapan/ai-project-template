@@ -50,6 +50,35 @@ Notes:
   claim (CONFIRMED / PLAUSIBLE / REFUTED). Feed verifier one finding at a
   time, ideally in parallel across findings.
 
+### Loop and graph vocabulary
+
+Shared terms for how work is orchestrated here, each with the mechanism
+that implements it:
+
+- **loop** — produce → check → correct → repeat, inside one node, until a
+  machine-evaluable check passes (`make check` exit 0, never "looks good").
+  Here: implement → `make check` → fix until it exits 0. The `/pr-review`
+  fix loop wraps that in a model review, capped at 3 rounds because a
+  reviewer's verdict is not machine-evaluable.
+- **gate** — a verdict that decides what runs next. `make check` locally,
+  CI + branch protection + `/land` for the merge.
+- **worker** — one unit of work, one lens, its own context: the agents in
+  the table above and the fresh reviewer behind `/code-review`.
+- **splitter** — cuts the work. The human's `Done when` in `/start-task`
+  (what counts as done); `/pr-review`'s lane pass (how far a change can
+  blast: `contained` / `wide` / `irreversible`).
+- **code node** — merge / dedupe / rank done by plain code, no model.
+  None here yet: `/code-review` dedupes model-side, and `/pr-review`'s
+  cross-round repeat check is the manual stand-in. `/code-review ultra`
+  is the ready-made multi-agent graph and the costliest review: ask the
+  user before launching it — and before building one of your own.
+- **correction edge** — short return path, this run only: a failed check
+  sends the *unit* back to the producer (fix loop round N → N+1).
+- **learning edge** — long return path, every later run: an accepted
+  finding becomes a constraint (`/pr-review`'s candidate-constraints
+  step → `/new-rule`, a test, an agent's lens). The human picks; nothing
+  is written for them.
+
 ---
 
 ## Quick Start with Claude
@@ -74,9 +103,9 @@ Slash commands (run inside Claude Code):
 - `/start-task <name>` — cut a `claude/<name>` branch and declare scope
 - `/finish-task` — run checks, push, and open a PR
 - `/pr-review [level] [--no-fix] [...]` — review this branch's open PR by
-  number; by default fixes the obvious findings, re-reviews (max 3
-  reviews), and pushes; explains what is left for you to decide (flags:
-  see the command file)
+  number at `low` unless a level is given; fixes what a revert can undo,
+  re-reviews (max 3 reviews), and pushes; asks you only about what a
+  revert cannot undo (flags: see the command file)
 - `/land [<pr>...]` — merge PR(s), retarget stacked children, sync main, and clean up
 - `/debug <traceback>` — diagnose and fix a Python error systematically
 - `/add-example <name>` — scaffold a runnable script under `examples/`

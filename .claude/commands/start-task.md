@@ -50,11 +50,27 @@ Steps:
    Out of scope:
      - <path or change>
 
+   Done when:
+     - <a check that comes back pass/fail: a test to turn green, a command
+       and its expected output, a fixture to match — one line each>
+     - <...>
+
    Stop conditions:
      - >3 files or >500 lines added beyond the in-scope set
      - any change to data/raw/, models/, or a real env file (.env, .env.local,
        …). Editing env.example is in scope.
      - tests fail in a way I cannot diagnose in 2 attempts
    ```
+
+   `Done when` is the task's definition of done, written before the code
+   exists so the review can be held against it instead of against "looks
+   done". Derive it from the conversation; if the user has not said what
+   done looks like, ask before emitting the declaration — except in an
+   autonomous run (`--dangerously-skip-permissions` or unattended), which
+   cannot wait for an answer: there, derive it from the task (`make
+   check` exits 0 plus the test or command that proves the task's
+   behavior) and mark each such line `(assumed)`, so the human sees in
+   the PR which criteria they never agreed to. `/finish-task` copies
+   these lines into the PR body and `/pr-review` checks each one.
 
 Do not start editing files until the user confirms the scope.
