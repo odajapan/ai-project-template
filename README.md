@@ -143,8 +143,8 @@ Slash commands available inside Claude Code:
 ├── .github/
 │   ├── CODEOWNERS         ← Owner review required on every PR (branch protection)
 │   └── workflows/
-│       ├── ci.yml                   ← make check on 3.12 / 3.13 + actionlint
-│       └── claude-code-review.yml   ← Automatic Claude PR review (needs a secret)
+│       └── ci.yml         ← make check on 3.12 / 3.13 + actionlint, then an
+│                            advisory Claude PR review (needs a secret)
 ├── .claude/
 │   ├── CLAUDE.md          ← Template baseline instructions for Claude Code
 │   ├── settings.json      ← Claude Code permissions and hooks
@@ -259,8 +259,9 @@ session being able to do anything genuinely dangerous. The guardrails:
   block alone still lets off-list hosts through. Merging
   is not enforced by a deny rule — see "Human merges" below and
   `docs/branch-protection.md` for the actual gate.
-- `.github/workflows/claude-code-review.yml` — automatic Claude review on
-  every PR once the `ANTHROPIC_API_KEY` (or `CLAUDE_CODE_OAUTH_TOKEN`)
+- `.github/workflows/ci.yml` `review` job — automatic Claude review on
+  every PR, run only after `checks` is green so a red PR spends no
+  review, once the `ANTHROPIC_API_KEY` (or `CLAUDE_CODE_OAUTH_TOKEN`)
   secret is set; advisory, never a required check.
 - `.claude/rules/data-raw-immutable.md`, `secrets.md`, `notebooks.md` —
   path-scoped guards that activate when matching files are in scope.
