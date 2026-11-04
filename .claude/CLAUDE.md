@@ -57,7 +57,9 @@ that implements it:
 
 - **loop** — produce → check → correct → repeat, inside one node, until a
   machine-evaluable check passes (`make check` exit 0, never "looks good").
-  Here: the `/pr-review` fix loop, capped at 3 reviews.
+  Here: implement → `make check` → fix until it exits 0. The `/pr-review`
+  fix loop wraps that in a model review, capped at 3 rounds because a
+  reviewer's verdict is not machine-evaluable.
 - **gate** — a verdict that decides what runs next. `make check` locally,
   CI + branch protection + `/land` for the merge.
 - **worker** — one unit of work, one lens, its own context: the agents in
@@ -66,13 +68,15 @@ that implements it:
   (what counts as done); `/pr-review`'s lane pass (how far a change can
   blast: `contained` / `wide` / `irreversible`).
 - **code node** — merge / dedupe / rank done by plain code, no model.
-  Delegated to `/code-review`; `/code-review ultra` is the ready-made
-  multi-agent graph — do not rebuild one before trying it.
+  Delegated to `/code-review`. `/code-review ultra` is the ready-made
+  multi-agent graph and the costliest review: ask the user before
+  launching it — and before building one of your own.
 - **correction edge** — short return path, this run only: a failed check
   sends the *unit* back to the producer (fix loop round N → N+1).
 - **learning edge** — long return path, every later run: an accepted
-  finding becomes a constraint (`/pr-review` step 9 → `/new-rule`, a
-  test, an agent's lens). The human picks; nothing is written for them.
+  finding becomes a constraint (`/pr-review`'s candidate-constraints
+  step → `/new-rule`, a test, an agent's lens). The human picks; nothing
+  is written for them.
 
 ---
 

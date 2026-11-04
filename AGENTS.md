@@ -150,7 +150,8 @@ These apply to every agent, unconditionally:
 - Run `make check` before **every** commit; fix failures before committing — never
   commit a red tree
 - Open PR with `gh pr create`; body must follow `.github/pull_request_template.md`
-  (summary, motivation, key changes, `make check` output, verification steps)
+  (summary, motivation, key changes, `make check` output, Done when,
+  verification steps)
 - **Merging is human-initiated, not autonomous.** In an interactive
   session, when the human says a PR is ready (e.g. via `/land`), Claude
   may run `gh pr merge`. The authoritative gate is **GitHub branch
