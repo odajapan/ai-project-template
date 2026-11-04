@@ -50,6 +50,30 @@ Notes:
   claim (CONFIRMED / PLAUSIBLE / REFUTED). Feed verifier one finding at a
   time, ideally in parallel across findings.
 
+### Loop and graph vocabulary
+
+Shared terms for how work is orchestrated here, each with the mechanism
+that implements it:
+
+- **loop** — produce → check → correct → repeat, inside one node, until a
+  machine-evaluable check passes (`make check` exit 0, never "looks good").
+  Here: the `/pr-review` fix loop, capped at 3 reviews.
+- **gate** — a verdict that decides what runs next. `make check` locally,
+  CI + branch protection + `/land` for the merge.
+- **worker** — one unit of work, one lens, its own context: the agents in
+  the table above and the fresh reviewer behind `/code-review`.
+- **splitter** — cuts the work. The human's `Done when` in `/start-task`
+  (what counts as done); `/pr-review`'s lane pass (how far a change can
+  blast: `contained` / `wide` / `irreversible`).
+- **code node** — merge / dedupe / rank done by plain code, no model.
+  Delegated to `/code-review`; `/code-review ultra` is the ready-made
+  multi-agent graph — do not rebuild one before trying it.
+- **correction edge** — short return path, this run only: a failed check
+  sends the *unit* back to the producer (fix loop round N → N+1).
+- **learning edge** — long return path, every later run: an accepted
+  finding becomes a constraint (`/pr-review` step 9 → `/new-rule`, a
+  test, an agent's lens). The human picks; nothing is written for them.
+
 ---
 
 ## Quick Start with Claude
