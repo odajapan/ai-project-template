@@ -202,3 +202,97 @@ def test_codex_copies_drop_claude_specifics() -> None:
     assert not offenders, (
         f"Claude branch prefix, CLI flag or bad Codex casing in: {offenders}"
     )
+
+
+# Learning edge from the /pr-review runs on PR #64 and #69: the command files
+# are prose specs that cross-reference their own numbered steps ("go to 8.8",
+# "steps 4–5") and the PR template's headings ("the `## Done when` section").
+# Every renumbering or heading rename silently broke one of those references
+# until a reviewer happened to notice. These checks make the references a
+# machine-evaluable gate instead.
+
+COMMANDS_DIR = REPO_ROOT / ".claude" / "commands"
+_FENCE = re.compile(r"^\s*```")
+_TOP_STEP = re.compile(r"^(\d+)\. ")
+_SUB_STEP = re.compile(r"^ +(\d+)\. ")
+# "step 7", "steps 4–5", "step 8.8"; the trailing group collects the rest of
+# a list or range ("4–5", "4 and 5", "4, 5").
+_STEP_WORD = re.compile(
+    r"\bsteps?\s+(\d+(?:\.\d+)?)((?:\s*(?:[–-]|,|and)\s*\d+(?:\.\d+)?)*)", re.I
+)
+# A bare "8.8" counts as a sub-step reference only when the file defines
+# sub-steps under step 8 — "Python 3.12" never has a sub-step 12 to resolve.
+_DOTTED = re.compile(r"(?<![\w.`])(\d+)\.(\d+)(?!\w)(?!\.\d)")
+
+
+def _prose_lines(text: str) -> list[tuple[int, str]]:
+    # Numbered lines inside fenced code blocks are output samples, not steps.
+    lines, in_fence = [], False
+    for number, line in enumerate(text.splitlines(), start=1):
+        if _FENCE.match(line):
+            in_fence = not in_fence
+        elif not in_fence:
+            lines.append((number, line))
+    return lines
+
+
+def _defined_steps(text: str) -> set[str]:
+    steps: set[str] = set()
+    current = None
+    for _, line in _prose_lines(text):
+        if top := _TOP_STEP.match(line):
+            current = top.group(1)
+            steps.add(current)
+        elif (sub := _SUB_STEP.match(line)) and current is not None:
+            steps.add(f"{current}.{sub.group(1)}")
+    return steps
+
+
+def _step_references(text: str) -> list[tuple[int, str]]:
+    defined = _defined_steps(text)
+    parents_with_substeps = {step.split(".")[0] for step in defined if "." in step}
+    refs: list[tuple[int, str]] = []
+    for number, line in _prose_lines(text):
+        for match in _STEP_WORD.finditer(line):
+            refs.append((number, match.group(1)))
+            refs.extend(
+                (number, ref) for ref in re.findall(r"\d+(?:\.\d+)?", match.group(2))
+            )
+        for match in _DOTTED.finditer(line):
+            if match.group(1) in parents_with_substeps:
+                refs.append((number, f"{match.group(1)}.{match.group(2)}"))
+    return refs
+
+
+def test_command_step_references_resolve() -> None:
+    dangling, total = [], 0
+    for path in sorted(COMMANDS_DIR.glob("*.md")):
+        text = path.read_text()
+        defined = _defined_steps(text)
+        for line, ref in _step_references(text):
+            total += 1
+            if ref not in defined:
+                dangling.append(f"{path.relative_to(REPO_ROOT)}:{line}: step {ref}")
+    assert total > 0, "no step references found — the reference regexes are broken"
+    assert not dangling, (
+        f"Command files reference steps they do not define (renumbered?): {dangling}"
+    )
+
+
+def test_step_reference_check_detects_dangling() -> None:
+    spec = "1. First.\n2. Second — see step 3.\n   1. Sub.\n   2. Go to 2.9.\n"
+    assert _defined_steps(spec) == {"1", "2", "2.1", "2.2"}
+    assert [ref for _, ref in _step_references(spec)] == ["3", "2.9"]
+
+
+def test_pr_template_sections_match_agents_md() -> None:
+    agents = " ".join((REPO_ROOT / "AGENTS.md").read_text().split())
+    match = re.search(r"pull_request_template\.md` \(sections: (.+?) —", agents)
+    assert match, "AGENTS.md no longer lists the PR template sections"
+    listed = match.group(1).split(", ")
+    template = (REPO_ROOT / ".github" / "pull_request_template.md").read_text()
+    headings = re.findall(r"(?m)^## (.+?)\s*$", template)
+    assert listed == headings, (
+        "AGENTS.md's PR-body section list and the `## ` headings in "
+        ".github/pull_request_template.md have drifted apart"
+    )
