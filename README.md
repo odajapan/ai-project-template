@@ -239,6 +239,71 @@ uv pip install -e .[dev,claude,notebook,viz]
 
 ---
 
+## Task workflow at a glance
+
+One task is one `claude/<task>` branch and one PR. The slash commands
+below carry a task from scope declaration to merge; the diagram shows
+where each loop closes, which gates must be green, and the dashed
+*learning edge* that turns an unfixed review finding into a constraint
+on the next task.
+
+```mermaid
+flowchart TD
+    subgraph task["One task — one claude/task branch"]
+        ST["/start-task name<br/>sync main, cut branch,<br/>declare scope + Done when"]
+        WORK["implement"]
+        CHECK{"make check"}
+        FT["/finish-task<br/>commit, push, gh pr create<br/>(Done when goes into the PR body)"]
+    end
+
+    subgraph pr["Pull request"]
+        CI{"CI: checks, actionlint, web<br/>+ Claude review (advisory)"}
+        PRV["/pr-review<br/>lanes, Done-when check,<br/>review, triage"]
+        FIX["fix what a revert can undo<br/>make check, commit"]
+        ASK["Needs your decision<br/>irreversible lane, public interface,<br/>or contradicts Done when"]
+        LE["Candidate constraints<br/>(learning edge)"]
+    end
+
+    LAND{"/land — a human merges<br/>gate: branch protection"}
+    MAIN[("main")]
+    RULES["tests/, .claude/rules/,<br/>.claude/agents/, AGENTS.md"]
+
+    ST --> WORK --> CHECK
+    CHECK -- red --> WORK
+    CHECK -- green --> FT --> CI
+    CI -- red --> WORK
+    CI -- green --> PRV
+    PRV -- Fix --> FIX
+    FIX -- "re-review, 3 rounds max" --> PRV
+    PRV -- Ask --> ASK --> LAND
+    PRV -. "unfixed findings" .-> LE -.-> RULES
+    RULES -. "constrains the next task" .-> ST
+    LAND --> MAIN
+```
+
+How to read it (the terms are defined in `.claude/CLAUDE.md`, "Loop and
+graph vocabulary"):
+
+- **Loops** — `implement → make check` repeats until the exit code is 0;
+  `/pr-review` repeats review → fix → re-review, capped at 3 reviews
+  because a reviewer's verdict is not machine-evaluable. The red arrows
+  back to *implement* and the re-review arrow are **correction edges**:
+  they return the same unit to its producer within one run.
+- **Gates** — `make check` locally, CI plus GitHub branch protection for
+  the merge. `/land` is the human's decision to pass the merge gate;
+  nothing in the loop merges on its own.
+- **Splitter** — the `Done when` lines declared in `/start-task` travel
+  through the PR body and tell `/pr-review` what counts as done.
+- **Learning edge** (dashed) — findings the fix loop did not resolve
+  become *candidate constraints*: a test, a path-scoped rule, an agent's
+  lens, or an `AGENTS.md` line. The human picks which to write; the next
+  `/start-task` begins under that constraint.
+- **Autonomous runs** (`--dangerously-skip-permissions`) follow the solid
+  path only as far as `/finish-task` and stop there. `/pr-review`'s fix
+  loop and `/land` are interactive.
+
+---
+
 ## Autonomous Claude Code runs
 
 This template is set up so Claude Code can be invoked with
