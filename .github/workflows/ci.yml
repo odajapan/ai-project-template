@@ -5,6 +5,9 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+    # ready_for_review is added for the `review` job below: a draft PR
+    # gets no Claude review, so the switch to ready must trigger a run.
+    types: [opened, synchronize, reopened, ready_for_review]
 
 jobs:
   checks:
@@ -88,3 +91,67 @@ jobs:
           pnpm typecheck
           pnpm test
           pnpm build
+
+  # Automatic PR review with the official anthropics/claude-code-action and
+  # the bundled code-review plugin -- the CI counterpart of the local
+  # /pr-review command. It is a gate-ordered job, not a gate: `needs:
+  # checks` means a PR that fails lint/types/tests is sent back to the
+  # author by `checks` alone and never spends a billable review on code
+  # that will change anyway. Keep it advisory -- never a required check.
+  #
+  # Each run is a billable Claude API call, so the job skips itself until
+  # a human has added the ANTHROPIC_API_KEY (or CLAUDE_CODE_OAUTH_TOKEN,
+  # from `claude setup-token`) repository secret -- see docs/TEMPLATE_INIT.md
+  # Phase 0. The secret alone is not enough: the Claude GitHub App must be
+  # installed on the repo too (`/install-github-app` does both), or the
+  # action cannot mint a token that posts comments and the job fails
+  # instead of skipping. GitHub withholds secrets from fork PRs and
+  # Dependabot, so those are skipped as well. The action also skips
+  # itself on any PR whose copy of this file differs from main's (it
+  # logs "Workflow validation failed"), so a change to this job can only
+  # be seen working on the next PR after it merges.
+  #
+  # `success()` is spelled out: a job-level `if:` replaces the implicit
+  # success()-of-needs guard, and without it the review would run on a
+  # red `checks`. `id-token: write` is what lets the action authenticate
+  # as the Claude GitHub App; `--allowedTools` must name the
+  # inline-comment MCP tool or the review only lands in the run log.
+  # Setup docs: https://code.claude.com/docs/en/github-actions
+  review:
+    needs: checks
+    if: success() && github.event_name == 'pull_request' && github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    concurrency:
+      group: claude-review-${{ github.event.pull_request.number || github.sha }}
+      cancel-in-progress: true
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: read
+      id-token: write
+    env:
+      HAS_SECRET: ${{ secrets.ANTHROPIC_API_KEY != '' || secrets.CLAUDE_CODE_OAUTH_TOKEN != '' }}
+    steps:
+      - name: Check for a review credential
+        if: env.HAS_SECRET != 'true'
+        run: echo "No ANTHROPIC_API_KEY / CLAUDE_CODE_OAUTH_TOKEN secret -- skipping Claude review."
+
+      - name: Checkout repository
+        if: env.HAS_SECRET == 'true'
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - name: Review the PR
+        if: env.HAS_SECRET == 'true'
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          plugin_marketplaces: "https://github.com/anthropics/claude-code.git"
+          plugins: "code-review@claude-code-plugins"
+          prompt: "/code-review:code-review --comment ${{ github.repository }}/pull/${{ github.event.pull_request.number }}"
+          # The inline-comment tool posts findings; the gh calls let the
+          # reviewer read the PR on a depth-1 checkout and fall back to a
+          # summary comment when nothing is inline-worthy.
+          claude_args: '--allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"'

@@ -46,9 +46,10 @@ below.
    **and** stores the `ANTHROPIC_API_KEY` (or `CLAUDE_CODE_OAUTH_TOKEN`)
    secret. Both are required — with the secret but no App the action
    cannot mint a token to post comments and the job fails instead of
-   skipping. `.github/workflows/claude-code-review.yml` skips itself while
-   the secret is absent. Reviews are billable API calls; do this only with
-   the human's explicit go-ahead.
+   skipping. The `review` job in `.github/workflows/ci.yml` skips itself
+   while the secret is absent, and runs only after `checks` is green.
+   Reviews are billable API calls; do this only with the human's explicit
+   go-ahead.
 
 ## Phase 1 — Prune
 
@@ -64,7 +65,7 @@ site — nothing in a freshly-cloned template has been used yet.
 | Sphinx docs? | `docs/*.rst`, `docs/{conf.py,Makefile,make.bat}`, the `docs` extra |
 | TypeScript workspace? | `.claude/rules/web.md`, the `web` CI job, the `AGENTS.md` §web section, `Bash(pnpm:*)` in `.claude/settings.json` |
 | Will anyone use OpenAI Codex on this repo? | `.codex/`, `.agents/`, `docs/CODEX.md` and the Codex pointer at the top of `AGENTS.md` (the Codex checks in `tests/test_repo_consistency.py` skip themselves once both directories are gone) |
-| Will PRs get an automatic Claude review in CI? (independent of whether the app itself calls Claude) | `.github/workflows/claude-code-review.yml`, Phase 0 step 9, the "Claude Code Review" note in `docs/branch-protection.md` |
+| Will PRs get an automatic Claude review in CI? (independent of whether the app itself calls Claude) | the `review` job in `.github/workflows/ci.yml` (and the `ready_for_review` trigger type above it), Phase 0 step 9, the `review` note in `docs/branch-protection.md` |
 | Does this project run as a long-lived service deployed to a host via a self-hosted GitHub Actions runner? | `deploy/`, `.github/workflows/deploy.yml`, `docs/EC2_DEPLOY.md`, `.claude/rules/ec2-deploy.md`, the `AGENTS.md` §EC2 deploy section |
 
 Deleting a row's files also means removing any now-dangling references to

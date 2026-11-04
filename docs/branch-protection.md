@@ -24,8 +24,8 @@ after cloning this template.
   - Require branches to be up to date before merging
   - Required checks: `checks` (from `.github/workflows/ci.yml`,
     both Python `3.12` and `3.13` matrix jobs). Do **not** require the
-    `Claude Code Review` job — it is advisory and skips itself without a
-    secret.
+    `review` job from the same workflow — it is advisory, skips itself
+    without a secret, and is skipped whenever `checks` fails.
 - **Require conversation resolution before merging**
 - **Do not allow bypassing the above settings**
 - **Restrict who can push to matching branches**
