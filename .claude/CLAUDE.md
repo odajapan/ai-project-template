@@ -103,9 +103,9 @@ Slash commands (run inside Claude Code):
 - `/start-task <name>` — cut a `claude/<name>` branch and declare scope
 - `/finish-task` — run checks, push, and open a PR
 - `/pr-review [level] [--no-fix] [...]` — review this branch's open PR by
-  number; by default fixes the obvious findings, re-reviews (max 3
-  reviews), and pushes; explains what is left for you to decide (flags:
-  see the command file)
+  number at `low` unless a level is given; fixes what a revert can undo,
+  re-reviews (max 3 reviews), and pushes; asks you only about what a
+  revert cannot undo (flags: see the command file)
 - `/land [<pr>...]` — merge PR(s), retarget stacked children, sync main, and clean up
 - `/debug <traceback>` — diagnose and fix a Python error systematically
 - `/add-example <name>` — scaffold a runnable script under `examples/`

@@ -3,7 +3,7 @@ name: "source-command-start-task"
 description: "Cut a fresh codex/<task> branch from latest main and declare the task scope."
 ---
 
-<!-- ported-from: .claude/commands/start-task.md sha256:ec153c5475cc -->
+<!-- ported-from: .claude/commands/start-task.md sha256:ca951edfb73e -->
 
 # source-command-start-task
 
@@ -59,7 +59,11 @@ Steps:
    `Done when` is the task's definition of done, written before the code
    exists so the review can be held against it instead of against "looks
    done". Derive it from the conversation; if the user has not said what
-   done looks like, ask before emitting the declaration. The
+   done looks like, ask before emitting the declaration — except in an
+   unattended run, which cannot wait for an answer: there, derive it from
+   the task (`make check` exits 0 plus the test or command that proves
+   the task's behavior) and mark each such line `(assumed)`, so the human
+   sees in the PR which criteria they never agreed to. The
    `source-command-finish-task` skill copies these lines into the PR body
    so reviewers can check each one.
 

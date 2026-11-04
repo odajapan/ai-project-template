@@ -3,6 +3,7 @@ description: Verify checks, push the claude/* branch, and open a PR.
 allowed-tools:
   - Bash
   - Read
+  - Skill
 common_files:
   - .github/pull_request_template.md
   - CLAUDE.md
@@ -12,8 +13,9 @@ suggested_sequence:
   - run make check
   - commit uncommitted changes with conventional commits
   - git push origin <branch>
-  - gh pr create with PR template
-  - report PR URL and stop
+  - gh pr create with PR template (Done when filled in)
+  - report PR URL; autonomous runs stop
+  - interactive: offer to watch CI and run /pr-review on green
   - suggest /clear with handoff after merge
 ---
 
@@ -44,13 +46,18 @@ Steps:
    actually ran instead; never leave the section as the template
    placeholder.
 7. Report the PR URL. **Autonomous runs stop here.** In an interactive
-   session, offer to watch CI and start the review when it is green; if
+   session, offer to watch CI and start `/pr-review` when it is green —
+   say in the offer that the default fix loop commits and pushes fixes
+   to the branch, and that `--no-fix` is the read-only alternative. If
    the user agrees, run `gh pr checks <number> --watch` in the
-   background and, when it completes: every check green → invoke
-   `/pr-review` (its default level); any check failed → report the
-   failing check with its URL and stop — the human decides whether to
-   review a red PR. Do not run `gh pr merge` — merging is a human
-   decision.
+   background and act on how it ends:
+   - `no checks reported` (GitHub has not registered the run yet): wait
+     30 s and start the watch again, up to 5 times, then report.
+   - every check `pass` or `skipping` → invoke `/pr-review` (with
+     `--no-fix` if that is what the user chose).
+   - any check `fail` or `cancel` → report it with its URL and stop; the
+     human decides whether to review a red PR.
+   Do not run `gh pr merge` — merging is a human decision.
 8. After the human has merged the PR and any follow-through (pipeline
    re-runs, deploys) is done, proactively suggest `/clear` with a
    one-line handoff (open questions, premise of the next task), per
