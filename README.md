@@ -322,8 +322,8 @@ session being able to do anything genuinely dangerous. The guardrails:
   `strictAllowlist: true` + `allowUnsandboxedCommands: false` in
   `~/.claude/settings.json` — in bypass-permissions mode the repo-level
   block alone still lets off-list hosts through. Merging
-  is not enforced by a deny rule — see "Human merges" below and
-  `docs/branch-protection.md` for the actual gate.
+  is not enforced by a deny rule — see step 5 of "Recommended flow"
+  below and `docs/branch-protection.md` for the actual gate.
 - `.github/workflows/ci.yml` `review` job — automatic Claude review on
   every PR, run only after `checks` is green so a red PR spends no
   review, once the `ANTHROPIC_API_KEY` (or `CLAUDE_CODE_OAUTH_TOKEN`)
@@ -355,7 +355,11 @@ session being able to do anything genuinely dangerous. The guardrails:
    - Confirm the scope with the human, then do the work.
    - `/finish-task` — run `make check`, commit in logical units, push
      `claude/<task>`, open the PR, report URL, **stop**.
-5. **Human merges.** Claude never runs `gh pr merge`.
+5. **A human decides the merge.** The autonomous run never runs
+   `gh pr merge`; it ends at the PR URL. Merging happens later, in an
+   interactive session, when the human says the PR is ready — usually
+   `/land <pr>`, which merges, syncs `main`, and cleans up. Branch
+   protection on `main` is what enforces this, not a local rule.
 
 ### Checklist before launching
 

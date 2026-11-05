@@ -6,7 +6,8 @@ run on a clone where someone has opted in (`make hooks`). The
 authoritative guardrails live on GitHub.
 
 Configure the following in the repository **Settings → Branches** UI
-after cloning this template.
+after cloning this template, or apply it in one command — see
+"Applying it from the command line" below.
 
 ## Recommended settings for `main`
 
@@ -53,7 +54,57 @@ A safe autonomous configuration looks like:
 1. Repo has the protection above on `main`.
 2. CI (`.github/workflows/ci.yml`) runs `make check` on every PR.
 3. Claude works on a `claude/*` branch, opens a PR, and **stops**.
-4. A human reviews the PR and clicks merge.
+4. A human reviews the PR and merges it — `/land <pr>` in an interactive
+   Claude session, or the merge button.
+
+## Applying it from the command line
+
+The classic branch-protection API sets everything above in one call.
+This is the **solo-maintainer** variant: a PR is required but with
+`0` approvals and no Code Owner review (see the note under "Require a
+pull request" — one owner cannot approve their own PR). Raise
+`required_approving_review_count` to `1` and set
+`require_code_owner_reviews` to `true` once a second reviewer exists.
+
+```bash
+cat > /tmp/protection.json <<'EOF'
+{
+  "required_status_checks": {
+    "strict": true,
+    "contexts": ["checks (3.12)", "checks (3.13)"]
+  },
+  "enforce_admins": true,
+  "required_pull_request_reviews": {
+    "dismiss_stale_reviews": true,
+    "require_code_owner_reviews": false,
+    "required_approving_review_count": 0
+  },
+  "restrictions": null,
+  "required_conversation_resolution": true,
+  "allow_force_pushes": false,
+  "allow_deletions": false
+}
+EOF
+gh api -X PUT repos/<owner>/<repo>/branches/main/protection \
+  --input /tmp/protection.json
+```
+
+Notes:
+
+- `restrictions` (who may push to `main`) is an organization-only
+  field; on a user-owned repo it must be `null`, and "nobody pushes to
+  `main`" is already covered by the PR requirement plus
+  `enforce_admins`.
+- `strict: true` is "Require branches to be up to date before merging".
+  It is the safer default, but when landing several PRs in a row each
+  one after the first needs an update-branch (the **Update branch**
+  button or `gh pr update-branch <pr>`) before `/land` can merge it. Set
+  it to `false` if that becomes friction.
+- Running this from inside a Claude Code session may be refused by the
+  permission classifier the first time (it looks like a CI bypass); run
+  it from a plain terminal, or repeat the request explicitly.
+- Classic protection is free on public repos; private repos need a
+  paid plan.
 
 ## Verifying the setup
 
