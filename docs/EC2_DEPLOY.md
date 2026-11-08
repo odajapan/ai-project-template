@@ -9,7 +9,11 @@ libraries, or data pipelines that don't run a persistent service.
 
 - `.github/workflows/deploy.yml` — triggered by `workflow_run` after the
   `CI` workflow completes successfully on `main` (or manually via
-  `workflow_dispatch`). Runs on a **self-hosted** runner.
+  `workflow_dispatch`). A GitHub-hosted `preflight` job first confirms a
+  self-hosted runner is online; the `deploy` job then runs on that
+  **self-hosted** runner. Merge-triggered runs only start when the
+  `DEPLOY_ENABLED` repository variable is `true`, so the workflow file can
+  sit in a project that never deploys without turning every merge red.
 - `deploy/install_github_runner.sh` — one-time, per host: downloads and
   registers a GitHub Actions runner scoped to this repo, installed as a
   systemd service so it survives reboots.
@@ -55,7 +59,25 @@ if a second push lands while the first one is still going through CI.
    starts (`workflow_run` has no matching `runs-on: self-hosted` runner to
    pick it up). A repo can carry a fully-written, fully-reviewed deploy
    pipeline that has never actually deployed anything.
-6. Trigger a manual `workflow_dispatch` run of Deploy and confirm it
+6. Give the workflow a token that can run that same check. Listing runners
+   requires the repository's **Administration: read** permission, which
+   the built-in `GITHUB_TOKEN` cannot be granted — the `preflight` job
+   would 403 even with a runner online. Create a fine-grained personal
+   access token scoped to this one repository with *Administration: Read*
+   (nothing else), and store it as the `RUNNER_CHECK_TOKEN` secret:
+   ```bash
+   gh secret set RUNNER_CHECK_TOKEN --repo <org>/<repo>
+   ```
+   Fine-grained tokens expire; the preflight error message names the
+   secret, so a lapsed token shows up as a red `Deploy` run, not a silent
+   one.
+7. Turn merge-triggered deploys on:
+   ```bash
+   gh variable set DEPLOY_ENABLED --body true --repo <org>/<repo>
+   ```
+   Until this is set, `workflow_run` deploys are skipped (not failed).
+   `workflow_dispatch` ignores the variable.
+8. Trigger a manual `workflow_dispatch` run of Deploy and confirm it
    completes successfully end to end before relying on merge-triggered
    deploys.
 

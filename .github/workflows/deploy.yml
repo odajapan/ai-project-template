@@ -50,19 +50,34 @@ jobs:
     # failing -- exactly the "looks deployed, never actually ran" failure
     # this pattern exists to catch (see docs/EC2_DEPLOY.md). Fail loudly
     # here, on a GitHub-hosted runner, before deploy tries to queue.
+    #
+    # Listing runners needs the repository's Administration: read
+    # permission, which GITHUB_TOKEN can never be granted -- with it the
+    # call 403s whether or not a runner is registered. The check therefore
+    # uses a fine-grained PAT stored as the RUNNER_CHECK_TOKEN secret
+    # (docs/EC2_DEPLOY.md, one-time setup).
+    #
+    # Merge-triggered runs are additionally gated on the DEPLOY_ENABLED
+    # repository variable, so a project with no deploy host (and the
+    # template itself) gets a skipped Deploy per merge instead of a red
+    # one. A manual workflow_dispatch is an explicit decision and runs
+    # regardless.
     if: |
       github.event_name == 'workflow_dispatch' ||
-      (github.event.workflow_run.conclusion == 'success' &&
+      (vars.DEPLOY_ENABLED == 'true' &&
+       github.event.workflow_run.conclusion == 'success' &&
        github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: ubuntu-latest
     timeout-minutes: 2
-    permissions:
-      actions: read
     steps:
       - name: Verify a self-hosted runner is online
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.RUNNER_CHECK_TOKEN }}
         run: |
+          if [ -z "${GH_TOKEN}" ]; then
+            echo "::error::RUNNER_CHECK_TOKEN secret is not set. Store a fine-grained PAT with Administration: read on this repo under that name (docs/EC2_DEPLOY.md), or delete deploy.yml if this project has nothing to deploy." >&2
+            exit 1
+          fi
           online=$(gh api "repos/${{ github.repository }}/actions/runners" \
             --jq '[.runners[] | select(.status == "online")] | length')
           if [ "${online}" -lt 1 ]; then
@@ -78,6 +93,9 @@ jobs:
     # checked here too, or a failed preflight (no online runner) still
     # lets this job queue forever on runs-on: self-hosted, which is
     # exactly the silent-hang failure this pattern exists to catch.
+    #
+    # A skipped preflight (DEPLOY_ENABLED unset) skips this job too, since
+    # 'skipped' != 'success'.
     #
     # workflow_run only fires this on CI success from this repo (not a
     # fork -- see the comment above); workflow_dispatch is an explicit
