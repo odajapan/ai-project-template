@@ -35,9 +35,10 @@ user to decide.
   → re-review, at most **10 reviews** in total (2 when round 2 changed
   only Markdown), then push once. The human decides only what a revert
   cannot undo — see step 7. The cap is a safety stop, not a target: the
-  loop usually ends earlier because the Fix bucket is empty (step 8.2) or
-  a finding repeats (8.1), and a code PR with a long tail of small real
-  findings is the case that needs the room.
+  loop usually ends earlier because the Fix bucket is empty (step 8.2),
+  including when every remaining Fix item is a repeat (8.1), and a code
+  PR with a long tail of small real findings is the case that needs the
+  room.
   **Autonomous runs** (`--dangerously-skip-permissions` or unattended)
   never use it — CLAUDE.md says they open the PR and stop — so they run
   as `--no-fix`, reject `--comment` / `--post` (no outward-facing posts
@@ -205,11 +206,14 @@ user to decide.
       the file just edited, so `git status` should list nothing but your
       fixes; if it does, `git restore` every modified file that is
       neither in the PR (`gh pr diff <number> --name-only`) nor a test
-      of a PR file. Then measure the fixes so far against the original
-      head (step 1's `headRefOid`, not the moving PR): stop if more than
-      3 files outside the PR's file list are touched (new tests count),
-      or if `git diff --shortstat <headRefOid>` plus the lines of new
-      untracked files exceeds 500 lines (insertions + deletions). On a
+      of a PR file. Untracked strays that an earlier round's 8.6 already
+      set aside for Left local are expected here and are left out of
+      everything that follows. Then measure the fixes so far against the
+      original head (step 1's `headRefOid`, not the moving PR): stop if
+      more than 3 files outside the PR's file list are touched (new tests
+      count, strays do not), or if `git diff --shortstat <headRefOid>`
+      plus the lines of new untracked files other than strays exceeds
+      500 lines (insertions + deletions). On a
       stop, do it before running `make check`: this round's edits stay
       uncommitted, and 8.8 still pushes the earlier rounds' commits.
    5. Run `make check`. If it fails and two diagnostic attempts do not
@@ -222,7 +226,8 @@ user to decide.
       but `git restore` does not touch untracked files, and 8.5 can leave
       some behind (a script or test that writes its output into the
       tree). Anything else `git status --porcelain` still shows stays out
-      of the commit and goes in the report under Left local. Commit one
+      of the commit and goes in the report under Left local; note its
+      path, so later rounds' 8.4 can skip it. Commit one
       Conventional Commit per round, e.g.
       `fix: address review findings (round 1)`, listing the fixed
       findings in the body. If a pre-commit hook rewrites files
@@ -255,8 +260,8 @@ user to decide.
       green in `make check` and re-reviewed by the following round —
       except a Markdown-only round 2, which 8.7 pushes unreviewed and
       the report must say so; a stop at 8.4 / 8.5 leaves only that
-      round's edits uncommitted. Do
-      not push after a stop at 8.7 (PR guard or fetch). If the push is
+      round's edits uncommitted. Do not push after any stop at 8.7 (PR
+      guard, fetch, or a re-review that could not read the range). If the push is
       rejected, stop and report — never force. Then go to step 9.
 9. **Report**, in the user's language (from CLAUDE.md or memory if set,
    otherwise the conversation's language; keep identifiers, paths, and

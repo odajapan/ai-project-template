@@ -60,7 +60,7 @@ that implements it:
   Here: implement → `make check` → fix until it exits 0. The `/pr-review`
   fix loop wraps that in a model review, capped at 10 rounds because a
   reviewer's verdict is not machine-evaluable; it normally ends earlier,
-  when the Fix bucket is empty or a finding repeats.
+  when the Fix bucket is empty, repeats included.
 - **gate** — a verdict that decides what runs next. `make check` locally,
   CI + branch protection + `/land` for the merge.
 - **worker** — one unit of work, one lens, its own context: the agents in
