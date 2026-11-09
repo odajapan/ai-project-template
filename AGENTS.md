@@ -189,7 +189,11 @@ it entirely if the project has no long-lived service to deploy.
 **The runner registration step is manual and easy to forget** — adding
 the workflow file alone does nothing; without a registered runner online,
 every merge just queues a `Deploy` run that never starts. Verify with
-`gh api /repos/<org>/<repo>/actions/runners` after setup.
+`gh api /repos/<org>/<repo>/actions/runners` after setup. Two more
+one-time settings are just as easy to skip: the `RUNNER_CHECK_TOKEN`
+secret (a fine-grained PAT with Administration: read — `GITHUB_TOKEN`
+cannot list runners) and the `DEPLOY_ENABLED=true` repository variable,
+without which merge-triggered deploys are skipped.
 
 ---
 

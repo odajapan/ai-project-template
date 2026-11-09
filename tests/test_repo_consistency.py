@@ -296,3 +296,27 @@ def test_pr_template_sections_match_agents_md() -> None:
         "AGENTS.md's PR-body section list and the `## ` headings in "
         ".github/pull_request_template.md have drifted apart"
     )
+
+
+# Learning edge from the Deploy runs on main after PR #71-#73: the preflight
+# job listed self-hosted runners with GITHUB_TOKEN, which GitHub never grants
+# the Administration permission that endpoint needs, so every run 403'd --
+# with or without a runner. The workflow had been reviewed three times and
+# never once executed its own check.
+
+
+def test_deploy_preflight_does_not_list_runners_with_github_token() -> None:
+    deploy = (REPO_ROOT / ".github" / "workflows" / "deploy.yml").read_text()
+    assert "/actions/runners" in deploy, "preflight no longer checks for a runner"
+    assert "secrets.GITHUB_TOKEN" not in deploy, (
+        "deploy.yml uses GITHUB_TOKEN; it cannot be granted Administration: "
+        "read, so listing /actions/runners with it always 403s. Use the "
+        "RUNNER_CHECK_TOKEN secret (docs/EC2_DEPLOY.md)."
+    )
+    assert "secrets.RUNNER_CHECK_TOKEN" in deploy
+    setup_doc = (REPO_ROOT / "docs" / "EC2_DEPLOY.md").read_text()
+    for name in ("RUNNER_CHECK_TOKEN", "DEPLOY_ENABLED"):
+        assert name in deploy and name in setup_doc, (
+            f"{name} must be documented in docs/EC2_DEPLOY.md wherever "
+            "deploy.yml depends on it"
+        )
