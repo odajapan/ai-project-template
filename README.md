@@ -274,7 +274,7 @@ flowchart TD
     CI -- red --> WORK
     CI -- green --> PRV
     PRV -- Fix --> FIX
-    FIX -- "re-review, 3 rounds max" --> PRV
+    FIX -- "re-review, 10 rounds max" --> PRV
     PRV -- Ask --> ASK --> LAND
     PRV -. "unfixed findings" .-> LE -.-> RULES
     RULES -. "constrains the next task" .-> ST
@@ -285,7 +285,7 @@ How to read it (the terms are defined in `.claude/CLAUDE.md`, "Loop and
 graph vocabulary"):
 
 - **Loops** — `implement → make check` repeats until the exit code is 0;
-  `/pr-review` repeats review → fix → re-review, capped at 3 reviews
+  `/pr-review` repeats review → fix → re-review, capped at 10 reviews
   because a reviewer's verdict is not machine-evaluable. The red arrows
   back to *implement* and the re-review arrow are **correction edges**:
   they return the same unit to its producer within one run.

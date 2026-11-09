@@ -32,9 +32,12 @@ user to decide.
 ## Modes
 
 - **Default — fix loop.** Review → fix what one revert can undo → commit
-  → re-review, at most **3 reviews** in total (2 when round 2 changed
+  → re-review, at most **10 reviews** in total (2 when round 2 changed
   only Markdown), then push once. The human decides only what a revert
-  cannot undo — see step 7.
+  cannot undo — see step 7. The cap is a safety stop, not a target: the
+  loop usually ends earlier because the Fix bucket is empty (step 8.2) or
+  a finding repeats (8.1), and a code PR with a long tail of small real
+  findings is the case that needs the room.
   **Autonomous runs** (`--dangerously-skip-permissions` or unattended)
   never use it — CLAUDE.md says they open the PR and stop — so they run
   as `--no-fix`, reject `--comment` / `--post` (no outward-facing posts
@@ -195,8 +198,8 @@ user to decide.
       problem, not the line number, since fixes shift lines), the fix did
       not hold: move it to Ask the user and do not fix it again.
    2. If the Fix bucket is now empty, go to 8.8.
-   3. If this was review round 3, do **not** fix — unreviewed fixes would
-      be pushed. Move the Fix items to the report as "fixable, not
+   3. If this was review round 10, do **not** fix — unreviewed fixes
+      would be pushed. Move the Fix items to the report as "fixable, not
       applied (round limit)" and go to 8.8.
    4. Apply the remaining Fix items. The PostToolUse hook formats only
       the file just edited, so `git status` should list nothing but your
@@ -213,9 +216,13 @@ user to decide.
       make it pass, stop the same way, and step 9 reports the failure
       output. Diagnostic edits follow the Fix-bucket rules (step 7): if
       making it pass needs a change outside them, stop instead.
-   6. Stage every file `git status --porcelain` shows — the tree was
-      clean at step 3 and 8.4 restored out-of-scope rewrites, so these
-      are this round's fixes, all checked by 8.5 — and commit one
+   6. Stage only the PR's files, their tests, and the tests this round
+      created — each by path (`git add <path>`, never `git add -A`). The
+      tree was clean at step 3 and 8.4 restored out-of-scope rewrites,
+      but `git restore` does not touch untracked files, and 8.5 can leave
+      some behind (a script or test that writes its output into the
+      tree). Anything else `git status --porcelain` still shows stays out
+      of the commit and goes in the report under Left local. Commit one
       Conventional Commit per round, e.g.
       `fix: address review findings (round 1)`, listing the fixed
       findings in the body. If a pre-commit hook rewrites files
@@ -230,11 +237,18 @@ user to decide.
       Then `git fetch origin <baseRefName>`; if the fetch fails, stop
       the same way — a stale base would review a different change set.
       Invoke `code-review` with
-      `args` = the same level, then `origin/<baseRefName>...HEAD`, then
-      the forwarded flags (level first, as in step 6). The PR number cannot be used here — it reads the
-      pushed state, and the fix commits are local until 8.8. This is a
-      full review of the PR as it now stands, not just the fixes. Return
-      to step 7 with this round's findings.
+      `args` = the same level, then `origin/<baseRefName>...<headRefName>`,
+      then the forwarded flags (level first, as in step 6). Name the
+      branch, not `HEAD`: the skill may run in a different checkout of
+      the same repository (a shared main checkout next to this worktree),
+      where `HEAD` is `main`; a branch name resolves the same everywhere.
+      The PR number cannot be used here — it reads the pushed state, and
+      the fix commits are local until 8.8. This is a full review of the
+      PR as it now stands, not just the fixes. If the review could not
+      resolve the range, saw an empty diff, or plainly did not read the
+      PR's files, that is not "no findings": stop, do not push, and
+      report it — the fixes would otherwise go out unreviewed. Return to
+      step 7 with this round's findings.
    8. If there is at least one fix commit, run the PR guard first — if
       it fails, do not push. Otherwise push once with
       `git push origin <headRefName>` (never force). Every commit was
@@ -273,7 +287,8 @@ user to decide.
    - **Why it stopped**: no findings left / only decisions left / round
      limit / Markdown-only round 2 (re-review skipped — read the diff
      before `/land`) / repeated finding / `make check` failure / scope
-     limit / PR changed on GitHub / base fetch failed / push rejected.
+     limit / PR changed on GitHub / base fetch failed / re-review could
+     not read the range / push rejected.
    - **Pushed**: the new head SHA, or "nothing pushed" with the reason.
      PR CI reruns on the push; `/pr-review` does not wait for it.
    - **Left local** (whenever anything is): the unpushed commits
@@ -314,6 +329,6 @@ user to decide.
 - This only pins the *target*. To narrow scope to a specific module or
   path, call `/code-review <level> <path>` directly.
 - Every round costs a full review at the chosen level, so the default
-  loop can cost up to three reviews. Use `--no-fix` when you only want
+  loop can cost up to ten reviews. Use `--no-fix` when you only want
   the findings.
 - Never merge — merging stays with `/land` and a human.
