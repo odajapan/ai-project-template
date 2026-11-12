@@ -58,8 +58,9 @@ that implements it:
 - **loop** — produce → check → correct → repeat, inside one node, until a
   machine-evaluable check passes (`make check` exit 0, never "looks good").
   Here: implement → `make check` → fix until it exits 0. The `/pr-review`
-  fix loop wraps that in a model review, capped at 3 rounds because a
-  reviewer's verdict is not machine-evaluable.
+  fix loop wraps that in a model review, capped at 10 rounds because a
+  reviewer's verdict is not machine-evaluable; it normally ends earlier,
+  when the Fix bucket is empty, repeats included.
 - **gate** — a verdict that decides what runs next. `make check` locally,
   CI + branch protection + `/land` for the merge.
 - **worker** — one unit of work, one lens, its own context: the agents in
@@ -104,7 +105,7 @@ Slash commands (run inside Claude Code):
 - `/finish-task` — run checks, push, and open a PR
 - `/pr-review [level] [--no-fix] [...]` — review this branch's open PR by
   number at `low` unless a level is given; fixes what a revert can undo,
-  re-reviews (max 3 reviews), and pushes; asks you only about what a
+  re-reviews (max 10 reviews), and pushes; asks you only about what a
   revert cannot undo (flags: see the command file)
 - `/land [<pr>...]` — merge PR(s), retarget stacked children, sync main, and clean up
 - `/debug <traceback>` — diagnose and fix a Python error systematically
