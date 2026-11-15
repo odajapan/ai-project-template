@@ -87,8 +87,9 @@ user to decide.
      nothing to fix in this turn.
    - `--max-findings` takes the next word as its value, which must be a
      positive integer, `all`, or `default` — if it is missing or anything
-     else, stop and say so. It caps every agent round (step 6) and is
-     forwarded to the skill with `ultra`.
+     else, stop and say so. A number caps every agent round (step 6);
+     `all` and `default` mean no cap there. With `ultra` the value is
+     forwarded to the skill as given.
    - `--comment` is rejected: the agent cannot post to the PR. For
      inline PR comments run `/code-review <level> <PR number> --comment`
      directly. `--post` / `--no-post` are allowed only with `ultra`.
