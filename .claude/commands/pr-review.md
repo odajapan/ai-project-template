@@ -3,6 +3,7 @@ description: Review this branch's open PR with the built-in /code-review (by PR 
 argument-hint: "[low|medium|high|xhigh|max|ultra] [--no-fix] [--comment] [--max-findings <n>] [--post|--no-post]"
 allowed-tools:
   - Skill
+  - Agent
   - Bash
   - Read
   - Grep
