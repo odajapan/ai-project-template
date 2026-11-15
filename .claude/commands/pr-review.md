@@ -62,7 +62,7 @@ user to decide.
 
 1. **Resolve the PR.**
    ```bash
-   gh pr view --json number,state,baseRefName,headRefName,headRefOid,isCrossRepository,url,body
+   gh pr view --json number,state,baseRefName,headRefName,headRefOid,isCrossRepository,url,title,body
    ```
    If this fails (no PR for the current branch, or `gh` not
    authenticated), **stop** and tell the user: push the branch and open a
@@ -87,7 +87,8 @@ user to decide.
      nothing to fix in this turn.
    - `--max-findings` takes the next word as its value, which must be a
      positive integer, `all`, or `default` — if it is missing or anything
-     else, stop and say so. It caps every review round (step 6).
+     else, stop and say so. It caps every agent round (step 6) and is
+     forwarded to the skill with `ultra`.
    - `--comment` is rejected: the agent cannot post to the PR. For
      inline PR comments run `/code-review <level> <PR number> --comment`
      directly. `--post` / `--no-post` are allowed only with `ultra`.
@@ -162,13 +163,16 @@ user to decide.
    high-confidence findings, since every finding costs the human
    attention) = Blockers only, `medium` = Blockers and Should-fix,
    `high` = all three tiers; the `--max-findings` cap, if any, as "at
-   most N findings, most severe first"; and that each finding must cite
-   `path:line` in one of the PR's files and quote the code it is about.
-   The agent reads this checkout, which step 3 made equal to the PR's
-   head (review-only mode warned if it is not). Its reply is this
-   round's review. If the reply is empty, says it could not read the
-   diff file, or cites no file from `gh pr diff <number> --name-only`,
+   most N findings, most severe first"; that each finding must cite
+   `path:line` in one of the PR's files and quote the code it is about;
+   and that a reply with no findings must say so in those words and
+   name the files or sections it checked. The agent reads this
+   checkout, which step 3 made equal to the PR's head (review-only mode
+   warned if it is not). Its reply is this round's review. If the reply
+   is empty, says it could not read the diff file, or reports findings
+   none of which cite a file from `gh pr diff <number> --name-only`,
    that is not "no findings": stop and report it under Why it stopped.
+   An explicit no-findings reply that names what it checked passes.
    In review-only mode, triage (step 7), then go to step 9.
 7. **Triage every finding** of the round into exactly one bucket. Read the
    cited code first; do not trust the finding's line numbers blindly.
