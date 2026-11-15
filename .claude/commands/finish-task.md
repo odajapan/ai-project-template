@@ -1,5 +1,6 @@
 ---
-description: Verify checks, push the claude/* branch, and open a PR.
+description: Verify checks, push the claude/* branch, open a PR, and start /pr-review while CI runs.
+argument-hint: "[--no-fix]"
 allowed-tools:
   - Bash
   - Read
@@ -15,7 +16,7 @@ suggested_sequence:
   - git push origin <branch>
   - gh pr create with PR template (Done when filled in)
   - report PR URL; autonomous runs stop
-  - interactive: offer to watch CI and run /pr-review on green
+  - interactive: watch CI in the background and run /pr-review at once
   - suggest /clear with handoff after merge
 ---
 
@@ -46,17 +47,22 @@ Steps:
    actually ran instead; never leave the section as the template
    placeholder.
 7. Report the PR URL. **Autonomous runs stop here.** In an interactive
-   session, offer to watch CI and start `/pr-review` when it is green —
-   say in the offer that the default fix loop commits and pushes fixes
-   to the branch, and that `--no-fix` is the read-only alternative. If
-   the user agrees, run `gh pr checks <number> --watch` in the
-   background and act on how it ends:
+   session, do not wait for CI: start `gh pr checks <number> --watch` in
+   the background and invoke `/pr-review` at once, forwarding `--no-fix`
+   when `$ARGUMENTS` contains it. The review's gate is the `make check`
+   step 3 already ran, so CI and the review run in parallel instead of
+   in series. Say in one line that the default fix loop commits and
+   pushes fixes to the branch (`/finish-task --no-fix` is the read-only
+   alternative). When the watch ends, act on how:
    - `no checks reported` (GitHub has not registered the run yet): wait
      30 s and start the watch again, up to 5 times, then report.
-   - every check `pass` or `skipping` → invoke `/pr-review` (with
-     `--no-fix` if that is what the user chose).
-   - any check `fail` or `cancel` → report it with its URL and stop; the
-     human decides whether to review a red PR.
+   - every check `pass` or `skipping` → say so in one line, in the
+     `/pr-review` report if it has not been written yet.
+   - any check `fail` or `cancel` → report it with its URL. A failure on
+     the head `/finish-task` pushed is the task's own work failing, not
+     a review finding: finish the review, then leave the fix to the
+     human.
+   `/land` waits for CI itself, so nobody needs to poll it afterwards.
    Do not run `gh pr merge` — merging is a human decision.
 8. After the human has merged the PR and any follow-through (pipeline
    re-runs, deploys) is done, proactively suggest `/clear` with a

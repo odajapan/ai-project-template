@@ -151,7 +151,10 @@ user to decide.
    skill — this command decides what gets fixed. Each `code-review` call
    is one round: its own output contract (a findings block, or
    `ReportFindings`) closes that round, not this command — keep going
-   with the next step. With `ultra`, go
+   with the next step. If the skill comes back with no output at all
+   (`(none)`, no findings block), that is not "no findings": save the
+   PR diff to the session scratchpad and run the `code-reviewer` agent
+   on it as this round's review instead. With `ultra`, go
    straight to step 9. In review-only mode, triage (step 7), then go to
    step 9.
 7. **Triage every finding** of the round into exactly one bucket. Read the
@@ -295,7 +298,8 @@ user to decide.
      limit / PR changed on GitHub / base fetch failed / re-review could
      not read the range / push rejected.
    - **Pushed**: the new head SHA, or "nothing pushed" with the reason.
-     PR CI reruns on the push; `/pr-review` does not wait for it.
+     PR CI reruns on the push; `/pr-review` does not wait for it, and
+     nobody has to — `/land` waits for CI before merging.
    - **Left local** (whenever anything is): the unpushed commits
      (`git log --oneline origin/<headRefName>..HEAD`) and the uncommitted
      files (`git status --short`), with the choices — keep and commit
