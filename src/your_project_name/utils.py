@@ -44,3 +44,17 @@ def slugify(text: str) -> str:
     normalized = re.sub(r"[^a-z0-9\-]", "", normalized)
     normalized = re.sub(r"-{2,}", "-", normalized)
     return normalized.strip("-")
+
+
+def chunked[T](items: Sequence[T], size: int) -> list[list[T]]:
+    """Split *items* into consecutive chunks of *size* elements.
+
+    Raises ``ValueError`` when *size* is not positive.
+    """
+
+    if size <= 0:
+        raise ValueError("size must be positive")
+
+    values = list(items)
+    full_chunks = len(values) // size
+    return [values[i * size : (i + 1) * size] for i in range(full_chunks)]
