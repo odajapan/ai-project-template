@@ -64,16 +64,12 @@ site — nothing in a freshly-cloned template has been used yet.
 | Does this project use Jira? | `scripts/{jira_task.py,daily_report.py,daily_report.sh}`, `tests/scripts/`, `docs/JIRA_GITHUB_WORKFLOW.md`, `.claude/commands/{jira,daily-report}.md`, the `jira` extra in `pyproject.toml` and its allow rules in `.claude/settings.json`, `jira` in the Makefile `EXTRAS` default |
 | Sphinx docs? | `docs/*.rst`, `docs/{conf.py,Makefile,make.bat}`, the `docs` extra |
 | TypeScript workspace? | `.claude/rules/web.md`, the `web` CI job, the `AGENTS.md` §web section, `Bash(pnpm:*)` in `.claude/settings.json` |
-| Will anyone use OpenAI Codex on this repo? | `.codex/`, `.agents/`, `docs/CODEX.md` and the Codex pointer at the top of `AGENTS.md` (the Codex checks in `tests/test_repo_consistency.py` skip themselves once both directories are gone) |
 | Will PRs get an automatic Claude review in CI? (independent of whether the app itself calls Claude) | the `review` job in `.github/workflows/ci.yml` (and the `ready_for_review` trigger type above it), Phase 0 step 9, the `review` note in `docs/branch-protection.md` |
 | Does this project run as a long-lived service deployed to a host via a self-hosted GitHub Actions runner? | `deploy/`, `.github/workflows/deploy.yml`, `docs/EC2_DEPLOY.md`, `.claude/rules/ec2-deploy.md`, the `AGENTS.md` §EC2 deploy section |
 
 Deleting a row's files also means removing any now-dangling references to
 them elsewhere (Makefile targets, `AGENTS.md` Commands table,
-`.claude/CLAUDE.md`, `pyproject.toml` extras). If Codex is kept, deleting a
-`.claude/agents/<name>.md` or `.claude/commands/<name>.md` also means deleting
-its copy, `.codex/agents/<name>.toml` or
-`.agents/skills/source-command-<name>/`.
+`.claude/CLAUDE.md`, `pyproject.toml` extras).
 
 ## Phase 2 — Re-anchor
 
@@ -118,8 +114,7 @@ Do not start the first feature task until all of these hold:
 
 - `make check` passes.
 - `git grep -c your_project_name` returns `0` (or only expected hits: this
-  file, `.claude/commands/init-from-template.md` and its Codex copy
-  `.agents/skills/source-command-init-from-template/SKILL.md`, and the bootstrap
+  file, `.claude/commands/init-from-template.md`, and the bootstrap
   section of `.claude/skills/codebase-onboarding/SKILL.md` are intentionally
   excluded from the rename sed and always match; historical docs you
   intentionally kept; or `deploy/*.service` if you haven't renamed it yet

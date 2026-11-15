@@ -113,7 +113,7 @@ user to decide.
    - `wide` — many callers or consumers: shared helpers, `schemas.py`,
      CLI flags, config keys, public function signatures, `Makefile`,
      `pyproject.toml`, instruction files other agents read (`AGENTS.md`,
-     `.claude/`, `.agents/`, `.codex/`, `.github/*template*`).
+     `.claude/`, `.github/*template*`).
    - `contained` — everything else: an isolated function with its own
      tests, a single test file, copy, examples.
    When in doubt between two lanes, pick the wider one. The lanes change
