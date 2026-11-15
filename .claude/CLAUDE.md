@@ -64,12 +64,13 @@ that implements it:
 - **gate** — a verdict that decides what runs next. `make check` locally,
   CI + branch protection + `/land` for the merge.
 - **worker** — one unit of work, one lens, its own context: the agents in
-  the table above and the fresh reviewer behind `/code-review`.
+  the table above (`/pr-review`'s reviewer is `code-reviewer`) and the
+  fresh reviewer behind `/code-review`.
 - **splitter** — cuts the work. The human's `Done when` in `/start-task`
   (what counts as done); `/pr-review`'s lane pass (how far a change can
   blast: `contained` / `wide` / `irreversible`).
 - **code node** — merge / dedupe / rank done by plain code, no model.
-  None here yet: `/code-review` dedupes model-side, and `/pr-review`'s
+  None here yet: each reviewer dedupes model-side, and `/pr-review`'s
   cross-round repeat check is the manual stand-in. `/code-review ultra`
   is the ready-made multi-agent graph and the costliest review: ask the
   user before launching it — and before building one of your own.
@@ -104,8 +105,9 @@ Slash commands (run inside Claude Code):
 - `/start-task <name>` — cut a `claude/<name>` branch and declare scope
 - `/finish-task [--no-fix]` — run checks, push, open a PR, and start
   `/pr-review` while CI runs in the background
-- `/pr-review [level] [--no-fix] [...]` — review this branch's open PR by
-  number at `low` unless a level is given; fixes what a revert can undo,
+- `/pr-review [level] [--no-fix] [...]` — review this branch's open PR
+  with the `code-reviewer` agent at `low` unless a level is given
+  (`ultra`: the cloud `/code-review`); fixes what a revert can undo,
   re-reviews (max 10 reviews), and pushes; asks you only about what a
   revert cannot undo (flags: see the command file)
 - `/land [<pr>...]` — merge PR(s), retarget stacked children, sync main, and clean up
