@@ -1,16 +1,11 @@
 # AGENTS.md
 
 This file is the **shared source of truth for all AI coding agents** working in this
-repository. Claude Code reads it via `@AGENTS.md` in `CLAUDE.md`. Other agents (Codex,
-Cursor, GitHub Copilot, Gemini CLI, Jules, Aider, goose, …) read it directly.
+repository. Claude Code reads it via `@AGENTS.md` in `CLAUDE.md`. Other agents
+(Cursor, GitHub Copilot, Gemini CLI, Jules, Aider, goose, …) read it directly.
 
 Harness-specific configuration stays in each agent's native directory — Claude Code
-under `.claude/`, Codex under `.codex/` and `.agents/skills/`. `.claude/` is the
-source; the Codex files are hand-adapted copies. **When you change a file under
-`.claude/agents/` or `.claude/commands/`, port the change to its Codex copy in the
-same PR** — `tests/test_repo_consistency.py` fails otherwise. The porting rules and
-the known Codex gaps live in [docs/CODEX.md](docs/CODEX.md); read it only when that
-test fails or you touch the Codex layer.
+under `.claude/`. Nothing else in this repo mirrors those files.
 
 ---
 
@@ -138,7 +133,7 @@ These apply to every agent, unconditionally:
 - **Never commit or push directly to `main` / `master`**
 - One task → one branch → one PR; don't pile unrelated changes together
 - Branch name: **`<agent>/<task-name-kebab-case>`**
-  - Claude Code → `claude/<task>`, Codex → `codex/<task>`, etc.
+  - Claude Code → `claude/<task>`, Cursor → `cursor/<task>`, etc.
   - Start from latest `main`:
     ```bash
     git fetch origin --prune
