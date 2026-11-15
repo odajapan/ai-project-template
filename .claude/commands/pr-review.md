@@ -252,11 +252,15 @@ user to decide.
       where `HEAD` is `main`; a branch name resolves the same everywhere.
       The PR number cannot be used here — it reads the pushed state, and
       the fix commits are local until 8.8. This is a full review of the
-      PR as it now stands, not just the fixes. If the review could not
-      resolve the range, saw an empty diff, or plainly did not read the
-      PR's files, that is not "no findings": stop, do not push, and
-      report it — the fixes would otherwise go out unreviewed. Return to
-      step 7 with this round's findings.
+      PR as it now stands, not just the fixes. If the skill comes back
+      with no output at all, use the step 6 fallback here too, on
+      `git diff origin/<baseRefName>...<headRefName>` saved to the
+      scratchpad — not `gh pr diff`, which would miss the local fix
+      commits. If the review could not resolve the range, saw an empty
+      diff, or plainly did not read the PR's files, that is not "no
+      findings": stop, do not push, and report it — the fixes would
+      otherwise go out unreviewed. Return to step 7 with this round's
+      findings.
    8. If there is at least one fix commit, run the PR guard first — if
       it fails, do not push. Otherwise push once with
       `git push origin <headRefName>` (never force). Every commit was

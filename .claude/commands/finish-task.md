@@ -58,10 +58,10 @@ Steps:
      30 s and start the watch again, up to 5 times, then report.
    - every check `pass` or `skipping` → say so in one line, in the
      `/pr-review` report if it has not been written yet.
-   - any check `fail` or `cancel` → report it with its URL. A failure on
-     the head `/finish-task` pushed is the task's own work failing, not
-     a review finding: finish the review, then leave the fix to the
-     human.
+   - any check `fail` or `cancel` → report it with its URL and the head
+     SHA it ran on (the fix loop may have pushed a newer head by then).
+     A CI failure is not a review finding whichever head it hit: finish
+     the review, then leave the fix to the human.
    `/land` waits for CI itself, so nobody needs to poll it afterwards.
    Do not run `gh pr merge` — merging is a human decision.
 8. After the human has merged the PR and any follow-through (pipeline
