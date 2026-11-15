@@ -257,7 +257,7 @@ flowchart TD
     end
 
     subgraph pr["Pull request"]
-        CI{"CI: checks, actionlint, web<br/>+ Claude review (advisory)"}
+        CI{"CI: checks, actionlint, web<br/>+ Claude review (advisory)<br/>runs alongside /pr-review"}
         PRV["/pr-review<br/>lanes, Done-when check,<br/>review, triage"]
         FIX["fix what a revert can undo<br/>make check, commit"]
         ASK["Needs your decision<br/>irreversible lane, public interface,<br/>or contradicts Done when"]
@@ -270,9 +270,11 @@ flowchart TD
 
     ST --> WORK --> CHECK
     CHECK -- red --> WORK
-    CHECK -- green --> FT --> CI
+    CHECK -- green --> FT
+    FT --> CI
+    FT --> PRV
     CI -- red --> WORK
-    CI -- green --> PRV
+    CI -- green --> LAND
     PRV -- Fix --> FIX
     FIX -- "re-review, 10 rounds max" --> PRV
     PRV -- Ask --> ASK --> LAND
@@ -290,8 +292,10 @@ graph vocabulary"):
   back to *implement* and the re-review arrow are **correction edges**:
   they return the same unit to its producer within one run.
 - **Gates** — `make check` locally, CI plus GitHub branch protection for
-  the merge. `/land` is the human's decision to pass the merge gate;
-  nothing in the loop merges on its own.
+  the merge. `/finish-task` starts `/pr-review` without waiting for CI,
+  because the review's gate is the local `make check`; `/land` is the
+  human's decision to pass the merge gate and waits for CI itself, so
+  nothing in the loop merges on its own and nobody polls CI by hand.
 - **Splitter** — the `Done when` lines declared in `/start-task` travel
   through the PR body and tell `/pr-review` what counts as done.
 - **Learning edge** (dashed) — findings the fix loop did not resolve

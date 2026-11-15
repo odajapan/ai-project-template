@@ -102,7 +102,8 @@ Slash commands (run inside Claude Code):
 - `/add-tool <name>` — scaffold a new ToolDefinition + handler + test
 - `/new-rule <name>` — create a path-scoped rule under `.claude/rules/`
 - `/start-task <name>` — cut a `claude/<name>` branch and declare scope
-- `/finish-task` — run checks, push, and open a PR
+- `/finish-task [--no-fix]` — run checks, push, open a PR, and start
+  `/pr-review` while CI runs in the background
 - `/pr-review [level] [--no-fix] [...]` — review this branch's open PR by
   number at `low` unless a level is given; fixes what a revert can undo,
   re-reviews (max 10 reviews), and pushes; asks you only about what a

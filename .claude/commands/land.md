@@ -23,9 +23,13 @@ stop. See `AGENTS.md` → Branch, commit & PR workflow.
 
 ## Steps (per PR)
 
-1. **Verify it's mergeable and green.** `gh pr checks <n>` — if any
-   required check is failing or pending, stop and report; do not merge a
-   red or in-flight PR. `gh pr view <n> --json mergeStateStatus` should be
+1. **Wait for green, then verify it's mergeable.** `gh pr checks <n>
+   --watch` blocks until every check has finished, so a PR whose CI is
+   still running after a `/pr-review` push needs no human to poll and
+   retry. If it reports `no checks reported`, wait 30 s and start the
+   watch again, up to 5 times, then stop and report. If any required
+   check ends `fail` or `cancel`, stop and report its URL; do not merge a
+   red PR. Then `gh pr view <n> --json mergeStateStatus` should be
    `CLEAN` (retry once after a short wait if `UNKNOWN` — GitHub is still
    recomputing after a prior merge).
 2. **Retarget stacked children first.** `gh pr list --base <branch>

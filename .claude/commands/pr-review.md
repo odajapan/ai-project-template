@@ -3,6 +3,7 @@ description: Review this branch's open PR with the built-in /code-review (by PR 
 argument-hint: "[low|medium|high|xhigh|max|ultra] [--no-fix] [--comment] [--max-findings <n>] [--post|--no-post]"
 allowed-tools:
   - Skill
+  - Agent
   - Bash
   - Read
   - Grep
@@ -151,7 +152,10 @@ user to decide.
    skill — this command decides what gets fixed. Each `code-review` call
    is one round: its own output contract (a findings block, or
    `ReportFindings`) closes that round, not this command — keep going
-   with the next step. With `ultra`, go
+   with the next step. If the skill comes back with no output at all
+   (`(none)`, no findings block), that is not "no findings": save the
+   PR diff to the session scratchpad and run the `code-reviewer` agent
+   on it as this round's review instead. With `ultra`, go
    straight to step 9. In review-only mode, triage (step 7), then go to
    step 9.
 7. **Triage every finding** of the round into exactly one bucket. Read the
@@ -249,11 +253,15 @@ user to decide.
       where `HEAD` is `main`; a branch name resolves the same everywhere.
       The PR number cannot be used here — it reads the pushed state, and
       the fix commits are local until 8.8. This is a full review of the
-      PR as it now stands, not just the fixes. If the review could not
-      resolve the range, saw an empty diff, or plainly did not read the
-      PR's files, that is not "no findings": stop, do not push, and
-      report it — the fixes would otherwise go out unreviewed. Return to
-      step 7 with this round's findings.
+      PR as it now stands, not just the fixes. If the skill comes back
+      with no output at all, use the step 6 fallback here too, on
+      `git diff origin/<baseRefName>...<headRefName>` saved to the
+      scratchpad — not `gh pr diff`, which would miss the local fix
+      commits. If the review could not resolve the range, saw an empty
+      diff, or plainly did not read the PR's files, that is not "no
+      findings": stop, do not push, and report it — the fixes would
+      otherwise go out unreviewed. Return to step 7 with this round's
+      findings.
    8. If there is at least one fix commit, run the PR guard first — if
       it fails, do not push. Otherwise push once with
       `git push origin <headRefName>` (never force). Every commit was
@@ -295,7 +303,8 @@ user to decide.
      limit / PR changed on GitHub / base fetch failed / re-review could
      not read the range / push rejected.
    - **Pushed**: the new head SHA, or "nothing pushed" with the reason.
-     PR CI reruns on the push; `/pr-review` does not wait for it.
+     PR CI reruns on the push; `/pr-review` does not wait for it, and
+     nobody has to — `/land` waits for CI before merging.
    - **Left local** (whenever anything is): the unpushed commits
      (`git log --oneline origin/<headRefName>..HEAD`) and the uncommitted
      files (`git status --short`), with the choices — keep and commit
