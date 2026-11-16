@@ -1,6 +1,6 @@
 ---
-description: Review this branch's open PR with the built-in /code-review (by PR number), fix the obvious findings, and re-review in a bounded loop; findings that need a human decision are explained and left to the user.
-argument-hint: "[low|medium|high|xhigh|max|ultra] [--no-fix] [--comment] [--max-findings <n>] [--post|--no-post]"
+description: Review this branch's open PR with the code-reviewer agent (ultra: the cloud /code-review by PR number), fix the obvious findings, and re-review in a bounded loop; findings that need a human decision are explained and left to the user.
+argument-hint: "[low|medium|high|ultra] [--no-fix] [--max-findings <n>] [--post|--no-post]"
 allowed-tools:
   - Skill
   - Agent
@@ -16,17 +16,22 @@ allowed-tools:
 
 ## Why this exists
 
-The built-in `/code-review` with no target defaults to
-`git diff @{upstream}...HEAD` (falling back to `main...HEAD` / `HEAD~1`
-only when there's no upstream). Once a branch is fully pushed, that range
-is **empty** — the review silently covers nothing (or falls through to
-whatever is in the working tree), not the PR's actual change set. Passing
-the PR number as the target fixes this: `/code-review` then reviews the
-PR's own diff against its real base, and `--comment` / `ultra` have a PR
-to work with.
+The review is the `code-reviewer` agent (opus, read-only) run on the
+PR's diff. It used to be the built-in `/code-review` skill, and the
+skill is still what `ultra` runs, but as the in-session reviewer it
+failed in a way the loop could not see: on four PRs in a row (#75, #78,
+#79 twice) the forked skill came back with no output at all — its
+findings go to the host UI through `ReportFindings`, not back to the
+calling turn — so the loop had nothing to triage, while the agent, run
+on the same diff, found real contradictions. An agent returns its
+findings as text this command can read, triage, and fix.
 
-On top of that, a bare `/code-review` ends the turn with raw findings.
-This command keeps the turn: it fixes what has one obvious fix, re-reviews
+Two things about the built-in skill still shape this command. Its
+no-target default is `git diff @{upstream}...HEAD`, which is **empty**
+once a branch is fully pushed — so `ultra` is always given the PR
+number, and every other round reads an explicit diff saved to the
+scratchpad. And a bare review ends the turn with raw findings; this
+command keeps the turn: it fixes what one revert can undo, re-reviews
 the whole PR, and stops with an explained list of what is left for the
 user to decide.
 
@@ -42,8 +47,8 @@ user to decide.
   room.
   **Autonomous runs** (`--dangerously-skip-permissions` or unattended)
   never use it — CLAUDE.md says they open the PR and stop — so they run
-  as `--no-fix`, reject `--comment` / `--post` (no outward-facing posts
-  without a human), and say so in one line. This override comes before
+  as `--no-fix`, reject `--post` (no outward-facing posts without a
+  human), and say so in one line. This override comes before
   step 2's flag checks: a `--fix` from an autonomous caller is ignored,
   not reported as contradicting `--no-fix`.
 - **`--no-fix` — review only.** The lane pass and Done-when check
@@ -57,7 +62,7 @@ user to decide.
 
 1. **Resolve the PR.**
    ```bash
-   gh pr view --json number,state,baseRefName,headRefName,headRefOid,isCrossRepository,url,body
+   gh pr view --json number,state,baseRefName,headRefName,headRefOid,isCrossRepository,url,title,body
    ```
    If this fails (no PR for the current branch, or `gh` not
    authenticated), **stop** and tell the user: push the branch and open a
@@ -71,8 +76,10 @@ user to decide.
    else pushed).
 2. **Parse `$ARGUMENTS`.** First split any `--flag=value` into
    `--flag value`, so every rule below sees the same form.
-   - At most one level: `low`, `medium`, `high`, `xhigh`, `max`, `ultra`
-     (case-insensitive; forward it lowercased).
+   - At most one level: `low`, `medium`, `high`, `ultra`
+     (case-insensitive). `xhigh` and `max` are accepted as `high` — say
+     so in one line. The level picks which of the agent's tiers are
+     reported (step 6); `ultra` picks the cloud review instead.
    - `--no-fix` selects review-only mode. `--fix` is accepted as a no-op
      (fixing is the default) — say so in one line. `--fix` together with
      `--no-fix` is rejected as contradictory, and so is `ultra` with
@@ -80,13 +87,15 @@ user to decide.
      nothing to fix in this turn.
    - `--max-findings` takes the next word as its value, which must be a
      positive integer, `all`, or `default` — if it is missing or anything
-     else, stop and say so. It is forwarded on every review round.
-   - `--comment` is allowed only with `--no-fix` and not with `ultra`
-     (in the loop, comments would describe findings that are about to be
-     fixed; `ultra` has no in-turn findings to comment on and posts with
-     `--post` instead). `--post` / `--no-post` are allowed only with
-     `ultra`. Otherwise stop and say which combination was rejected.
-   - Any other `--` flag is forwarded as-is. Any other word (a path, a PR
+     else, stop and say so. A number caps every agent round (step 6);
+     `all` and `default` mean no cap there. With `ultra` the value is
+     forwarded to the skill as given.
+   - `--comment` is rejected: the agent cannot post to the PR. For
+     inline PR comments run `/code-review <level> <PR number> --comment`
+     directly. `--post` / `--no-post` are allowed only with `ultra`.
+     Otherwise stop and say which combination was rejected.
+   - Any other `--` flag is forwarded to the skill with `ultra` and
+     rejected otherwise — the agent takes no flags. Any other word (a path, a PR
      number, a second level) means the user wanted a custom target: stop
      and tell them to call `/code-review` directly.
 3. **Check the local tree.** Reviews read the PR as pushed to GitHub.
@@ -141,23 +150,31 @@ user to decide.
    decision and never fixed by this loop. This step runs in every mode,
    `ultra` included: it depends on the PR body, not on findings.
 6. **Review round 1.** Print one line naming the PR (`url`, base
-   `baseRefName`), then invoke the `Skill` tool with
-   `skill: "code-review"` and `args` set to the level **first** (the one
-   given, otherwise `low` — few, high-confidence findings; every finding
-   costs the human attention, so ask for more only on purpose), then
-   `<PR number>`, then the forwarded flags, e.g. `"low 63"`, `"max 63"`,
-   `"ultra 63 --post"`. The skill reads the level only when it comes
-   before the target; after it, the level is swallowed into the target
-   and the review silently runs at whatever level was used last. Do not pass `--fix` to the
-   skill — this command decides what gets fixed. Each `code-review` call
-   is one round: its own output contract (a findings block, or
-   `ReportFindings`) closes that round, not this command — keep going
-   with the next step. If the skill comes back with no output at all
-   (`(none)`, no findings block), that is not "no findings": save the
-   PR diff to the session scratchpad and run the `code-reviewer` agent
-   on it as this round's review instead. With `ultra`, go
-   straight to step 9. In review-only mode, triage (step 7), then go to
-   step 9.
+   `baseRefName`). With `ultra`, invoke the `Skill` tool with
+   `skill: "code-review"` and `args` = `ultra`, then `<PR number>`, then
+   the forwarded flags, e.g. `"ultra 63 --post"` — the level must come
+   **first**; after the target it is swallowed into the target and the
+   review silently runs at whatever level was used last. Do not pass
+   `--fix`. Then go straight to step 9.
+   Otherwise save the diff to the session scratchpad
+   (`gh pr diff <number> > <scratchpad>/pr-<number>-r1.diff`) and run
+   the `code-reviewer` agent with a prompt that names: the diff file's
+   path; the PR's `url`, title, and the `## Done when` lines from its
+   body; the level as the tiers to report — `low` (the default: few,
+   high-confidence findings, since every finding costs the human
+   attention) = Blockers only, `medium` = Blockers and Should-fix,
+   `high` = all three tiers; the `--max-findings` cap, if any, as "at
+   most N findings, most severe first"; that each finding must cite
+   `path:line` in one of the PR's files and quote the code it is about;
+   and that a reply with no findings must say so in those words and
+   name the files or sections it checked. The agent reads this
+   checkout, which step 3 made equal to the PR's head (review-only mode
+   warned if it is not). Its reply is this round's review. If the reply
+   is empty, says it could not read the diff file, or reports findings
+   none of which cite a file from `gh pr diff <number> --name-only`,
+   that is not "no findings": stop and report it under Why it stopped.
+   An explicit no-findings reply that names what it checked passes.
+   In review-only mode, triage (step 7), then go to step 9.
 7. **Triage every finding** of the round into exactly one bucket. Read the
    cited code first; do not trust the finding's line numbers blindly.
    Every item handed to the human costs attention, so **Fix is the
@@ -245,23 +262,17 @@ user to decide.
       do not push, and report.
       Then `git fetch origin <baseRefName>`; if the fetch fails, stop
       the same way — a stale base would review a different change set.
-      Invoke `code-review` with
-      `args` = the same level, then `origin/<baseRefName>...<headRefName>`,
-      then the forwarded flags (level first, as in step 6). Name the
-      branch, not `HEAD`: the skill may run in a different checkout of
-      the same repository (a shared main checkout next to this worktree),
-      where `HEAD` is `main`; a branch name resolves the same everywhere.
-      The PR number cannot be used here — it reads the pushed state, and
-      the fix commits are local until 8.8. This is a full review of the
-      PR as it now stands, not just the fixes. If the skill comes back
-      with no output at all, use the step 6 fallback here too, on
-      `git diff origin/<baseRefName>...<headRefName>` saved to the
-      scratchpad — not `gh pr diff`, which would miss the local fix
-      commits. If the review could not resolve the range, saw an empty
-      diff, or plainly did not read the PR's files, that is not "no
-      findings": stop, do not push, and report it — the fixes would
-      otherwise go out unreviewed. Return to step 7 with this round's
-      findings.
+      Save `git diff origin/<baseRefName>...<headRefName>` to the
+      scratchpad as `pr-<number>-r<round>.diff` — the local branch (by
+      name, so the range reads the same from any checkout), not
+      `gh pr diff`, which reads the pushed state and would miss the fix
+      commits that stay local until 8.8 — and run the `code-reviewer`
+      agent on it exactly as in step 6, same level and cap. This is a
+      full review of the PR as it now stands, not just the fixes. If
+      the diff is empty, or the reply fails step 6's read check, that
+      is not "no findings": stop, do not push, and report it — the
+      fixes would otherwise go out unreviewed. Return to step 7 with
+      this round's findings.
    8. If there is at least one fix commit, run the PR guard first — if
       it fails, do not push. Otherwise push once with
       `git push origin <headRefName>` (never force). Every commit was
@@ -269,13 +280,14 @@ user to decide.
       except a Markdown-only round 2, which 8.7 pushes unreviewed and
       the report must say so; a stop at 8.4 / 8.5 leaves only that
       round's edits uncommitted. Do not push after any stop at 8.7 (PR
-      guard, fetch, or a re-review that could not read the range). If the push is
+      guard, fetch, or a re-review that could not read the diff). If the push is
       rejected, stop and report — never force. Then go to step 9.
 9. **Report**, in the user's language (from CLAUDE.md or memory if set,
    otherwise the conversation's language; keep identifiers, paths, and
-   the skill's raw output as-is). Do not paste the skill's output a second
-   time; if a round's findings arrived only as a tool result the user
-   cannot see, paste them once, verbatim. Then:
+   the reviewer's raw output as-is). The agent's reply is a tool result
+   the user cannot see: paste each round's findings once, verbatim,
+   before the sections below (with `ultra` there is nothing to paste).
+   Then:
    - **Rounds**: one line per round — number of findings and how many
      were fixed / asked / no action; the fix commit SHA.
    - **Done when** (only when step 5 verified at least one item): one
@@ -300,8 +312,8 @@ user to decide.
    - **Why it stopped**: no findings left / only decisions left / round
      limit / Markdown-only round 2 (re-review skipped — read the diff
      before `/land`) / repeated finding / `make check` failure / scope
-     limit / PR changed on GitHub / base fetch failed / re-review could
-     not read the range / push rejected.
+     limit / PR changed on GitHub / base fetch failed / review could
+     not read the diff / push rejected.
    - **Pushed**: the new head SHA, or "nothing pushed" with the reason.
      PR CI reruns on the push; `/pr-review` does not wait for it, and
      nobody has to — `/land` waits for CI before merging.
@@ -340,9 +352,9 @@ user to decide.
 
 ## Notes
 
-- This only pins the *target*. To narrow scope to a specific module or
-  path, call `/code-review <level> <path>` directly.
-- Every round costs a full review at the chosen level, so the default
-  loop can cost up to ten reviews. Use `--no-fix` when you only want
+- To review a specific module or path rather than the PR, call
+  `/code-review <level> <path>` directly.
+- Every round is a full opus review of the PR, so the default loop can
+  cost up to ten reviews. Use `--no-fix` when you only want
   the findings.
 - Never merge — merging stays with `/land` and a human.
