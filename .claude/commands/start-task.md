@@ -14,7 +14,7 @@ suggested_sequence:
   - sync main
   - cut claude/<task> branch
   - re-read CLAUDE.md autonomous rules
-  - emit scope declaration and wait for confirmation
+  - emit scope declaration and wait for confirmation (autonomous runs proceed)
 ---
 
 # /start-task — begin an autonomous task
@@ -36,7 +36,8 @@ Steps:
    sections of `AGENTS.md`, plus `.claude/CLAUDE.md`, so the constraints are
    fresh in context.
 5. Emit a short scope declaration in this exact shape and stop for the
-   user to confirm before any further work:
+   user to confirm before any further work (autonomous runs: see the
+   exception after the shape):
 
    ```
    ## Scope declaration — claude/$ARGUMENTS
@@ -73,4 +74,7 @@ Steps:
    the PR which criteria they never agreed to. `/finish-task` copies
    these lines into the PR body and `/pr-review` checks each one.
 
-Do not start editing files until the user confirms the scope.
+Do not start editing files until the user confirms the scope — except in
+an autonomous run, which cannot wait: emit the declaration with its
+`(assumed)` lines and proceed; the human reviews those criteria in the PR
+body instead.
