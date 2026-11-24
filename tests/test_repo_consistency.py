@@ -10,6 +10,8 @@ diverging again.
 
 from __future__ import annotations
 
+import json
+import os
 import re
 from pathlib import Path
 
@@ -211,3 +213,56 @@ def test_deploy_preflight_does_not_list_runners_with_github_token() -> None:
             f"{name} must be documented in docs/EC2_DEPLOY.md wherever "
             "deploy.yml depends on it"
         )
+
+
+# /template-sync (docs/TEMPLATE_SYNC.md) hangs off two files that nothing
+# else exercises: the baseline ini and the SessionStart hook script. The
+# baseline follows the env.example pattern above — the template ships it
+# empty, a renamed project must fill it (or delete the file to opt out).
+
+TEMPLATE_SYNC_INI = REPO_ROOT / ".claude" / "template-sync.ini"
+
+
+def _template_sync_commit() -> str:
+    match = re.search(r"(?m)^\s*commit\s*=\s*(\S*)\s*$", TEMPLATE_SYNC_INI.read_text())
+    assert match, ".claude/template-sync.ini has no template.commit key"
+    return match.group(1)
+
+
+def test_template_sync_baseline_set_after_rename() -> None:
+    pyproject = (REPO_ROOT / "pyproject.toml").read_text()
+    name_match = re.search(r'(?m)^name = "([^"]+)"', pyproject)
+    assert name_match, "pyproject.toml has no [project] name field"
+    if name_match.group(1) == "your_project_name":
+        assert TEMPLATE_SYNC_INI.exists(), "the template must ship the baseline file"
+        assert _template_sync_commit() == "", (
+            "the template itself must ship .claude/template-sync.ini with an "
+            "empty template.commit, or every downstream clone starts out "
+            "believing it already reviewed up to that commit"
+        )
+        return
+    if not TEMPLATE_SYNC_INI.exists():
+        pytest.skip("project opted out of template sync (ini deleted)")
+    assert re.fullmatch(r"[0-9a-f]{7,40}", _template_sync_commit()), (
+        "pyproject.toml was renamed away from the template default but "
+        ".claude/template-sync.ini still has an empty template.commit. Run "
+        "/template-sync --init (docs/TEMPLATE_INIT.md Phase 0 step 10), or "
+        "delete the ini file if this project never wants template reviews."
+    )
+
+
+def test_settings_hook_scripts_exist_and_are_executable() -> None:
+    settings = json.loads((REPO_ROOT / ".claude" / "settings.json").read_text())
+    commands = [
+        hook["command"]
+        for entries in settings.get("hooks", {}).values()
+        for entry in entries
+        for hook in entry.get("hooks", [])
+        if hook.get("type") == "command"
+    ]
+    scripts = re.findall(r"\.claude/hooks/([\w.-]+)", " ".join(commands))
+    assert scripts, "no .claude/hooks/ scripts referenced from settings.json"
+    for name in scripts:
+        path = REPO_ROOT / ".claude" / "hooks" / name
+        assert path.is_file(), f"settings.json references missing hook {path}"
+        assert os.access(path, os.X_OK), f"hook script is not executable: {path}"
