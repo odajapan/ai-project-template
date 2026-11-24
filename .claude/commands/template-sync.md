@@ -43,8 +43,11 @@ and diff is read through that rename (the doc's `$RENAME`).
   older one (command in the doc's "Initializing the baseline"). Show
   the proposed commit with its date and subject and **wait for the
   human to confirm** — a wrong baseline either hides changes or
-  re-reviews ported ones. Then write `template.commit` and
-  `template.syncedAt`, and leave the file for the human to commit with
+  re-reviews ported ones. Then write `template.commit` as the **full
+  40-hex SHA** (`git rev-parse --verify "<commit>^{commit}"` — never the
+  ref name or an abbreviation; the drift check compares it against
+  `git ls-remote` output) and `template.syncedAt`, and leave the file
+  for the human to commit with
   whatever task they are on (or as `chore(template): set sync baseline`).
 
 ## Full review

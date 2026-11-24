@@ -47,7 +47,9 @@ head=$(GIT_TERMINAL_PROMPT=0 git ls-remote --quiet "https://github.com/$repo.git
   "refs/heads/$ref" 2>/dev/null | cut -f1) || exit 0
 [ -n "$head" ] || exit 0
 date +%s > "$stamp" 2>/dev/null || true
-[ "$head" = "$baseline" ] && exit 0
+# Prefix match: ls-remote returns 40 hex chars, but a hand-edited baseline
+# may be abbreviated; an exact compare would then report drift forever.
+case "$head" in "$baseline"*) exit 0 ;; esac
 
 # A count is only possible once `template` has been fetched (the review
 # does that); before then the notice just says "moved".

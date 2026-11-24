@@ -37,13 +37,28 @@ clone; a project that predates this procedure does it by hand:
 git remote add template https://github.com/odajapan/ai-project-template.git
 git remote set-url --push template no_push
 git fetch template --quiet
-# A fresh clone: the template's current head.
-git config -f .claude/template-sync.ini template.commit "$(git rev-parse template/main)"
-# An older project: the last template commit before this repo's first
-# commit — everything after it is genuinely unreviewed. Adjust if the
-# project already ported later template changes by hand.
+```
+
+Then **one** of the two, not both — the value is always a full 40-hex SHA
+(`rev-parse`), never a ref name or abbreviation:
+
+```bash
+# (a) A fresh clone: the template's current head.
+baseline=$(git rev-parse --verify template/main^{commit})
+```
+
+```bash
+# (b) An older project: the last template commit before this repo's first
+# commit — everything after it is genuinely unreviewed. Look at the
+# candidate first; if the project already ported later template changes
+# by hand, pick a later commit from `git log --first-parent template/main`.
 first=$(git log --reverse --format=%cI | head -1)
 git log template/main --first-parent --before="$first" -1 --format='%H %cs %s'
+baseline=$(git log template/main --first-parent --before="$first" -1 --format=%H)
+```
+
+```bash
+git config -f .claude/template-sync.ini template.commit "$baseline"
 git config -f .claude/template-sync.ini template.syncedAt "$(date +%F)"
 ```
 

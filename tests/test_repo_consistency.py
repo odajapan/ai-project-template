@@ -243,11 +243,13 @@ def test_template_sync_baseline_set_after_rename() -> None:
         return
     if not TEMPLATE_SYNC_INI.exists():
         pytest.skip("project opted out of template sync (ini deleted)")
-    assert re.fullmatch(r"[0-9a-f]{7,40}", _template_sync_commit()), (
+    assert re.fullmatch(r"[0-9a-f]{40}", _template_sync_commit()), (
         "pyproject.toml was renamed away from the template default but "
-        ".claude/template-sync.ini still has an empty template.commit. Run "
-        "/template-sync --init (docs/TEMPLATE_INIT.md Phase 0 step 10), or "
-        "delete the ini file if this project never wants template reviews."
+        ".claude/template-sync.ini has no full 40-hex template.commit. Run "
+        "/template-sync --init (docs/TEMPLATE_INIT.md Phase 0 step 10) — it "
+        "writes `git rev-parse` of the baseline, never an abbreviated SHA or "
+        "a ref name — or delete the ini file if this project never wants "
+        "template reviews."
     )
 
 
