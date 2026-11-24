@@ -14,7 +14,7 @@ common_files:
   - AGENTS.md
 suggested_sequence:
   - confirm clean tree and cut claude/init-from-template
-  - Phase 0 rename + install + green make check
+  - Phase 0 rename + install + green make check + /template-sync --init
   - ask the Phase 1 questions as a batch, wait for answers
   - delete only what the answers authorize
   - Phase 2 re-anchor docs and env.example

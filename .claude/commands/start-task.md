@@ -29,6 +29,11 @@ Steps:
    behalf.
 2. Run `git fetch origin --prune` and then
    `git checkout main && git pull --ff-only origin main` to sync.
+   Then run `.claude/hooks/template-drift-check.sh --force`: if it
+   prints a line, repeat it to the user verbatim after the scope
+   declaration and carry on — a template sync is its own task
+   (`/template-sync`), never folded into this one. Silence means the
+   baseline is current, uninitialized, or opted out; say nothing.
 3. Run `git checkout -b claude/$ARGUMENTS`. If the branch already
    exists, stop and ask the user whether to resume it or pick a new
    name.
