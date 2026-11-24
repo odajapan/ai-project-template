@@ -100,8 +100,9 @@ user to decide.
      and tell them to call `/code-review` directly.
 3. **Check the local tree.** Reviews read the PR as pushed to GitHub.
    - Review-only mode: if `git rev-parse HEAD` differs from `headRefOid`,
-     continue but warn in one line that the pushed version is reviewed
-     and local-only commits are not covered.
+     continue but warn in one line that the diff is the pushed version
+     while the surrounding code the agent reads is the local checkout,
+     so local-only commits are not in the diff.
    - Fix loop: **stop** unless all of these hold — `isCrossRepository` is
      false and `git remote get-url origin` (SSH or HTTPS form) names the
      same `<owner>/<repo>` as step 1's `url`
@@ -166,10 +167,13 @@ user to decide.
    `high` = all three tiers; the `--max-findings` cap, if any, as "at
    most N findings, most severe first"; that each finding must cite
    `path:line` in one of the PR's files and quote the code it is about;
-   and that a reply with no findings must say so in those words and
-   name the files or sections it checked. The agent reads this
-   checkout, which step 3 made equal to the PR's head (review-only mode
-   warned if it is not). Its reply is this round's review. If the reply
+   that a reply with no findings must say so in those words and name
+   the files or sections it checked; and the absolute path from
+   `git rev-parse --show-toplevel`, with "the PR's files are under this
+   path" — a subagent starts in the session's starting directory, which
+   in a worktree is usually the main checkout, not this one. Step 3 made
+   this checkout equal to the PR's head (review-only mode warned if it
+   is not). Its reply is this round's review. If the reply
    is empty, says it could not read the diff file, or reports findings
    none of which cite a file from `gh pr diff <number> --name-only`,
    that is not "no findings": stop and report it under Why it stopped.
