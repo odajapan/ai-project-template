@@ -82,7 +82,13 @@ both treat a missing file as an opt-out.
    ```
    For each unit, its diff is `git diff "$m^1" "$m"` and its files
    `git diff --name-status "$m^1" "$m"`. A unit that is a plain commit
-   (no merge) is reviewed the same way.
+   (no merge) is reviewed the same way. Review at most 30 units per
+   sync, oldest first; `reviewed_head` below is the newest unit you
+   actually reviewed — the branch tip only when nothing was cut off:
+   ```bash
+   reviewed_head=$(git rev-list --first-parent --reverse "$base..template/main" | sed -n 30p)
+   : "${reviewed_head:=$(git rev-parse template/main)}"
+   ```
 4. **Map the names.** The template's placeholder package is
    `your_project_name`; this project renamed it (the `name` field in
    `pyproject.toml`, and `src/<name>/`). Every template path and diff is
@@ -122,10 +128,11 @@ both treat a missing file as an opt-out.
    git config -f .claude/template-sync.ini "skipped.$sha7.title" "<title>"
    git config -f .claude/template-sync.ini "skipped.$sha7.reason" "<one line>"
    ```
-9. **Advance the baseline** to the template head reviewed, whatever was
-   adopted — the baseline means "reviewed up to", not "identical to":
+9. **Advance the baseline** to `reviewed_head` from the listing step,
+   whatever was adopted — the baseline means "reviewed up to", not
+   "identical to", and never past a unit nobody looked at:
    ```bash
-   git config -f .claude/template-sync.ini template.commit "$(git rev-parse template/main)"
+   git config -f .claude/template-sync.ini template.commit "$reviewed_head"
    git config -f .claude/template-sync.ini template.syncedAt "$(date +%F)"
    ```
    Commit as `chore(template): advance baseline to <sha7>`.

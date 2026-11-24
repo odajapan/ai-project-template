@@ -67,8 +67,9 @@ and diff is read through that rename (the doc's `$RENAME`).
 4. **List the units.** `git log --first-parent --format='%h %cs %s'
    <baseline>..template/<ref>`. Zero units → say the baseline is
    current, delete the branch, stop. More than 30 units → say so and
-   review the oldest 30 (the baseline advances only past the reviewed
-   ones, so the rest surface next time).
+   review the oldest 30; the **newest unit reviewed** (the 30th, or the
+   branch tip when there are 30 or fewer) is the only commit the
+   baseline may advance to, so the rest surface next time.
 5. **Classify.** For each unit: files (`git diff --name-status`),
    category per the doc's table, local state per file (clean /
    diverged / pruned / new via the doc's three-way check), and a
@@ -91,8 +92,9 @@ and diff is read through that rename (the doc's `$RENAME`).
    `skipped.<sha7>.title` and `skipped.<sha7>.reason` in the ini (doc:
    "Record the rest"). The reason is one line and specific — `pruned in
    init`, `project locks deps`, `README rewritten` — not "not needed".
-9. **Advance the baseline** to the template head you listed in step 4 (not
-   beyond), set `template.syncedAt` to today, commit as
+9. **Advance the baseline** to the newest unit reviewed in step 4 — the
+   full SHA of that first-parent commit, never `template/<ref>` when the
+   list was cut at 30 — set `template.syncedAt` to today, commit as
    `chore(template): advance baseline to <sha7>`.
 10. **`make check`.** Fix or revert the port that broke it; never leave
     a red tree. Then hand over to `/finish-task`: it pushes, opens the
