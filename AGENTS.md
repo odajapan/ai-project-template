@@ -170,6 +170,20 @@ the PR back to the issue. Setup and full command reference:
 [docs/JIRA_GITHUB_WORKFLOW.md](docs/JIRA_GITHUB_WORKFLOW.md). This is
 purely additive — skip it entirely if the project doesn't use Jira.
 
+### Keeping up with the template
+
+A project created from this template has no git link back to it. The
+baseline in `.claude/template-sync.ini` records the template commit this
+project has reviewed up to; `/template-sync` (Claude Code) or the manual
+procedure in [docs/TEMPLATE_SYNC.md](docs/TEMPLATE_SYNC.md) lists the
+template PRs since then, classifies each (harness / gate / deps /
+scaffold / docs / pruned), and ports the ones the human picks — one
+commit per template PR, the rest recorded in the ini with a reason. A
+session-start hook and the `/start-task` / `/land` milestones print a
+one-line notice when the template has moved; nothing syncs on its own,
+and an autonomous run only produces the review table. Delete the ini
+file to opt out.
+
 ### Optional: EC2 self-hosted-runner deploy
 
 Projects that run as a long-lived service (a dashboard, an API) can
