@@ -28,6 +28,14 @@
       "Bash(git worktree list)",
       "Bash(git worktree prune)",
       "Bash(git worktree remove:*)",
+      "Bash(git ls-remote:*)",
+      "Bash(git remote get-url:*)",
+      "Bash(git remote add template:*)",
+      "Bash(git remote set-url --push template:*)",
+      "Bash(git rev-list:*)",
+      "Bash(git merge-base:*)",
+      "Bash(git config -f .claude/template-sync.ini:*)",
+      "Bash(.claude/hooks/template-drift-check.sh:*)",
       "Bash(gh pr create:*)",
       "Bash(gh pr view:*)",
       "Bash(gh pr list:*)",
@@ -81,6 +89,18 @@
           {
             "type": "command",
             "command": "\"${CLAUDE_PROJECT_DIR:-.}\"/.claude/hooks/format-edited-file.sh"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PROJECT_DIR:-.}\"/.claude/hooks/template-drift-check.sh",
+            "timeout": 10
           }
         ]
       }

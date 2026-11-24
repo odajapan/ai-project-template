@@ -53,6 +53,11 @@ fi
 # to). That skill also has a "Key files" table that legitimately
 # should follow the rename -- docs/TEMPLATE_INIT.md Phase 2 has a manual
 # step for that, since a single sed pass can't tell the two apart.
+#
+# docs/TEMPLATE_SYNC.md and .claude/commands/template-sync.md are excluded
+# for the same reason in the other direction: they tell /template-sync to
+# map the *template's* placeholder onto this project's name when porting
+# template diffs, so the placeholder must survive the rename there.
 FIND_FILES=(find . -type f
   \( -name "*.py" -o -name "*.rst" -o -name "*.md"
      -o -name "*.yml" -o -name "*.yaml" -o -name "*.txt"
@@ -75,6 +80,8 @@ FIND_FILES=(find . -type f
   ! -path "*/docs/TEMPLATE_INIT.md"
   ! -path "*/.claude/commands/init-from-template.md"
   ! -path "*/.claude/skills/codebase-onboarding/SKILL.md"
+  ! -path "*/docs/TEMPLATE_SYNC.md"
+  ! -path "*/.claude/commands/template-sync.md"
   ! -name "package-lock.json"
   ! -name "pnpm-lock.yaml"
   ! -name "uv.lock"

@@ -15,7 +15,10 @@ the placeholder in one shot:
 Then, before starting your first feature, walk through
 [docs/TEMPLATE_INIT.md](docs/TEMPLATE_INIT.md) (or run `/init-from-template`
 in Claude Code) to prune the scaffolding this project doesn't need and
-re-anchor the docs.
+re-anchor the docs. Later, `/template-sync` (or
+[docs/TEMPLATE_SYNC.md](docs/TEMPLATE_SYNC.md) by hand) pulls down the
+template changes worth having; a session-start hook says when there are
+any.
 
 ---
 

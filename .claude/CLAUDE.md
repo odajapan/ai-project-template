@@ -111,6 +111,11 @@ Slash commands (run inside Claude Code):
   re-reviews (max 10 reviews), and pushes; asks you only about what a
   revert cannot undo (flags: see the command file)
 - `/land [<pr>...]` — merge PR(s), retarget stacked children, sync main, and clean up
+- `/template-sync [--check | --init]` — review what the upstream template
+  changed since this project's baseline, port the changes the human
+  picks, advance the baseline (see `docs/TEMPLATE_SYNC.md`); a
+  `SessionStart` hook plus `/start-task` and `/land` print a one-line
+  drift notice when the template has moved
 - `/debug <traceback>` — diagnose and fix a Python error systematically
 - `/add-example <name>` — scaffold a runnable script under `examples/`
 - `/worktree` — show commands to spin up an isolated git worktree

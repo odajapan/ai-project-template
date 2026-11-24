@@ -50,9 +50,15 @@ main`.
    or that is detached: `git worktree remove --force <path>`. If a
    worktree looks active (unmerged branch, uncommitted work), **list it
    and stop** rather than removing it.
-7. **Suggest `/clear`.** Per the "Session hygiene" section in CLAUDE.md,
+7. **Check template drift.** Run
+   `.claude/hooks/template-drift-check.sh --force`. A merge is the
+   natural point to look upstream: if it prints a line, relay it and
+   suggest `/template-sync` as the next task. Silence means nothing to
+   do.
+8. **Suggest `/clear`.** Per the "Session hygiene" section in CLAUDE.md,
    propose `/clear` with a one-line handoff — but only if the working
-   tree is clean and nothing is still running.
+   tree is clean and nothing is still running. If the drift check
+   reported anything, put it in the handoff line.
 
 If any step blocks and the cause is non-obvious, stop and report before
 guessing. Never use `gh pr merge` outside this human-initiated flow.

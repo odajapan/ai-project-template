@@ -50,6 +50,15 @@ below.
    while the secret is absent, and runs only after `checks` is green.
    Reviews are billable API calls; do this only with the human's explicit
    go-ahead.
+10. Record the template baseline: `/template-sync --init` (or the
+    commands under "Initializing the baseline" in `docs/TEMPLATE_SYNC.md`).
+    It writes the template commit this clone started from into
+    `.claude/template-sync.ini`; from then on the drift notice says when
+    the template has moved and `/template-sync` reviews the changes.
+    Enforced: `tests/test_repo_consistency.py::test_template_sync_baseline_set_after_rename`
+    fails `make check` once `pyproject.toml` is renamed while the
+    baseline is still empty. A project that never wants template
+    reviews deletes the ini file instead — a missing file is an opt-out.
 
 ## Phase 1 — Prune
 
@@ -114,11 +123,14 @@ Do not start the first feature task until all of these hold:
 
 - `make check` passes.
 - `git grep -c your_project_name` returns `0` (or only expected hits: this
-  file, `.claude/commands/init-from-template.md`, and the bootstrap
-  section of `.claude/skills/codebase-onboarding/SKILL.md` are intentionally
-  excluded from the rename sed and always match; historical docs you
-  intentionally kept; or `deploy/*.service` if you haven't renamed it yet
-  — see Phase 2 step 6).
+  file, `.claude/commands/init-from-template.md`, the bootstrap
+  section of `.claude/skills/codebase-onboarding/SKILL.md`,
+  `docs/TEMPLATE_SYNC.md`, and `.claude/commands/template-sync.md` are
+  intentionally excluded from the rename sed and always match; historical
+  docs you intentionally kept; or `deploy/*.service` if you haven't
+  renamed it yet — see Phase 2 step 6).
+- `git config -f .claude/template-sync.ini template.commit` prints a
+  commit (Phase 0 step 10), or the file was deliberately deleted.
 - No references remain to files deleted in Phase 1 (`make precommit`
   catches broken links via the standard hooks; also worth a manual
   `git grep` for filenames you removed).
