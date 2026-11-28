@@ -1,15 +1,15 @@
 {
-  "$comment": "Project-scoped MCP servers. Copy to .mcp.json to enable (gitignored).",
+  "$comment": "Project-scoped MCP servers. Copy to .mcp.json to enable (gitignored). Keep every key under `mcpServers` a server definition: Claude Code refuses to load the file when a non-server key (such as a comment) sits inside it, so the comments live up here.",
+  "$comment_filesystem": "Read/write access to data and reports directories.",
+  "$comment_db": "A SQL database server (sqlite/postgres/etc.) is a common addition here. The community-maintained servers change over time — check https://github.com/modelcontextprotocol/servers for the current recommended package before adding one; server-sqlite and server-postgres from the original reference set are archived.",
   "mcpServers": {
     "filesystem": {
-      "$comment": "Read/write access to data and reports directories",
       "command": "npx",
       "args": [
         "@modelcontextprotocol/server-filesystem",
         "data/",
         "reports/"
       ]
-    },
-    "$comment_db": "A SQL database server (sqlite/postgres/etc.) is a common addition here. The community-maintained servers change over time — check https://github.com/modelcontextprotocol/servers for the current recommended package before adding one; server-sqlite and server-postgres from the original reference set are archived."
+    }
   }
 }

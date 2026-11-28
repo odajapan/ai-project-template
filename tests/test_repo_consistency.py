@@ -10,6 +10,7 @@ diverging again.
 
 from __future__ import annotations
 
+import fnmatch
 import json
 import os
 import re
@@ -268,3 +269,80 @@ def test_settings_hook_scripts_exist_and_are_executable() -> None:
         path = REPO_ROOT / ".claude" / "hooks" / name
         assert path.is_file(), f"settings.json references missing hook {path}"
         assert os.access(path, os.X_OK), f"hook script is not executable: {path}"
+
+
+# Carry-backs from japan-market-index's review of the template (2026-11):
+# two committed config files were wrong in ways nothing executed locally.
+# `:*` in a permission rule is a word-boundary wildcard, so `claude/:*`
+# never matched `claude/foo`; a comment key inside `mcpServers` made Claude
+# Code refuse the copied .mcp.json.
+
+
+def test_permission_rules_do_not_put_a_wildcard_after_a_separator() -> None:
+    settings = json.loads((REPO_ROOT / ".claude" / "settings.json").read_text())
+    rules = [
+        rule for bucket in settings.get("permissions", {}).values() for rule in bucket
+    ]
+    assert rules, "settings.json has no permission rules"
+    bad = [rule for rule in rules if re.search(r"[^\w.]:\*\)$", rule)]
+    assert not bad, (
+        f"`:*` only matches after a word boundary; use `prefix/*` instead: {bad}"
+    )
+
+
+def test_mcp_example_keeps_only_servers_under_mcp_servers() -> None:
+    example = json.loads((REPO_ROOT / ".mcp.json.example").read_text())
+    for name, server in example["mcpServers"].items():
+        assert isinstance(server, dict) and ("command" in server or "url" in server), (
+            f"mcpServers.{name} is not a server definition; move comments to the "
+            "top level or Claude Code will not load the copied .mcp.json"
+        )
+        assert not any(key.startswith("$") for key in server), (
+            f"mcpServers.{name} carries a comment key; keep server entries clean"
+        )
+
+
+def _bash_rule_matches(rule: str, command: str) -> bool:
+    # Claude Code's two Bash wildcards: a trailing `:*` matches the prefix
+    # itself or the prefix followed by a space (word boundary); a bare `*`
+    # matches any characters, spaces and colons included.
+    if not rule.startswith("Bash(") or not rule.endswith(")"):
+        return False
+    pattern = rule[len("Bash(") : -1]
+    if pattern.endswith(":*"):
+        prefix = pattern[:-2]
+        return command == prefix or command.startswith(prefix + " ")
+    return fnmatch.fnmatchcase(command, pattern)
+
+
+def test_push_allow_rule_does_not_outrun_the_push_deny_rules() -> None:
+    # Review finding on PR #88: `Bash(git push origin claude/*)` also matches
+    # `git push origin claude/x --force` and `claude/x:main`, and the deny
+    # rules only saw the flag or `main` right after `git push`. Deny wins over
+    # allow, so every forbidden form must hit a deny rule.
+    settings = json.loads((REPO_ROOT / ".claude" / "settings.json").read_text())
+    allow = settings["permissions"]["allow"]
+    deny = settings["permissions"]["deny"]
+    forbidden = [
+        "git push --force origin claude/x",
+        "git push -f origin claude/x",
+        "git push origin claude/x --force",
+        "git push origin claude/x --force-with-lease",
+        "git push origin claude/x -f",
+        "git push origin claude/x:main",
+        "git push origin claude/x:master",
+        "git push origin main",
+        "git push origin master",
+    ]
+    for command in forbidden:
+        assert any(_bash_rule_matches(r, command) for r in deny), (
+            f"no deny rule catches {command!r}"
+        )
+    permitted = ["git push origin claude/x", "git checkout -b claude/x"]
+    for command in permitted:
+        assert any(_bash_rule_matches(r, command) for r in allow), (
+            f"no allow rule matches {command!r}"
+        )
+        assert not any(_bash_rule_matches(r, command) for r in deny), (
+            f"a deny rule also matches {command!r}"
+        )
