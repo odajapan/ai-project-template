@@ -75,8 +75,12 @@
       "Bash(rm -fR:*)",
       "Bash(git push --force:*)",
       "Bash(git push -f:*)",
+      "Bash(git push * --force*)",
+      "Bash(git push * -f*)",
       "Bash(git push origin main:*)",
       "Bash(git push origin master:*)",
+      "Bash(git push *:main*)",
+      "Bash(git push *:master*)",
       "Bash(git reset --hard:*)",
       "Bash(git rebase -i:*)"
     ]

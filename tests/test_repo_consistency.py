@@ -10,6 +10,7 @@ diverging again.
 
 from __future__ import annotations
 
+import fnmatch
 import json
 import os
 import re
@@ -298,4 +299,50 @@ def test_mcp_example_keeps_only_servers_under_mcp_servers() -> None:
         )
         assert not any(key.startswith("$") for key in server), (
             f"mcpServers.{name} carries a comment key; keep server entries clean"
+        )
+
+
+def _bash_rule_matches(rule: str, command: str) -> bool:
+    # Claude Code's two Bash wildcards: a trailing `:*` matches the prefix
+    # itself or the prefix followed by a space (word boundary); a bare `*`
+    # matches any characters, spaces and colons included.
+    if not rule.startswith("Bash(") or not rule.endswith(")"):
+        return False
+    pattern = rule[len("Bash(") : -1]
+    if pattern.endswith(":*"):
+        prefix = pattern[:-2]
+        return command == prefix or command.startswith(prefix + " ")
+    return fnmatch.fnmatchcase(command, pattern)
+
+
+def test_push_allow_rule_does_not_outrun_the_push_deny_rules() -> None:
+    # Review finding on PR #88: `Bash(git push origin claude/*)` also matches
+    # `git push origin claude/x --force` and `claude/x:main`, and the deny
+    # rules only saw the flag or `main` right after `git push`. Deny wins over
+    # allow, so every forbidden form must hit a deny rule.
+    settings = json.loads((REPO_ROOT / ".claude" / "settings.json").read_text())
+    allow = settings["permissions"]["allow"]
+    deny = settings["permissions"]["deny"]
+    forbidden = [
+        "git push --force origin claude/x",
+        "git push -f origin claude/x",
+        "git push origin claude/x --force",
+        "git push origin claude/x --force-with-lease",
+        "git push origin claude/x -f",
+        "git push origin claude/x:main",
+        "git push origin claude/x:master",
+        "git push origin main",
+        "git push origin master",
+    ]
+    for command in forbidden:
+        assert any(_bash_rule_matches(r, command) for r in deny), (
+            f"no deny rule catches {command!r}"
+        )
+    permitted = ["git push origin claude/x", "git checkout -b claude/x"]
+    for command in permitted:
+        assert any(_bash_rule_matches(r, command) for r in allow), (
+            f"no allow rule matches {command!r}"
+        )
+        assert not any(_bash_rule_matches(r, command) for r in deny), (
+            f"a deny rule also matches {command!r}"
         )
