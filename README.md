@@ -141,6 +141,9 @@ Slash commands available inside Claude Code:
 - `/llm-test` — verify the Claude API works end-to-end
 - `/add-tool <name>` — scaffold a new `ToolDefinition`
 - `/new-rule <name>` — add a new path-scoped rule
+- `/new-clone <suffix> [session]` — dedicated clone (own `.venv`, shared
+  `data/`) for a long-lived tmux session; optional, for `~/.config/tmux-projects`
+  launchers
 
 ---
 
