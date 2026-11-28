@@ -28,7 +28,9 @@ and the exact commands. This file is the order of operations.
 The baseline lives in `.claude/template-sync.ini`. The placeholder
 package name the template uses is `your_project_name`; this project's
 real name is the `name` field in `pyproject.toml`. Every template path
-and diff is read through that rename (the doc's `$RENAME`).
+and diff is read through that rename (the doc's `$RENAME`) and through
+the ini's `[path "<template path>"] local = …` map for files this
+project moved (the doc's `local_path`).
 
 ## Modes
 
@@ -72,7 +74,8 @@ and diff is read through that rename (the doc's `$RENAME`).
    baseline may advance to, so the rest surface next time.
 5. **Classify.** For each unit: files (`git diff --name-status`),
    category per the doc's table, local state per file (clean /
-   diverged / pruned / new via the doc's three-way check), and a
+   diverged / pruned / new via the doc's three-way check, against
+   `local_path` of each file — never the template path itself), and a
    proposal — Adopt, Adapt, Skip — with a one-line why. Split a unit
    whose files fall in different categories. Skipped-ledger entries
    from earlier syncs are not units; the baseline already passed them.
@@ -82,7 +85,8 @@ and diff is read through that rename (the doc's `$RENAME`).
    **Autonomous runs stop here for good**: the table is the report, no
    branch is pushed, the baseline does not move.
 7. **Port the picks**, one commit per unit in template order, with the
-   doc's `git apply --check` → `git apply --index` recipe; when the
+   doc's `port_diff` → `git apply --check` → `git apply --index` recipe
+   (per file, so a moved file is patched where it lives); when the
    check fails, read the unit's diff and make the equivalent edit by
    hand. Commit as `chore(template): port #<n> <template PR title>` with
    the template commit URL in the body. If a port needs more than the

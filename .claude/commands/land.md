@@ -45,16 +45,24 @@ main`.
 
 ## After all PRs
 
-6. **Clean stale worktrees.** Under `.claude/worktrees/` (gitignored
-   runtime state), remove any worktree whose branch is merged into main
-   or that is detached: `git worktree remove --force <path>`. If a
-   worktree looks active (unmerged branch, uncommitted work), **list it
-   and stop** rather than removing it.
-7. **Check template drift.** Run
-   `.claude/hooks/template-drift-check.sh --force`. A merge is the
-   natural point to look upstream: if it prints a line, relay it and
-   suggest `/template-sync` as the next task. Silence means nothing to
-   do.
+6. **Clean stale worktrees.** First move into the main checkout,
+   because this session may itself be running inside a worktree the
+   next command removes — the Bash tool carries the working directory
+   from one call to the next, but not shell variables, so `cd` rather
+   than remembering the path:
+   `cd "$(git worktree list --porcelain | head -n 1 | cut -d' ' -f2-)"`.
+   Then, under `.claude/worktrees/` (gitignored runtime state), remove
+   any worktree whose branch is merged into main or that is detached:
+   `git worktree remove --force <path>`. If a worktree looks active
+   (unmerged branch, uncommitted work), **list it and stop** rather
+   than removing it.
+7. **Check template drift — once, from the main checkout.** Still in
+   the directory step 6 moved to, run
+   `CLAUDE_PROJECT_DIR=$PWD .claude/hooks/template-drift-check.sh --force`.
+   Run from a directory step 6 deleted, the hook exits silently, and
+   silence reads as "no drift". A merge is the natural point to look
+   upstream: if it prints a line, relay it and suggest `/template-sync`
+   as the next task. Silence means nothing to do.
 8. **Suggest `/clear`.** Per the "Session hygiene" section in CLAUDE.md,
    propose `/clear` with a one-line handoff — but only if the working
    tree is clean and nothing is still running. If the drift check

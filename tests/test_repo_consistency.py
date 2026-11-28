@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -224,9 +225,16 @@ TEMPLATE_SYNC_INI = REPO_ROOT / ".claude" / "template-sync.ini"
 
 
 def _template_sync_commit() -> str:
-    match = re.search(r"(?m)^\s*commit\s*=\s*(\S*)\s*$", TEMPLATE_SYNC_INI.read_text())
-    assert match, ".claude/template-sync.ini has no template.commit key"
-    return match.group(1)
+    # Read through `git config -f`, as the drift-check hook does, so quoting
+    # and whitespace are interpreted exactly once, by git.
+    result = subprocess.run(
+        ["git", "config", "-f", str(TEMPLATE_SYNC_INI), "template.commit"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, "template-sync.ini has no template.commit key"
+    return result.stdout.strip()
 
 
 def test_template_sync_baseline_set_after_rename() -> None:
