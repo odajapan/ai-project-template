@@ -35,18 +35,25 @@ stamp="$gitdir/template-sync-last-check"
 days="${TEMPLATE_SYNC_CHECK_DAYS:-7}"
 if [ "$force" -eq 0 ] && [ -f "$stamp" ]; then
   last=$(cat "$stamp" 2>/dev/null || echo 0)
+  # A junk stamp (empty, truncated, hand-edited) would break the arithmetic
+  # below and the hook would fail on every session start; treat it as "never".
+  case "$last" in '' | *[!0-9]*) last=0 ;; esac
   now=$(date +%s)
   if [ $((now - last)) -lt $((days * 86400)) ]; then
     exit 0
   fi
 fi
+# Stamp the attempt, not the success: when GitHub is unreachable (VPN down,
+# IP allow list) a success-only stamp would retry on every session start
+# instead of once per throttle window. A --force run is an explicit check and
+# leaves the session-start throttle alone.
+[ "$force" -eq 1 ] || date +%s > "$stamp" 2>/dev/null || true
 
 # GIT_TERMINAL_PROMPT=0: a private template with no credential helper must
 # fail fast, not hang the session start on a password prompt.
 head=$(GIT_TERMINAL_PROMPT=0 git ls-remote --quiet "https://github.com/$repo.git" \
   "refs/heads/$ref" 2>/dev/null | cut -f1) || exit 0
 [ -n "$head" ] || exit 0
-date +%s > "$stamp" 2>/dev/null || true
 # Prefix match: ls-remote returns 40 hex chars, but a hand-edited baseline
 # may be abbreviated; an exact compare would then report drift forever.
 case "$head" in "$baseline"*) exit 0 ;; esac

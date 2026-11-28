@@ -14,8 +14,8 @@ below. Any agent can follow it; only the drift notice is Claude-specific.
 
 | Piece | Purpose |
 |---|---|
-| `.claude/template-sync.ini` | The **baseline**: which template commit this project has reviewed up to, plus a ledger of PRs it deliberately skipped. git-config syntax (`git config -f .claude/template-sync.ini template.commit`). Committed, so the whole team shares one baseline. |
-| `.claude/hooks/template-drift-check.sh` | The **notice**: one `git ls-remote`, one line of output, only when the template's branch is past the baseline. Runs from the `SessionStart` hook (throttled to once a week) and from the `/start-task` and `/land` milestones (`--force`). Silent while `template.commit` is empty. |
+| `.claude/template-sync.ini` | The **baseline**: which template commit this project has reviewed up to, plus a ledger of PRs it deliberately skipped and a map of files this project moved (`[path "<template path>"] local = <local path>`). git-config syntax (`git config -f .claude/template-sync.ini template.commit`). Committed, so the whole team shares one baseline. |
+| `.claude/hooks/template-drift-check.sh` | The **notice**: one `git ls-remote`, one line of output, only when the template's branch is past the baseline. Runs from the `SessionStart` hook (throttled to once a week; the throttle stamps the attempt, so an unreachable GitHub costs one try per week, not one per session) and from the `/start-task` and `/land` milestones (`--force`). Silent while `template.commit` is empty. |
 | `/template-sync` | The **review**: fetch the template, list its merged PRs since the baseline, classify each, port the ones the human picks, advance the baseline. |
 
 ## When it runs
@@ -37,24 +37,32 @@ clone; a project that predates this procedure does it by hand:
 git remote add template https://github.com/odajapan/ai-project-template.git
 git remote set-url --push template no_push
 git fetch template --quiet
+ref=$(git config -f .claude/template-sync.ini template.ref); : "${ref:=main}"
 ```
+
+`template.ref` is the template branch the review follows; the ini ships
+it as `main`, which is this template's default branch. A template with a
+different default branch shows it in
+`git remote show template | sed -n 's/.*HEAD branch: //p'` — set
+`template.ref` to that first, so the drift check and the review look at
+the same branch.
 
 Then **one** of the two, not both — the value is always a full 40-hex SHA
 (`rev-parse`), never a ref name or abbreviation:
 
 ```bash
 # (a) A fresh clone: the template's current head.
-baseline=$(git rev-parse --verify template/main^{commit})
+baseline=$(git rev-parse --verify "template/$ref^{commit}")
 ```
 
 ```bash
 # (b) An older project: the last template commit before this repo's first
 # commit — everything after it is genuinely unreviewed. Look at the
 # candidate first; if the project already ported later template changes
-# by hand, pick a later commit from `git log --first-parent template/main`.
+# by hand, pick a later commit from `git log --first-parent template/$ref`.
 first=$(git log --reverse --format=%cI | head -1)
-git log template/main --first-parent --before="$first" -1 --format='%H %cs %s'
-baseline=$(git log template/main --first-parent --before="$first" -1 --format=%H)
+git log "template/$ref" --first-parent --before="$first" -1 --format='%H %cs %s'
+baseline=$(git log "template/$ref" --first-parent --before="$first" -1 --format=%H)
 ```
 
 ```bash
@@ -78,7 +86,8 @@ both treat a missing file as an opt-out.
    commits, so `--first-parent` is exactly the PR list):
    ```bash
    base=$(git config -f .claude/template-sync.ini template.commit)
-   git log --first-parent --format='%h %cs %s' "$base..template/main"
+   ref=$(git config -f .claude/template-sync.ini template.ref); : "${ref:=main}"
+   git log --first-parent --format='%h %cs %s' "$base..template/$ref"
    ```
    For each unit, its diff is `git diff "$m^1" "$m"` and its files
    `git diff --name-status "$m^1" "$m"`. A unit that is a plain commit
@@ -86,8 +95,8 @@ both treat a missing file as an opt-out.
    sync, oldest first; `reviewed_head` below is the newest unit you
    actually reviewed — the branch tip only when nothing was cut off:
    ```bash
-   reviewed_head=$(git rev-list --first-parent --reverse "$base..template/main" | sed -n 30p)
-   : "${reviewed_head:=$(git rev-parse template/main)}"
+   reviewed_head=$(git rev-list --first-parent --reverse "$base..template/$ref" | sed -n 30p)
+   : "${reviewed_head:=$(git rev-parse "template/$ref")}"
    ```
 4. **Map the names.** The template's placeholder package is
    `your_project_name`; this project renamed it (the `name` field in
@@ -97,28 +106,60 @@ both treat a missing file as an opt-out.
    pkg=$(sed -n 's/^name = "\(.*\)"/\1/p' pyproject.toml | head -1)
    RENAME="s/your_project_name/${pkg}/g"
    ```
+   Files this project **moved or renamed** are a second mapping, kept in
+   the ini so every sync sees it — one entry per file (the template
+   ships none; `/init-from-template` renames nothing):
+   ```ini
+   [path "docs/EXAMPLE.md"]
+   	local = docs/guides/example.md
+   ```
+   `local_path` turns a template path into where this project keeps the
+   file, both mappings applied; every step below goes through it:
+   ```bash
+   local_path() {
+     local p
+     p=$(git config -f .claude/template-sync.ini "path.$1.local") || p=$1
+     printf '%s\n' "$p" | sed "$RENAME"
+   }
+   ```
+   Without the map, a unit that touches a moved file is misclassified —
+   **new** (nothing at the template path) or **diverged** against the
+   wrong file — and `git apply` would then plant a second copy at the
+   template's path.
 5. **Classify each unit** by the files it touches and by the local
    state of those files. Local state is a three-way question — has this
    project changed the file since the template version the unit starts
    from?
    ```bash
-   git show "$m^1:$f" | sed "$RENAME" | diff -q - "$(echo "$f" | sed "$RENAME")"
+   local=$(local_path "$f")
+   git show "$m^1:$f" | sed "$RENAME" | diff -q - "$local"
    ```
    identical → **clean** (the template patch applies as-is);
    differs → **diverged** (port by hand, guided by the diff);
-   missing locally → **pruned** (removed in `/init-from-template` Phase 1,
-   or never adopted);
+   `$local` missing → **pruned** (removed in `/init-from-template`
+   Phase 1, or never adopted — check the `[path]` map before concluding
+   that);
    missing at `$m^1` → **new** (the template added it).
 6. **Propose, then wait.** Present the table below and stop. The human
    picks; the proposal column is only the default. An autonomous run
    (`--dangerously-skip-permissions`) stops here with the table as its
    report — it never adopts or advances the baseline on its own.
-7. **Port the chosen units,** one commit per unit, in template order:
+7. **Port the chosen units,** one commit per unit, in template order.
+   `port_diff` is one file's slice of the unit with its header pointed
+   at the local path, so a moved file receives the patch where it lives:
    ```bash
-   git diff "$m^1" "$m" -- $files | sed "$RENAME" | git apply --check \
-     && git diff "$m^1" "$m" -- $files | sed "$RENAME" | git apply --index
+   port_diff() {
+     local f=$1 l; l=$(local_path "$1")
+     git diff "$m^1" "$m" -- "$f" | sed "$RENAME" \
+       | sed -e "s#^diff --git a/.* b/.*#diff --git a/$l b/$l#" \
+             -e "s#^--- a/.*#--- a/$l#" -e "s#^+++ b/.*#+++ b/$l#"
+   }
+   ok=1
+   for f in $files; do port_diff "$f" | git apply --check || ok=0; done
+   [ "$ok" = 1 ] && for f in $files; do port_diff "$f" | git apply --index; done
    ```
-   When `--check` fails (the file diverged), read the unit's diff and
+   Every file is checked before any is applied, so a unit is still
+   taken whole or not at all. When `--check` fails (the file diverged), read the unit's diff and
    make the equivalent edit by hand — the intent, not the bytes. Commit
    as `chore(template): port #<n> <template PR title>` with the template
    commit URL in the body, so `git log` answers "where did this come
