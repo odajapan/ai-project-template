@@ -32,9 +32,12 @@ endif
 export PYTHONPATH := $(PROJECT_DIR)/src$(if $(PYTHONPATH),:$(PYTHONPATH))
 
 # Interpreter that creates .venv: the newest pyenv 3.12.x (highest patch number,
-# so 3.12.11 beats 3.12.9), else python3.12 on PATH. Recursively expanded, so the
-# shell runs only when a target uses it. Override: `make VENV_PYTHON=/path/to/python3.12 venv`.
-VENV_PYTHON ?= $(or $(shell ls -d $(HOME)/.pyenv/versions/3.12.*/bin/python 2>/dev/null | awk -F/ '{ split($$(NF-2), v, "."); print v[3], $$0 }' | sort -n | tail -n 1 | cut -d' ' -f2-),python3.12)
+# so 3.12.11 beats 3.12.9; pre-releases such as 3.12.0rc1 are skipped), else
+# python3.12 on PATH. $(wildcard) rather than ls: ls emits color codes under
+# CLICOLOR_FORCE, and awk never sees an error when pyenv is absent. Recursively
+# expanded, so the shell runs only when a target uses it; a recipe expands it
+# once into a shell variable. Override: `make VENV_PYTHON=/path/to/python3.12 venv`.
+VENV_PYTHON ?= $(or $(shell printf '%s\n' $(wildcard $(HOME)/.pyenv/versions/3.12.*/bin/python) | awk -F/ 'NF >= 3 { split($$(NF-2), v, "."); if (v[3] ~ /^[0-9]+$$/) print v[3], $$0 }' | sort -n | tail -n 1 | cut -d' ' -f2-),python3.12)
 # Canonical extras for this project. Every doc and CI job installs exactly
 # this set; override at invocation time, e.g. `make EXTRAS=dev requirements`.
 EXTRAS ?= dev,claude,jira
@@ -63,8 +66,7 @@ requirements-all:
 # removed), so an unusable .venv is rebuilt with --clear instead.
 ## Create this checkout's own .venv and editable-install the canonical extras (idempotent; no conda needed)
 venv:
-	@$(PROJECT_DIR)/.venv/bin/python -c '' 2>/dev/null || command -v $(VENV_PYTHON) >/dev/null || { echo "make venv: '$(VENV_PYTHON)' not found; set VENV_PYTHON=/path/to/python3.12" >&2; exit 1; }
-	@$(PROJECT_DIR)/.venv/bin/python -c '' 2>/dev/null || $(VENV_PYTHON) -m venv --clear $(PROJECT_DIR)/.venv
+	@py='$(VENV_PYTHON)'; $(PROJECT_DIR)/.venv/bin/python -c '' 2>/dev/null || { command -v "$$py" >/dev/null || { echo "make venv: '$$py' not found; set VENV_PYTHON=/path/to/python3.12" >&2; exit 1; }; "$$py" -m venv --clear $(PROJECT_DIR)/.venv; }
 	$(PROJECT_DIR)/.venv/bin/python -m pip install -e '$(PROJECT_DIR)[$(EXTRAS)]'
 	@touch $(VENV_MARKER)
 
