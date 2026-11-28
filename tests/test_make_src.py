@@ -16,8 +16,9 @@ pytestmark = pytest.mark.skipif(shutil.which("make") is None, reason="make missi
 
 
 def _env() -> dict[str, str]:
-    # No jobserver flags leaking in when pytest itself runs under `make test`.
-    drop = ("MAKEFLAGS", "MAKELEVEL", "MFLAGS")
+    # No jobserver flags leaking in when pytest itself runs under `make test`,
+    # and no caller-set VENV_PYTHON overriding the Makefile's `?=` default.
+    drop = ("MAKEFLAGS", "MAKELEVEL", "MFLAGS", "VENV_PYTHON")
     return {k: v for k, v in os.environ.items() if k not in drop}
 
 
