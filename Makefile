@@ -157,7 +157,9 @@ precommit:
 ## Install repo-local Git hooks (branch guards in .githooks/)
 # The hook files are committed with the executable bit set, so no chmod is
 # needed — which also keeps this target working when the sandbox denies
-# writes under .githooks/.
+# writes under .githooks/. Pointing core.hooksPath here means the pre-commit
+# framework never runs on `git commit`; that is deliberate — `make precommit`
+# is its on-demand entry point and `make check` the gate.
 hooks:
 	git config core.hooksPath .githooks
 	@echo ">>> Git hooks installed (.githooks/ via core.hooksPath)."

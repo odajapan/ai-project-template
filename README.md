@@ -98,6 +98,10 @@ to `main`/`master` are blocked locally:
 make hooks
 ```
 
+`.githooks/` owns commit time: it holds branch guards only, and the
+pre-commit framework's hooks (`.pre-commit-config.yaml`) run on demand
+through `make precommit`, not on `git commit`. `make check` is the gate.
+
 ---
 
 ## Common commands
@@ -113,7 +117,7 @@ make format         # Format with ruff
 make typecheck      # Run mypy on src/
 make test           # Run pytest
 make data           # Run the data pipeline
-make precommit      # Run pre-commit hooks against all files
+make precommit      # Run pre-commit hooks over all files (on demand; they do not run on git commit)
 make activate       # Print the conda activate command
 ```
 
