@@ -1,6 +1,6 @@
 ---
 name: new-clone
-description: Create a dedicated clone of this repo for a long-lived tmux session (clone + data symlink + .venv + pnpm install + tmux-projects entry). Use only when the user asks for a new clone or tmux session; it writes outside the repo.
+description: Create a dedicated clone of this repo for a long-lived tmux session (clone + .venv + pnpm install + tmux-projects entry; data/ symlink when data/ is gitignored). Use only when the user asks for a new clone or tmux session; it writes outside the repo.
 argument-hint: <suffix> [session-name]
 disable-model-invocation: true
 ---
@@ -51,8 +51,11 @@ Then report to the user, briefly:
 - if the launcher runs `claude --continue`, there is no conversation to
   resume in a fresh clone — the first launch there should be plain `claude`
   (and the folder-trust prompt is the user's to answer);
-- that the clone shares `data/` with the main checkout via a symlink, so
-  anything that rewrites `data/` affects both;
+- `data/`: when the project gitignores `data/` as a whole, the clone shares
+  the main checkout's copy via a symlink, so anything that rewrites `data/`
+  affects both. A project that still tracks the `data/*/.gitkeep` skeleton
+  (as the template ships) gets its own empty `data/` from the clone instead,
+  and the script says so (`is part of the clone ... not linking`);
 - what the script does **not** set up: `.env` and
   `.claude/settings.local.json` are not copied;
 - the clone gets its own `.venv` (`make venv`: `python3.12`, the newest

@@ -122,9 +122,9 @@ Slash commands (run inside Claude Code):
 - `/new-clone <suffix> [session]` — dedicated clone for a long-lived tmux
   session booted from a `~/.config/tmux-projects` launcher (worktrees get
   removed after merge; a clone does not). Implemented as the action skill
-  `skills/new-clone/SKILL.md`; it clones the repo, links `data/`, runs
-  `make venv` and edits `~/.config/tmux-projects`, so use it only on
-  explicit request
+  `skills/new-clone/SKILL.md`; it clones the repo, links `data/` (when
+  gitignored as a whole), runs `make venv` and edits
+  `~/.config/tmux-projects`, so use it only on explicit request
 - `/jira <subcommand>` — optional Jira ↔ GitHub workflow (issue = branch = PR);
   see `docs/JIRA_GITHUB_WORKFLOW.md`
 - `/daily-report [--date YYYY-MM-DD]` — list Jira tickets completed on a day

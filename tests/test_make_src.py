@@ -89,6 +89,28 @@ def test_make_venv_names_the_missing_interpreter(tmp_path: Path) -> None:
     assert not (tmp_path / ".venv").exists()
 
 
+def test_venv_python_prefers_the_highest_pyenv_patch_release(tmp_path: Path) -> None:
+    # A string sort would put 3.12.9 after 3.12.11.
+    (tmp_path / "Makefile").write_text((REPO_ROOT / "Makefile").read_text())
+    home = tmp_path / "home"
+    for version in ("3.12.9", "3.12.11", "3.12.10"):
+        bin_dir = home / ".pyenv" / "versions" / version / "bin"
+        bin_dir.mkdir(parents=True)
+        (bin_dir / "python").write_text("")
+    env = _env()
+    env["HOME"] = str(home)
+    result = subprocess.run(
+        ["make", "-n", "venv"],
+        cwd=tmp_path,
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert f"{home}/.pyenv/versions/3.12.11/bin/python -m venv --clear" in result.stdout
+
+
 def test_make_venv_rebuilds_a_venv_whose_python_is_gone(tmp_path: Path) -> None:
     # A plain `python -m venv` keeps a dangling bin/python symlink, so the
     # .venv would stay dead and every make target with it.

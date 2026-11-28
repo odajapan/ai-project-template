@@ -43,8 +43,12 @@ def _git(cwd: Path, *args: str) -> None:
     )
 
 
-def _make_repo(tmp_path: Path, makefile: str) -> Path:
-    """A 'main checkout' cloned from a bare origin that holds the script."""
+def _make_repo(tmp_path: Path, makefile: str, *, tracked_data: bool = False) -> Path:
+    """A 'main checkout' cloned from a bare origin that holds the script.
+
+    By default data/ is untracked (the gitignored-snapshot layout the symlink
+    is for); tracked_data commits the data/*/.gitkeep skeleton the template
+    ships instead."""
     origin = tmp_path / "origin" / "myrepo.git"
     origin.parent.mkdir()
     _git(tmp_path, "init", "--bare", "-q", str(origin))
@@ -54,6 +58,9 @@ def _make_repo(tmp_path: Path, makefile: str) -> Path:
     (main / "scripts").mkdir()
     shutil.copy(SCRIPT, main / "scripts" / "new_clone.sh")
     (main / "Makefile").write_text(makefile)
+    if tracked_data:
+        (main / "data" / "raw").mkdir(parents=True)
+        (main / "data" / "raw" / ".gitkeep").write_text("")
     _git(main, "add", "-A")
     _git(
         main,
@@ -61,7 +68,8 @@ def _make_repo(tmp_path: Path, makefile: str) -> Path:
         "commit", "-q", "-m", "init",
     )  # fmt: skip
     _git(main, "push", "-q", "origin", "HEAD")
-    (main / "data").mkdir()
+    if not tracked_data:
+        (main / "data").mkdir()
     return main
 
 
@@ -90,6 +98,20 @@ def test_clones_links_data_registers_and_makes_venv(tmp_path: Path) -> None:
     assert (clone / ".venv-made").exists()
     # Default session name is <repo>-<suffix>, taken from the origin URL.
     assert _registered(tmp_path) == ["myrepo-ui ~/work/myrepo-ui"]
+
+
+def test_tracked_data_skeleton_is_left_as_cloned(tmp_path: Path) -> None:
+    # The template tracks data/*/.gitkeep, so the clone brings its own data/;
+    # replacing it with a symlink would show the tracked files as deleted.
+    main = _make_repo(tmp_path, VENV_OK, tracked_data=True)
+    result = _run(main, tmp_path, "ui", "sess")
+    assert result.returncode == 0, result.stderr
+    clone = tmp_path / "work" / "myrepo-ui"
+    assert (clone / "data").is_dir() and not (clone / "data").is_symlink()
+    assert (clone / "data" / "raw" / ".gitkeep").exists()
+    assert "not linking" in result.stdout
+    exclude = clone / ".git" / "info" / "exclude"
+    assert not exclude.exists() or "/data" not in exclude.read_text()
 
 
 def test_second_run_is_idempotent(tmp_path: Path) -> None:

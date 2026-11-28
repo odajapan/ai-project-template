@@ -21,8 +21,9 @@ set -euo pipefail
 ##
 ## Idempotent: re-running skips whatever already exists.
 ##
-## Steps: clone origin -> symlink the (gitignored) data/ from the main
-## checkout -> register the session in ~/.config/tmux-projects (override the
+## Steps: clone origin -> symlink the main checkout's data/ when data/ is
+## gitignored as a whole (a tracked data/ skeleton, as the template ships, is
+## left as cloned) -> register the session in ~/.config/tmux-projects (override the
 ## path with TMUX_PROJECTS) so the launcher recreates it after a reboot ->
 ## `make venv` (the clone's own .venv, so its editable install points at the
 ## clone, not the main checkout) -> pnpm install in web/ if it exists.
@@ -97,11 +98,15 @@ else
   (cd "$MAIN_REPO" && git clone "$ORIGIN_URL" "$TARGET")
 fi
 
-## data/ is a gitignored (often multi-GB) snapshot; share the main checkout's
-## copy. The trailing-slash gitignore pattern does not match a symlink, so
-## exclude it locally to keep `git status` clean.
-if [ -e "$TARGET/data" ] || [ -L "$TARGET/data" ]; then
-  echo "data: $TARGET/data already exists, skipping"
+## data/ is usually a gitignored (often multi-GB) snapshot; share the main
+## checkout's copy. A project that still tracks the data/ skeleton (the
+## template ships data/*/.gitkeep) gets a real data/ from the clone itself;
+## that is left alone, since replacing tracked files with a symlink would show
+## up as deletions in `git status`.
+if [ -L "$TARGET/data" ]; then
+  echo "data: $TARGET/data already linked, skipping"
+elif [ -e "$TARGET/data" ]; then
+  echo "data: $TARGET/data is part of the clone (data/ is not fully gitignored), not linking"
 elif [ -d "$MAIN_REPO/data" ]; then
   ## -P resolves a symlinked data/ (when started from another clone) to the
   ## real directory so links never chain through a clone that may be deleted.
@@ -111,9 +116,13 @@ elif [ -d "$MAIN_REPO/data" ]; then
 else
   echo "data: $MAIN_REPO/data not found, skipping" >&2
 fi
-mkdir -p "$TARGET/.git/info"
-if ! grep -qxF '/data' "$TARGET/.git/info/exclude" 2>/dev/null; then
-  echo '/data' >> "$TARGET/.git/info/exclude"
+## The trailing-slash gitignore pattern does not match a symlink, so exclude
+## it locally to keep `git status` clean.
+if [ -L "$TARGET/data" ]; then
+  mkdir -p "$TARGET/.git/info"
+  if ! grep -qxF '/data' "$TARGET/.git/info/exclude" 2>/dev/null; then
+    echo '/data' >> "$TARGET/.git/info/exclude"
+  fi
 fi
 
 ## Register before the slow, fallible installs so a failure there does not
