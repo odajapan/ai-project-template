@@ -268,3 +268,34 @@ def test_settings_hook_scripts_exist_and_are_executable() -> None:
         path = REPO_ROOT / ".claude" / "hooks" / name
         assert path.is_file(), f"settings.json references missing hook {path}"
         assert os.access(path, os.X_OK), f"hook script is not executable: {path}"
+
+
+# Carry-backs from japan-market-index's review of the template (2026-11):
+# two committed config files were wrong in ways nothing executed locally.
+# `:*` in a permission rule is a word-boundary wildcard, so `claude/:*`
+# never matched `claude/foo`; a comment key inside `mcpServers` made Claude
+# Code refuse the copied .mcp.json.
+
+
+def test_permission_rules_do_not_put_a_wildcard_after_a_separator() -> None:
+    settings = json.loads((REPO_ROOT / ".claude" / "settings.json").read_text())
+    rules = [
+        rule for bucket in settings.get("permissions", {}).values() for rule in bucket
+    ]
+    assert rules, "settings.json has no permission rules"
+    bad = [rule for rule in rules if re.search(r"[^\w.]:\*\)$", rule)]
+    assert not bad, (
+        f"`:*` only matches after a word boundary; use `prefix/*` instead: {bad}"
+    )
+
+
+def test_mcp_example_keeps_only_servers_under_mcp_servers() -> None:
+    example = json.loads((REPO_ROOT / ".mcp.json.example").read_text())
+    for name, server in example["mcpServers"].items():
+        assert isinstance(server, dict) and ("command" in server or "url" in server), (
+            f"mcpServers.{name} is not a server definition; move comments to the "
+            "top level or Claude Code will not load the copied .mcp.json"
+        )
+        assert not any(key.startswith("$") for key in server), (
+            f"mcpServers.{name} carries a comment key; keep server entries clean"
+        )
