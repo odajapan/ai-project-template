@@ -55,7 +55,7 @@ the key and the LLM scaffolding entirely.
 | `make test` | Run pytest |
 | `make format` | Format with ruff |
 | `make data` | Run the data pipeline |
-| `make precommit` | Run pre-commit hooks against all files |
+| `make precommit` | Run the pre-commit hooks over all files, on demand — `make hooks` points `core.hooksPath` at `.githooks/` (branch guards only), so nothing lints at commit time; `make check` is the gate |
 
 Run a single test:
 ```bash

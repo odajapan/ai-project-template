@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 # Template-provided guard hook: refuse direct commits to main/master.
 #
-# Lint / format / type checks are handled by .pre-commit-config.yaml via the
-# pre-commit framework. This hook intentionally stays focused on branch
-# protection so the two systems do not duplicate work.
+# This directory owns commit-time hooks (core.hooksPath, set by `make hooks`),
+# so the pre-commit framework's hooks in .pre-commit-config.yaml do NOT run on
+# `git commit` here; `make precommit` runs them on demand over the whole tree,
+# and `make check` is the gate before every commit. This hook stays focused on
+# branch protection so a commit is never slowed by mypy.
 
 set -euo pipefail
 

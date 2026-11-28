@@ -75,9 +75,9 @@ def test_venv_is_used_only_after_make_venv_finished(tmp_path: Path) -> None:
     assert _interpreter_in(tmp_path / "c", marker=True, dangling=True) == "python"
 
 
-def test_precommit_puts_the_venv_bin_on_path(tmp_path: Path) -> None:
-    # pre-commit's `language: system` hooks (ruff, mypy) resolve on PATH, not
-    # through the interpreter that starts pre-commit.
+def test_precommit_hands_the_make_interpreter_to_the_wrapper(tmp_path: Path) -> None:
+    # scripts/precommit_tool.sh runs `$PRECOMMIT_PYTHON -m <tool>`, so the
+    # hooks judge with the interpreter make uses, whichever one that is.
     venv_bin = tmp_path / ".venv" / "bin"
     venv_bin.mkdir(parents=True)
     (venv_bin / "python").write_text("")
@@ -92,8 +92,10 @@ def test_precommit_puts_the_venv_bin_on_path(tmp_path: Path) -> None:
         check=False,
     )
     assert result.returncode == 0, result.stderr
-    assert result.stdout.startswith(f'PATH="{venv_bin.resolve()}/:$PATH" ')
-    # With a bare interpreter name nothing (not even ./) is prepended.
+    python = (venv_bin / "python").resolve()
+    assert result.stdout.strip() == (
+        f'PRECOMMIT_PYTHON="{python}" {python} -m pre_commit run --all-files'
+    )
     plain = subprocess.run(
         ["make", "-s", "-n", "PYTHON_INTERPRETER=python", "precommit"],
         cwd=tmp_path,
@@ -102,7 +104,9 @@ def test_precommit_puts_the_venv_bin_on_path(tmp_path: Path) -> None:
         text=True,
         check=False,
     )
-    assert plain.stdout.startswith('PATH="$PATH" python -m pre_commit')
+    assert plain.stdout.strip() == (
+        'PRECOMMIT_PYTHON="python" python -m pre_commit run --all-files'
+    )
 
 
 def test_make_venv_names_the_missing_interpreter(tmp_path: Path) -> None:
@@ -120,16 +124,11 @@ def test_make_venv_names_the_missing_interpreter(tmp_path: Path) -> None:
     assert not (tmp_path / ".venv").exists()
 
 
-def test_venv_python_prefers_the_highest_pyenv_patch_release(tmp_path: Path) -> None:
-    # A string sort would put 3.12.9 after 3.12.11.
+def _venv_python_chosen(tmp_path: Path, home: Path, **extra_env: str) -> str:
+    # `make -n venv` prints the recipe; its first line binds the interpreter
+    # once (`py='...'`), so a chosen path shows up exactly there.
     (tmp_path / "Makefile").write_text((REPO_ROOT / "Makefile").read_text())
-    home = tmp_path / "home"
-    for version in ("3.12.9", "3.12.11", "3.12.10"):
-        bin_dir = home / ".pyenv" / "versions" / version / "bin"
-        bin_dir.mkdir(parents=True)
-        (bin_dir / "python").write_text("")
-    env = _env()
-    env["HOME"] = str(home)
+    env = {**_env(), "HOME": str(home), **extra_env}
     result = subprocess.run(
         ["make", "-n", "venv"],
         cwd=tmp_path,
@@ -139,7 +138,30 @@ def test_venv_python_prefers_the_highest_pyenv_patch_release(tmp_path: Path) -> 
         check=False,
     )
     assert result.returncode == 0, result.stderr
-    assert f"{home}/.pyenv/versions/3.12.11/bin/python -m venv --clear" in result.stdout
+    assert result.stderr == "", result.stderr
+    first = result.stdout.splitlines()[0]
+    assert first.startswith("py='"), first
+    return first[len("py='") : first.index("';")]
+
+
+def test_venv_python_prefers_the_highest_pyenv_patch_release(tmp_path: Path) -> None:
+    # A string sort would put 3.12.9 after 3.12.11; `sort -V` ranks 3.12.0rc1
+    # oddly; and `ls` under CLICOLOR_FORCE wraps every path in color codes.
+    home = tmp_path / "home"
+    for version in ("3.12.9", "3.12.11", "3.12.10", "3.12.0rc1"):
+        bin_dir = home / ".pyenv" / "versions" / version / "bin"
+        bin_dir.mkdir(parents=True)
+        (bin_dir / "python").write_text("")
+    chosen = _venv_python_chosen(tmp_path, home, CLICOLOR_FORCE="1")
+    assert chosen == f"{home}/.pyenv/versions/3.12.11/bin/python"
+
+
+def test_venv_python_falls_back_quietly_without_pyenv(tmp_path: Path) -> None:
+    # No ~/.pyenv at all: python3.12 from PATH, and nothing on stderr (the
+    # old `ls | awk` pipeline printed an awk error here).
+    home = tmp_path / "home"
+    home.mkdir()
+    assert _venv_python_chosen(tmp_path, home) == "python3.12"
 
 
 def test_make_venv_rebuilds_a_venv_whose_python_is_gone(tmp_path: Path) -> None:

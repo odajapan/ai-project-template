@@ -16,32 +16,39 @@ repos:
   # pinned-rev mirrors drifted: a ruff fixed by the hook could still fail
   # `make lint`, and mirrors-mypy runs in an isolated env without the
   # project's dependencies, so its verdict differed from `make typecheck`.
-  # Consequence: the project env must be active (or `.venv/bin` on PATH)
-  # when pre-commit runs — the same requirement `make check` already has.
+  # The entries go through scripts/precommit_tool.sh, which runs
+  # `<python> -m <tool>` with the interpreter `make` uses (PRECOMMIT_PYTHON,
+  # set by `make precommit`), else this checkout's finished .venv, else
+  # `python` — a bare `ruff` on PATH could belong to a different interpreter.
   # Order matters: `check --fix` first, then `format`, as ruff documents,
   # so the formatter sees the fixed code and one run converges (`make
   # format` uses the same order). `files:` pins the same src/tests/scripts
   # set that `make lint` / `make format` cover, so both gates agree.
+  # `--force-exclude`: pre-commit passes explicit paths, which would
+  # otherwise bypass pyproject's excludes.
   - repo: local
     hooks:
       - id: ruff-check
         name: ruff check --fix
-        entry: ruff check --fix
+        entry: scripts/precommit_tool.sh ruff check --force-exclude --fix
         language: system
+        require_serial: true
         files: ^(src|tests|scripts)/
         types_or: [python, pyi]
       - id: ruff-format
         name: ruff format
-        entry: ruff format
+        entry: scripts/precommit_tool.sh ruff format --force-exclude
         language: system
+        require_serial: true
         files: ^(src|tests|scripts)/
         types_or: [python, pyi]
       - id: mypy
         name: mypy (make typecheck)
-        entry: mypy src scripts
+        entry: scripts/precommit_tool.sh mypy src scripts
         language: system
+        require_serial: true
         pass_filenames: false
-        types_or: [python, pyi]
+        files: ^(src/|scripts/|pyproject\.toml$)
 
   - repo: https://github.com/asottile/pyupgrade
     rev: v3.20.0
