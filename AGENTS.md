@@ -30,6 +30,12 @@ cp env.example .env                   # only if this project uses the LLM layer
 
 Python 3.12+ required. Never commit `.env`.
 
+A clone or worktree needs its own environment: a shared env's editable
+install points at one checkout's `src/`. `make venv` creates `.venv` in the
+checkout and every `make` target uses it without activation (`make which_src`
+shows what make resolves); running `python scripts/x.py` or the CLI directly
+needs `.venv/bin/python` or `PYTHONPATH=$PWD/src`.
+
 `ANTHROPIC_API_KEY` is required only for `src/your_project_name/llm.py`, the
 `ask`/`chat` CLI commands, and `examples/`. `make check` passes without it —
 unit tests mock `anthropic.Anthropic`. Projects with no LLM layer can delete
@@ -42,6 +48,8 @@ the key and the LLM scaffolding entirely.
 | Command | Description |
 |---------|-------------|
 | `make check` | **The gate** — lint (ruff) + type check (mypy) + tests (pytest) |
+| `make venv` | Create this checkout's own `.venv` with the canonical extras; `make` targets use it without activation |
+| `make which_src` | Print the interpreter, `PYTHONPATH`, and package path `make` resolves |
 | `make lint` | Run ruff over `src/` and `tests/` |
 | `make typecheck` | Run mypy over `src/` |
 | `make test` | Run pytest |

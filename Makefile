@@ -1,4 +1,4 @@
-.PHONY: clean data lint requirements requirements-all sync_data_to_s3 sync_data_from_s3 test coverage format check typecheck precommit activate hooks create_environment
+.PHONY: clean data lint requirements requirements-all sync_data_to_s3 sync_data_from_s3 test coverage format check typecheck precommit activate hooks create_environment venv which_src
 
 #################################################################################
 # GLOBALS                                                                       #
@@ -8,9 +8,32 @@ PROJECT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 BUCKET = [OPTIONAL] your-bucket-for-syncing-data (do not include 's3://')
 PROFILE = default
 PROJECT_NAME = your_project_name
-# Use the current environment's "python" by default (conda/venv friendly).
-# You can override this at invocation time, e.g. `make PYTHON_INTERPRETER=python3.11 requirements`.
+# A checkout's own .venv is used without activating it, but only once `make venv`
+# has finished (it writes the marker below), so a bare or stale .venv (e.g. from
+# a hand-run `python -m venv .venv`) is ignored. Otherwise whatever "python" is on
+# PATH (a conda env, an activated venv). Chosen when make starts, so run
+# `make venv` as its own invocation, not `make venv check`. Tools run as
+# `$(PYTHON_INTERPRETER) -m <tool>` because macOS's make 3.81 looks single-command
+# recipes up on its startup PATH, so putting .venv/bin on PATH here would not work.
+# Override at invocation time, e.g. `make PYTHON_INTERPRETER=python3.11 requirements`.
+# realpath is empty when .venv/bin/python is a dangling symlink (the Python it was
+# built from was removed), so such a .venv falls back like a missing one.
+VENV_MARKER = $(PROJECT_DIR)/.venv/.make-venv-ok
+ifneq (,$(and $(wildcard $(VENV_MARKER)),$(realpath $(PROJECT_DIR)/.venv/bin/python)))
+PYTHON_INTERPRETER = $(PROJECT_DIR)/.venv/bin/python
+else
 PYTHON_INTERPRETER = python
+endif
+
+# A shared env's editable install (e.g. a conda env) points at one checkout, so
+# a clone or worktree without its own .venv would run that checkout's src from
+# every target below (scripts/*.py, the CLI). Put this checkout's src first.
+# The checkout path must not contain ':' (it would split the PYTHONPATH entry).
+export PYTHONPATH := $(PROJECT_DIR)/src$(if $(PYTHONPATH),:$(PYTHONPATH))
+
+# Interpreter that creates .venv: the newest pyenv 3.12.x (by name), else python3.12
+# on PATH. Override: `make VENV_PYTHON=/path/to/python3.12 venv`.
+VENV_PYTHON ?= $(or $(lastword $(sort $(wildcard $(HOME)/.pyenv/versions/3.12.*/bin/python))),python3.12)
 # Canonical extras for this project. Every doc and CI job installs exactly
 # this set; override at invocation time, e.g. `make EXTRAS=dev requirements`.
 EXTRAS ?= dev,claude,jira
@@ -35,6 +58,20 @@ requirements:
 requirements-all:
 	$(MAKE) EXTRAS=dev,claude,jira,notebook,viz,docs,cloud requirements
 
+## Create this checkout's own .venv and editable-install the canonical extras (idempotent; no conda needed)
+# A plain `python -m venv` keeps a dead bin/python symlink (its Python was
+# removed), so an unusable .venv is rebuilt with --clear instead.
+venv:
+	@$(PROJECT_DIR)/.venv/bin/python -c '' 2>/dev/null || command -v $(VENV_PYTHON) >/dev/null || { echo "make venv: '$(VENV_PYTHON)' not found; set VENV_PYTHON=/path/to/python3.12" >&2; exit 1; }
+	@$(PROJECT_DIR)/.venv/bin/python -c '' 2>/dev/null || $(VENV_PYTHON) -m venv --clear $(PROJECT_DIR)/.venv
+	$(PROJECT_DIR)/.venv/bin/python -m pip install -e '$(PROJECT_DIR)[$(EXTRAS)]'
+	@touch $(VENV_MARKER)
+
+## Print the interpreter and PYTHONPATH make uses and the your_project_name it resolves to (should be this checkout's src/)
+which_src:
+	@echo "interpreter=$(PYTHON_INTERPRETER)"
+	@$(PYTHON_INTERPRETER) -c "import os, your_project_name as m; print('PYTHONPATH=' + os.environ.get('PYTHONPATH', '')); print('module=' + m.__file__)"
+
 ## Make Dataset
 data:
 	$(PYTHON_INTERPRETER) src/your_project_name/data/make_dataset.py data/raw data/processed
@@ -47,17 +84,17 @@ clean:
 
 ## Lint using ruff (style rules + formatting drift)
 lint:
-	ruff check src tests scripts
-	ruff format --check src tests scripts
+	$(PYTHON_INTERPRETER) -m ruff check src tests scripts
+	$(PYTHON_INTERPRETER) -m ruff format --check src tests scripts
 
 ## Format code with ruff
 format:
-	ruff check --fix src tests scripts
-	ruff format src tests scripts
+	$(PYTHON_INTERPRETER) -m ruff check --fix src tests scripts
+	$(PYTHON_INTERPRETER) -m ruff format src tests scripts
 
 ## Run static type checks with mypy
 typecheck:
-	mypy src scripts
+	$(PYTHON_INTERPRETER) -m mypy src scripts
 
 ## Upload Data to S3
 sync_data_to_s3:
@@ -75,15 +112,15 @@ else
 	aws s3 sync s3://$(BUCKET)/data/ data/ --profile $(PROFILE)
 endif
 
-## Set up python interpreter environment (prefer conda + environment.yml)
+## Set up a shared conda env from environment.yml (per-checkout environments: `make venv`)
 create_environment:
 ifeq (True,$(HAS_CONDA))
 		@echo ">>> Detected conda, creating/updating environment from environment.yml."
 		conda env create -f environment.yml || conda env update -f environment.yml
 		@echo ">>> Activate with:\nconda activate $(PROJECT_NAME)"
 else
-	$(PYTHON_INTERPRETER) -m venv .venv
-	@echo ">>> New virtual environment created in .venv. Activate with:\nsource .venv/bin/activate"
+	@echo ">>> No conda; creating this checkout's .venv with make venv instead."
+	$(MAKE) venv
 endif
 
 ## Show the command to activate the conda environment for this project
@@ -96,18 +133,18 @@ activate:
 
 ## Run tests
 test:
-	pytest
+	$(PYTHON_INTERPRETER) -m pytest
 
 ## Run tests with a coverage report
 coverage:
-	pytest --cov=src --cov-report=term-missing
+	$(PYTHON_INTERPRETER) -m pytest --cov=src --cov-report=term-missing
 
 ## Run linting, type checks, and tests
 check: lint typecheck test
 
 ## Run pre-commit on all files
 precommit:
-	pre-commit run --all-files
+	$(PYTHON_INTERPRETER) -m pre_commit run --all-files
 
 ## Install repo-local Git hooks (branch guards in .githooks/)
 # The hook files are committed with the executable bit set, so no chmod is
