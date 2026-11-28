@@ -154,11 +154,12 @@ both treat a missing file as an opt-out.
        | sed -e "s#^diff --git a/.* b/.*#diff --git a/$l b/$l#" \
              -e "s#^--- a/.*#--- a/$l#" -e "s#^+++ b/.*#+++ b/$l#"
    }
-   for f in $files; do
-     port_diff "$f" | git apply --check && port_diff "$f" | git apply --index
-   done
+   ok=1
+   for f in $files; do port_diff "$f" | git apply --check || ok=0; done
+   [ "$ok" = 1 ] && for f in $files; do port_diff "$f" | git apply --index; done
    ```
-   When `--check` fails (the file diverged), read the unit's diff and
+   Every file is checked before any is applied, so a unit is still
+   taken whole or not at all. When `--check` fails (the file diverged), read the unit's diff and
    make the equivalent edit by hand — the intent, not the bytes. Commit
    as `chore(template): port #<n> <template PR title>` with the template
    commit URL in the body, so `git log` answers "where did this come
