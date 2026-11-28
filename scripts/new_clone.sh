@@ -140,7 +140,8 @@ mkdir -p "$(dirname "$TMUX_PROJECTS")"
 OWNER=""
 if [ -f "$TMUX_PROJECTS" ]; then
   ## ENVIRON (not -v) so backslashes in paths are not treated as escapes, and
-  ## no sub() so '&' in $HOME is not a replacement metacharacter.
+  ## no sub() so '&' in $HOME is not a replacement metacharacter. The "" forces
+  ## a string comparison: a numeric-looking name like 1 must not match 01.
   OWNER="$(SESSION="$SESSION" TARGET="$TARGET" awk '
     /^[[:space:]]*(#|$)/ { next }
     {
@@ -148,7 +149,7 @@ if [ -f "$TMUX_PROJECTS" ]; then
       if (substr(dir, 1, 1) == "~") dir = ENVIRON["HOME"] substr(dir, 2)
       sub(/\/+$/, "", dir)
     }
-    $1 == ENVIRON["SESSION"] || dir == ENVIRON["TARGET"] { print $1 "\t" dir; exit }
+    ($1 "") == (ENVIRON["SESSION"] "") || dir == ENVIRON["TARGET"] { print $1 "\t" dir; exit }
   ' "$TMUX_PROJECTS")"
 fi
 if [ -n "$OWNER" ]; then

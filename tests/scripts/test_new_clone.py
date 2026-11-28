@@ -150,6 +150,16 @@ def test_stale_session_for_another_dir_fails_without_changing_the_file(
     assert registry.read_text() == "sess ~/gone/old-worktree\n"
 
 
+def test_numeric_looking_session_names_compare_as_strings(tmp_path: Path) -> None:
+    # awk would otherwise treat 1 and 01 as the same number and report a clash.
+    main = _make_repo(tmp_path, VENV_OK)
+    registry = tmp_path / "tmux-projects"
+    registry.write_text("01 ~/other/project\n")
+    result = _run(main, tmp_path, "ui", "1")
+    assert result.returncode == 0, result.stderr
+    assert _registered(tmp_path) == ["01 ~/other/project", "1 ~/work/myrepo-ui"]
+
+
 @pytest.mark.parametrize("suffix", [".x", "a b", "a/b", ""])
 def test_rejects_bad_suffix(tmp_path: Path, suffix: str) -> None:
     main = _make_repo(tmp_path, VENV_OK)
