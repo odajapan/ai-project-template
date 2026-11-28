@@ -143,9 +143,13 @@ coverage:
 ## Run linting, type checks, and tests
 check: lint typecheck test
 
+# The ruff and mypy hooks are `language: system`, so pre-commit finds them on
+# PATH, not through the interpreter that starts it; when make uses a .venv (an
+# interpreter given by path), its bin/ goes first. A shell assignment inside
+# the command is fine under make 3.81; only a bare leading command is not.
 ## Run pre-commit on all files
 precommit:
-	$(PYTHON_INTERPRETER) -m pre_commit run --all-files
+	PATH="$(if $(findstring /,$(PYTHON_INTERPRETER)),$(dir $(PYTHON_INTERPRETER)):)$$PATH" $(PYTHON_INTERPRETER) -m pre_commit run --all-files
 
 ## Install repo-local Git hooks (branch guards in .githooks/)
 # The hook files are committed with the executable bit set, so no chmod is
