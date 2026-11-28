@@ -40,6 +40,16 @@ uv pip install -e ".[dev,claude,jira]"
 ### 2. pip / venv
 
 ```bash
+make venv            # this checkout's own .venv with the canonical extras (needs python3.12
+                     # or VENV_PYTHON=/path/to/python); every make target then uses it
+                     # without activation
+make which_src       # shows the interpreter and the src/ make resolves
+```
+
+Or by hand (then activate it: without the marker `make venv` writes,
+`make` keeps using whatever `python` is on PATH):
+
+```bash
 python3 -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install --upgrade pip
@@ -95,6 +105,8 @@ make hooks
 ```bash
 make requirements   # Install project in editable mode with the canonical extras (dev,claude,jira)
 make requirements-all  # ...plus the heavier data-science extras (notebook,viz,docs,cloud)
+make venv           # Create this checkout's own .venv (canonical extras); make targets use it without activation
+make which_src      # Show which interpreter and src/ make resolves (should be this checkout's)
 make check          # Lint (ruff) + type check (mypy) + tests (pytest)
 make lint           # Run ruff check over src/ and tests/
 make format         # Format with ruff
@@ -129,6 +141,9 @@ Slash commands available inside Claude Code:
 - `/llm-test` — verify the Claude API works end-to-end
 - `/add-tool <name>` — scaffold a new `ToolDefinition`
 - `/new-rule <name>` — add a new path-scoped rule
+- `/new-clone <suffix> [session]` — dedicated clone (own `.venv`; `data/`
+  shared via symlink once the project gitignores it as a whole) for a
+  long-lived tmux session; optional, for `~/.config/tmux-projects` launchers
 
 ---
 
