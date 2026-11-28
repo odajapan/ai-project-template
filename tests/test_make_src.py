@@ -75,9 +75,9 @@ def test_venv_is_used_only_after_make_venv_finished(tmp_path: Path) -> None:
     assert _interpreter_in(tmp_path / "c", marker=True, dangling=True) == "python"
 
 
-def test_precommit_puts_the_venv_bin_on_path(tmp_path: Path) -> None:
-    # pre-commit's `language: system` hooks (ruff, mypy) resolve on PATH, not
-    # through the interpreter that starts pre-commit.
+def test_precommit_hands_the_make_interpreter_to_the_wrapper(tmp_path: Path) -> None:
+    # scripts/precommit_tool.sh runs `$PRECOMMIT_PYTHON -m <tool>`, so the
+    # hooks judge with the interpreter make uses, whichever one that is.
     venv_bin = tmp_path / ".venv" / "bin"
     venv_bin.mkdir(parents=True)
     (venv_bin / "python").write_text("")
@@ -92,8 +92,10 @@ def test_precommit_puts_the_venv_bin_on_path(tmp_path: Path) -> None:
         check=False,
     )
     assert result.returncode == 0, result.stderr
-    assert result.stdout.startswith(f'PATH="{venv_bin.resolve()}/:$PATH" ')
-    # With a bare interpreter name nothing (not even ./) is prepended.
+    python = (venv_bin / "python").resolve()
+    assert result.stdout.strip() == (
+        f'PRECOMMIT_PYTHON="{python}" {python} -m pre_commit run --all-files'
+    )
     plain = subprocess.run(
         ["make", "-s", "-n", "PYTHON_INTERPRETER=python", "precommit"],
         cwd=tmp_path,
@@ -102,7 +104,9 @@ def test_precommit_puts_the_venv_bin_on_path(tmp_path: Path) -> None:
         text=True,
         check=False,
     )
-    assert plain.stdout.startswith('PATH="$PATH" python -m pre_commit')
+    assert plain.stdout.strip() == (
+        'PRECOMMIT_PYTHON="python" python -m pre_commit run --all-files'
+    )
 
 
 def test_make_venv_names_the_missing_interpreter(tmp_path: Path) -> None:
